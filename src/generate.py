@@ -16,10 +16,11 @@ uses. One door, not two.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import pathlib
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from openai import OpenAI
@@ -51,6 +52,7 @@ class Slot:
     priority: Priority
     tags: frozenset[Tag] = field(default_factory=frozenset)
     acceptable_types: tuple[CaseType, ...] = ()
+    note: str | None = None
 
     @property
     def record_id(self) -> str:
@@ -114,6 +116,14 @@ def build_prompt(slot: Slot) -> str:
         lines.append(f"- It should be defensibly arguable between: {alternatives}")
     for tag in sorted(slot.tags, key=lambda t: t.value):
         lines.append(f"- {TAG_INSTRUCTIONS[tag]}")
+    if slot.note:
+        lines.append(f"- {slot.note}")
+    if Tag.ANGRY in slot.tags and slot.priority is Priority.URGENT:
+        lines.append(
+            "- This record is both angry AND urgent, so label_note MUST state the "
+            "deadline or financial consequence that earns the URGENT, separately "
+            "from the tone."
+        )
 
     lines += [
         "",
@@ -138,19 +148,28 @@ def load_env(path: str = ".env") -> None:
 
 @dataclass
 class Usage:
-    """Measured, never extrapolated. Reported per run."""
+    """Measured, never extrapolated. Reported per run.
+
+    Generation is concurrent, so the counters are locked. Concurrency is safe
+    here precisely because the generator is not under test — the latency
+    measurement in `evals/latency.py` is serial and must never share a run
+    with anything parallel (`CLAUDE.md`).
+    """
 
     calls: int = 0
     prompt_tokens: int = 0
     completion_tokens: int = 0
     reasoning_tokens: int = 0
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def add(self, usage) -> None:
-        self.calls += 1
-        self.prompt_tokens += usage.prompt_tokens
-        self.completion_tokens += usage.completion_tokens
         details = getattr(usage, "completion_tokens_details", None)
-        self.reasoning_tokens += getattr(details, "reasoning_tokens", 0) or 0
+        reasoning = getattr(details, "reasoning_tokens", 0) or 0
+        with self._lock:
+            self.calls += 1
+            self.prompt_tokens += usage.prompt_tokens
+            self.completion_tokens += usage.completion_tokens
+            self.reasoning_tokens += reasoning
 
     def report(self) -> str:
         return (
@@ -195,10 +214,12 @@ def generate_record(
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--plan", required=True, help="JSON file of planned slots")
-    parser.add_argument("--out", required=True, help="JSONL file to append to")
+    parser.add_argument("--out", required=True, help="JSONL file to write")
     parser.add_argument("--limit", type=int, default=None, help="stop after N slots")
+    parser.add_argument("--workers", type=int, default=6, help="concurrent calls")
     args = parser.parse_args(argv[1:])
+
+    from src.plan import PLAN  # imported here: src.plan imports Slot from this module
 
     load_env()
     client = OpenAI(
@@ -207,32 +228,29 @@ def main(argv: list[str]) -> int:
     )
     model = os.environ["GENERATOR_MODEL"]
 
-    slots = [
-        Slot(
-            index=entry["index"],
-            case_type=CaseType(entry["case_type"]),
-            priority=Priority(entry["priority"]),
-            tags=frozenset(Tag(t) for t in entry.get("tags", [])),
-            acceptable_types=tuple(
-                CaseType(t) for t in entry.get("acceptable_types", [])
-            ),
-        )
-        for entry in json.loads(pathlib.Path(args.plan).read_text(encoding="utf-8"))
-    ]
-    if args.limit is not None:
-        slots = slots[: args.limit]
+    slots = list(PLAN[: args.limit] if args.limit else PLAN)
 
     counters = FailureCounters()
     usage = Usage()
-    records = []
+    lock = threading.Lock()
 
-    for slot in slots:
+    def work(slot: Slot) -> EnquiryRecord:
         record = generate_record(client, model, slot, counters, usage)
-        records.append(record)
-        print(f"  {record.id}  {slot.case_type.value:<16} {slot.priority.value:<7}"
-              f" {','.join(sorted(t.value for t in slot.tags)) or '-'}")
+        with lock:
+            print(
+                f"  {record.id}  {slot.case_type.value:<16} "
+                f"{slot.priority.value:<7} "
+                f"{','.join(sorted(t.value for t in slot.tags)) or '-'}",
+                flush=True,
+            )
+        return record
 
-    with open(args.out, "a", encoding="utf-8") as handle:
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        records = list(pool.map(work, slots))
+
+    records.sort(key=lambda r: r.id)
+
+    with open(args.out, "w", encoding="utf-8") as handle:
         for record in records:
             handle.write(record.model_dump_json() + "\n")
 

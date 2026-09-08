@@ -9,9 +9,22 @@ other than "it seemed right at the time."
 
 Rules are applied in order; the first that matches wins.
 
-1. **Refusal cases** are labelled by refusal, not by topic. An enquiry asking
-   whether a claim will definitely be approved is a refusal case, not
-   `CLAIM`.
+1. **Refusal cases** are labelled by refusal, not by topic — meaning the
+   *required action* is refusal. The record still carries its topical
+   `expected_type`, and refusal is a separate axis recorded by the `REFUSAL`
+   tag and scored by its own binary metric.
+
+   An enquiry asking whether a claim will definitely be approved is
+   `expected_type: CLAIM` with the `REFUSAL` tag: a human agent would route it
+   to the claims queue, and what makes it a refusal case is that the reply must
+   not answer the question, not that the enquiry is about something else.
+
+   *This rule was ambiguous as first written.* It said what such a record is
+   not, without saying what it is. The two candidate readings were `OTHER` plus
+   the tag, or the topical type plus the tag. `OTHER` was rejected: rule 4
+   forbids `OTHER` as an escape hatch, and with only five `OTHER` records in
+   forty, adding two refusal cases would make 40% of that class noise and its
+   per-class F1 uninterpretable. See the change log.
 2. **Mixed-topic enquiries** are labelled by the *action the CS agent must take
    first*, not by word count. An email that complains about service and then
    requests an address change is `ADDRESS_CHANGE` — the complaint is tone, the
@@ -68,4 +81,5 @@ is recorded here with a date and reason.
 
 | Date | Record | Change | Reason |
 |---|---|---|---|
+| 2026-09-08 | Rule 1 (all refusal records) | Clarified that refusal records keep their topical `expected_type` and carry the `REFUSAL` tag, rather than being labelled `OTHER` | The rule as written said only what a refusal record is *not*. Labelling them `OTHER` would contradict rule 4 and put 40% noise into the smallest class. Resolved **before** the golden set was generated or frozen, so no label was changed after seeing any result. |
 | — | — | Initial freeze | — |

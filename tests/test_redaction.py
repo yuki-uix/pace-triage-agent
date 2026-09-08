@@ -122,3 +122,10 @@ def test_a_record_with_no_identifiers_is_unchanged(analyzer):
     result = pseudonymise(plain, analyzer)
     assert result.record == plain
     assert result.mapping == {}
+
+
+def test_hkid_span_includes_the_check_digit_parentheses(analyzer):
+    """A regex ending in \\b stopped before ')', leaving 'X078297(A))' in the data."""
+    result = pseudonymise(record(body="HKID A123456(7) on file"), analyzer)
+    assert "A123456(7)" in result.mapping
+    assert "))" not in result.record.body

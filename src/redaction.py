@@ -78,7 +78,7 @@ POLICY_NUMBER = PatternRecognizer(
 )
 HK_ID = PatternRecognizer(
     supported_entity="HK_ID",
-    patterns=[Pattern("hkid", r"\b[A-Z]{1,2}\d{6}\(?[0-9A]\)?\b", 0.9)],
+    patterns=[Pattern("hkid", r"\b[A-Z]{1,2}\d{6}(?:\([0-9A]\))?", 0.9)],
 )
 # Presidio's built-in phone recognizer works through `phonenumbers`, which wants
 # a country context. A bare Hong Kong mobile — eight digits, no dialling code —

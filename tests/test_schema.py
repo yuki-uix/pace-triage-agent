@@ -53,6 +53,36 @@ def test_confidence_outside_zero_to_one_is_rejected(confidence):
         TriageOutput.model_validate({**VALID_TRIAGE, "confidence": confidence})
 
 
+@pytest.mark.parametrize("confidence", [True, False])
+def test_boolean_confidence_is_rejected_not_promoted_to_a_number(confidence):
+    """`true` becoming 1.0 would be a malformed response wearing full certainty."""
+    with pytest.raises(ValidationError):
+        TriageOutput.model_validate({**VALID_TRIAGE, "confidence": confidence})
+
+
+def test_string_confidence_is_rejected_not_coerced():
+    with pytest.raises(ValidationError):
+        TriageOutput.model_validate({**VALID_TRIAGE, "confidence": "0.82"})
+
+
+@pytest.mark.parametrize("confidence", [0, 1])
+def test_integer_confidence_at_the_bounds_is_accepted(confidence):
+    assert TriageOutput.model_validate(
+        {**VALID_TRIAGE, "confidence": confidence}
+    ).confidence == confidence
+
+
+@pytest.mark.parametrize("confidence", [float("nan"), float("inf")])
+def test_nan_and_infinity_confidence_are_rejected(confidence):
+    with pytest.raises(ValidationError):
+        TriageOutput.model_validate({**VALID_TRIAGE, "confidence": confidence})
+
+
+def test_non_string_draft_field_is_rejected_not_stringified():
+    with pytest.raises(ValidationError):
+        DraftOutput.model_validate({"summary": 42, "draft_reply": "r"})
+
+
 def test_extra_field_is_rejected_rather_than_dropped():
     with pytest.raises(ValidationError):
         TriageOutput.model_validate({**VALID_TRIAGE, "reasoning": "because"})
@@ -79,8 +109,8 @@ def test_missing_draft_field_is_rejected(missing):
         DraftOutput.model_validate(payload)
 
 
-@pytest.mark.parametrize("field", ["summary", "draft_reply"])
-def test_empty_draft_field_is_rejected(field):
-    payload = {"summary": "s", "draft_reply": "r", field: ""}
+@pytest.mark.parametrize("empty_field", ["summary", "draft_reply"])
+def test_empty_draft_field_is_rejected(empty_field):
+    payload = {"summary": "s", "draft_reply": "r", empty_field: ""}
     with pytest.raises(ValidationError):
         DraftOutput.model_validate(payload)

@@ -61,6 +61,10 @@ class FailureCounters:
     `provider_refusals` is the provider declining to answer at all, which is
     not the same event as the agent correctly refusing an out-of-bounds
     enquiry — that one is a task-quality metric, scored on the golden set.
+
+    `raw_failures` holds unredacted model output, so it is an exit for
+    customer PII and is withheld from `as_dict()` by default. Anything that
+    serialises it must pass it through the redaction boundary first (ADR-004).
     """
 
     schema_failures: int = 0
@@ -71,8 +75,17 @@ class FailureCounters:
     def record_provider_refusal(self) -> None:
         self.provider_refusals += 1
 
-    def as_dict(self) -> dict:
-        return asdict(self)
+    def as_dict(self, include_raw: bool = False) -> dict:
+        """Counts only, unless raw payloads are asked for explicitly.
+
+        The default is safe because this is the method results and traces
+        serialise. `include_raw=True` returns unredacted model output and is
+        only valid on a path that redacts afterwards.
+        """
+        counts = asdict(self)
+        if not include_raw:
+            counts.pop("raw_failures")
+        return counts
 
 
 def _unwrap(raw: str) -> str:

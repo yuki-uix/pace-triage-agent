@@ -68,7 +68,6 @@ def test_valid_first_attempt_leaves_every_counter_at_zero():
         "schema_failures": 0,
         "retry_exhaustions": 0,
         "provider_refusals": 0,
-        "raw_failures": [],
     }
 
 
@@ -141,6 +140,41 @@ def test_provider_errors_propagate_and_are_not_counted_as_schema_failures():
 
     assert counters.schema_failures == 0
     assert counters.retry_exhaustions == 0
+
+
+def test_boolean_confidence_fails_the_contract_at_the_boundary():
+    counters = FailureCounters()
+    raw = json.dumps({"case_type": "CLAIM", "priority": "URGENT", "confidence": True})
+
+    with pytest.raises(RetryExhaustedError):
+        call_with_contract(responder(raw, raw, raw), TriageOutput, counters)
+
+    assert counters.schema_failures == 3
+
+
+def test_as_dict_withholds_raw_payloads_by_default():
+    """`as_dict` is what results and traces serialise; PII must not ride along."""
+    counters = FailureCounters()
+    with pytest.raises(RetryExhaustedError):
+        call_with_contract(
+            responder(*["Policy HK-8842011 for Chan Ka Ming"] * 3),
+            TriageOutput,
+            counters,
+        )
+
+    serialised = counters.as_dict()
+
+    assert "raw_failures" not in serialised
+    assert "HK-8842011" not in json.dumps(serialised)
+    assert serialised["schema_failures"] == 3
+
+
+def test_raw_payloads_are_available_only_when_asked_for_explicitly():
+    counters = FailureCounters()
+    with pytest.raises(RetryExhaustedError):
+        call_with_contract(responder(*["nope"] * 3), TriageOutput, counters)
+
+    assert counters.as_dict(include_raw=True)["raw_failures"] == ["nope"] * 3
 
 
 def test_provider_refusal_is_its_own_counter():

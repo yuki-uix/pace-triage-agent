@@ -11,7 +11,7 @@ followed the contract, and silently dropping the field would hide that.
 
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
 
 
 class CaseType(str, Enum):
@@ -37,13 +37,18 @@ class TriageOutput(BaseModel):
     `confidence` is derived rather than asked for (ADR-002), but it arrives
     here the same way regardless of which derivation was used, so the contract
     does not encode the method. The method is recorded in the trace.
+
+    It is strictly typed. Pydantic's lax mode promotes `true` to 1.0, which
+    would turn a malformed response into the highest possible confidence —
+    the one value that most distorts the calibration table and the escalation
+    gate. A confidence that is not a number is a schema failure.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     case_type: CaseType
     priority: Priority
-    confidence: float = Field(ge=0.0, le=1.0)
+    confidence: StrictFloat | StrictInt = Field(ge=0.0, le=1.0)
 
 
 class DraftOutput(BaseModel):
@@ -51,5 +56,5 @@ class DraftOutput(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    summary: str = Field(min_length=1)
-    draft_reply: str = Field(min_length=1)
+    summary: StrictStr = Field(min_length=1)
+    draft_reply: StrictStr = Field(min_length=1)

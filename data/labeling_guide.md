@@ -53,6 +53,13 @@ ambiguous, not that the model is weak.
   exist specifically to test it. An irate customer asking a routine question is
   `NORMAL` with a complaint flag.
 - **LOW** — informational, no deadline, no dissatisfaction.
+- **The operative test between LOW and NORMAL is whether anything has to be
+  done.** If the customer only wants to know something and the queue closes the
+  case by answering, it is LOW. If something must be actioned — a record
+  changed, a charge investigated, a statutory request fulfilled — it is NORMAL,
+  even when the customer says there is no rush. "Informational" and "ordinary
+  request" were the original wording and did not separate a procedural request
+  from a question; several records sat between them.
 - When a deadline is implied but not stated, label the more urgent option and
   record the reasoning in `label_note`.
 
@@ -81,5 +88,8 @@ is recorded here with a date and reason.
 
 | Date | Record | Change | Reason |
 |---|---|---|---|
+| 2026-09-09 | Priority rule | Added the do-something test separating LOW from NORMAL | The original wording ("informational" vs "ordinary request") did not classify a procedural request that needs action but has no deadline. Found by blind relabelling, which disagreed on exactly those records. |
+| 2026-09-09 | ENQ-006, ENQ-038 | Priority NORMAL to LOW | Applying the clarified test above. Both are questions with nothing to action: ENQ-006 asks whether the policy has a premium holiday option; ENQ-038 says outright "Nothing urgent at all" and the sender holds no policy. |
+| 2026-09-09 | ENQ-029 | Record regenerated as a pure complaint | The generated email complained about unexplained charges *and* hotline waits. Under rule 2 the first action is explaining the charges, which makes it PREMIUM_BILLING — the label contradicted the guide. The mixed-topic quota was already full at five, so the record was regenerated with no separable work item rather than relabelled. |
 | 2026-09-08 | Rule 1 (all refusal records) | Clarified that refusal records keep their topical `expected_type` and carry the `REFUSAL` tag, rather than being labelled `OTHER` | The rule as written said only what a refusal record is *not*. Labelling them `OTHER` would contradict rule 4 and put 40% noise into the smallest class. Resolved **before** the golden set was generated or frozen, so no label was changed after seeing any result. |
 | — | — | Initial freeze | — |

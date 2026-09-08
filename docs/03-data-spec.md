@@ -40,15 +40,41 @@ buried one is the realistic threat.
 **Mixed-topic cases** are the reason `data/labeling_guide.md` exists. Do not
 generate them until the adjudication rule is written down.
 
+**Every slot needs a scenario brief, and `OTHER` needs one most.** Learned by
+generating without them. Six undifferentiated `OTHER` slots came back as four
+variations of "is this SMS really from you?" — mode collapse — and the blind
+relabeller contested five of the six labels, because an enquiry written freely
+for a life insurer drifts toward being about a policy. A class where two thirds
+of the records are the same scenario measures one thing, not six. The briefs now
+live in `src/plan.py` and a test requires them.
+
 ## Generation
 
 Generate with a different model family from either model under test. Shared
 priors between generator and classifier inflate accuracy — the data comes out
 cleaner and more prototypical than real customer email.
 
-Names, policy numbers, and addresses are Faker-generated. Presidio's custom
-anonymiser with a Faker lambda is used here too, which lets the write-up state
-that the dataset contains no real PII by construction.
+**Amended 2026-09-09, after running it.** The original plan was to Faker-generate
+names, policy numbers and addresses through Presidio's anonymiser. Applied end
+to end to real generated records it made the data worse, so the scope is now
+structured identifiers only — policy numbers, phone numbers, email addresses,
+HKID. What went wrong is recorded in `src/redaction.py`: name spans ran past the
+name into the next line and swallowed part of the address; Hong Kong districts
+such as Kwun Tong and Sheung Wan were classified as people, because romanised
+Cantonese place names and personal names are the same shape to an English NER
+model; and with no coreference one customer became three people inside a single
+email. Detected names are now reported for human review rather than rewritten.
+
+**The "no real PII" claim rests on something else, and always did.** The dataset
+contains no real customer data because no real customer data was ever an input:
+every enquiry is written from a label specification, not drawn from an inbox.
+The substitution pass is defence in depth against a generator emitting a
+memorised identifier, and it makes identifiers reproducible. Stating it the
+other way round — that Faker makes the data safe — would be claiming a guarantee
+the tool does not provide.
+
+Presidio's built-in phone recognizer also reads a bare eight-digit Hong Kong
+mobile as a date, so there is a local recognizer for it.
 
 ## Freezing the golden set
 

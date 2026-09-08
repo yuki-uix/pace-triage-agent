@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr
 
 from src.contract import FailureCounters, call_with_contract
 from src.dataset import EnquiryRecord, Tag
+from src.quotas import load_records
 from src.redaction import build_analyzer, pseudonymise
 from src.schema import CaseType, Priority
 
@@ -218,6 +219,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--out", required=True, help="JSONL file to write")
     parser.add_argument("--limit", type=int, default=None, help="stop after N slots")
     parser.add_argument("--workers", type=int, default=6, help="concurrent calls")
+    parser.add_argument("--only", help="comma-separated slot indices to regenerate")
+    parser.add_argument("--merge", action="store_true",
+                        help="replace those ids in --out, keeping the rest")
     args = parser.parse_args(argv[1:])
 
     from src.plan import PLAN  # imported here: src.plan imports Slot from this module
@@ -231,6 +235,12 @@ def main(argv: list[str]) -> int:
     model = os.environ["GENERATOR_MODEL"]
 
     slots = list(PLAN[: args.limit] if args.limit else PLAN)
+    if args.only:
+        wanted = {int(i) for i in args.only.split(",")}
+        slots = [slot for slot in slots if slot.index in wanted]
+        missing = wanted - {slot.index for slot in slots}
+        if missing:
+            raise SystemExit(f"no such slot(s) in the plan: {sorted(missing)}")
 
     counters = FailureCounters()
     usage = Usage()
@@ -254,6 +264,11 @@ def main(argv: list[str]) -> int:
 
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         records = list(pool.map(work, slots))
+
+    if args.merge:
+        existing = {r.id: r for r in load_records(args.out)}
+        existing.update({r.id: r for r in records})
+        records = list(existing.values())
 
     records.sort(key=lambda r: r.id)
 

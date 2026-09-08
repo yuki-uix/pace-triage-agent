@@ -97,3 +97,42 @@ def test_at_least_three_angry_records_are_not_urgent():
     angry = [s for s in PLAN if Tag.ANGRY in s.tags]
     not_urgent = [s for s in angry if s.priority is not Priority.URGENT]
     assert len(not_urgent) >= 3
+
+
+def test_every_other_slot_carries_a_scenario_brief():
+    """Undifferentiated OTHER slots collapsed onto one scenario in the first run.
+
+    Four of six came back as variations of "is this SMS from you?", so the class
+    measured one thing rather than six, and the blind relabeller contested five
+    of the six labels.
+    """
+    for slot in PLAN:
+        if slot.case_type is CaseType.OTHER and slot.index != 40:
+            assert slot.note, f"{slot.record_id} needs a scenario brief"
+
+
+def test_other_slot_briefs_are_distinct():
+    briefs = [s.note for s in PLAN if s.case_type is CaseType.OTHER and s.note]
+    assert len(briefs) == len(set(briefs))
+
+
+def test_the_dataset_labels_match_the_plan():
+    """The plan is the source of truth. Drift between them is silent otherwise.
+
+    Skipped when the dataset has not been generated yet, so the suite still runs
+    on a fresh checkout before anyone spends anything.
+    """
+    import pathlib
+
+    if not pathlib.Path("data/enquiries.jsonl").exists():
+        pytest.skip("dataset not generated")
+
+    from src.quotas import load_records
+
+    planned = {slot.record_id: slot for slot in PLAN}
+    for record in load_records("data/enquiries.jsonl"):
+        slot = planned[record.id]
+        assert record.expected_type is slot.case_type, record.id
+        assert record.expected_priority is slot.priority, record.id
+        assert record.tags == slot.tags, record.id
+        assert record.acceptable_types == slot.acceptable_types, record.id

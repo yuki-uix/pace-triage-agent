@@ -1,0 +1,10 @@
+pydantic>=2
+deepeval
+presidio-analyzer
+presidio-anonymizer
+spacy
+faker
+scikit-learn
+python-dotenv
+pytest
+# provider SDKs — pin once models are chosen

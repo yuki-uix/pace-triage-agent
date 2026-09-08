@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.deepeval/
+.deepeval-cache.json
+results/*.jsonl
+results/*.json
+!results/.gitkeep
+traces/

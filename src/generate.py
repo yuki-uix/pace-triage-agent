@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr
 
 from src.contract import FailureCounters, call_with_contract
 from src.dataset import EnquiryRecord, Tag
+from src.redaction import build_analyzer, pseudonymise
 from src.schema import CaseType, Priority
 
 
@@ -222,6 +223,7 @@ def main(argv: list[str]) -> int:
     from src.plan import PLAN  # imported here: src.plan imports Slot from this module
 
     load_env()
+    analyzer = build_analyzer()
     client = OpenAI(
         api_key=os.environ["DASHSCOPE_API_KEY"],
         base_url=os.environ["DASHSCOPE_BASE_URL"],
@@ -234,9 +236,14 @@ def main(argv: list[str]) -> int:
     usage = Usage()
     lock = threading.Lock()
 
+    review: dict[str, tuple[str, ...]] = {}
+
     def work(slot: Slot) -> EnquiryRecord:
-        record = generate_record(client, model, slot, counters, usage)
+        generated = generate_record(client, model, slot, counters, usage)
+        result = pseudonymise(generated, analyzer)
+        record = result.record
         with lock:
+            review[record.id] = result.for_review
             print(
                 f"  {record.id}  {slot.case_type.value:<16} "
                 f"{slot.priority.value:<7} "
@@ -257,6 +264,13 @@ def main(argv: list[str]) -> int:
     print(f"\nwrote {len(records)} records to {args.out}")
     print(f"usage: {usage.report()}")
     print(f"contract failures: {counters.as_dict()}")
+
+    flagged = sum(len(v) for v in review.values())
+    print(
+        f"\n{flagged} name/place spans flagged for human review across "
+        f"{len(review)} records. These are NOT rewritten - see src/redaction.py "
+        f"for why substituting them corrupted the data."
+    )
     return 0
 
 

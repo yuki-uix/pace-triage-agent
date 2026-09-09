@@ -93,13 +93,38 @@ def test_triage_derives_confidence_from_logprobs_and_records_the_method():
 
 def test_triage_falls_back_to_self_consistency_when_logprobs_are_absent():
     """The fallback triples cost, so the trace must say which path ran."""
-    client = FakeClient([TRIAGE_JSON, TRIAGE_JSON,
+    client = FakeClient([TRIAGE_JSON, TRIAGE_JSON, TRIAGE_JSON,
                          '{"case_type": "OTHER", "priority": "LOW"}'])
     output, trace = run_triage(client, StageConfig("m"), "s", "b", FailureCounters())
 
     assert trace.confidence_method == "SELF_CONSISTENCY"
     assert output.confidence == pytest.approx(2 / 3)
-    assert trace.extra_calls == 2
+    assert trace.extra_calls == 3
+
+
+def test_every_self_consistency_vote_is_drawn_at_the_same_temperature():
+    """ADR-002 says three samples at 0.7. A modal share over samples from two
+    different distributions is not a probability estimate of anything."""
+    client = FakeClient([TRIAGE_JSON] * 4)
+    run_triage(client, StageConfig("m"), "s", "b", FailureCounters())
+
+    vote_requests = client.requests[1:]
+    assert len(vote_requests) == 3
+    assert {r["temperature"] for r in vote_requests} == {0.7}
+
+
+def test_the_first_call_is_not_counted_as_a_self_consistency_vote():
+    """It was sampled at the provider default, possibly from a retried prompt."""
+    client = FakeClient(['{"case_type": "CLAIM", "priority": "URGENT"}',
+                         '{"case_type": "OTHER", "priority": "LOW"}',
+                         '{"case_type": "OTHER", "priority": "LOW"}',
+                         '{"case_type": "OTHER", "priority": "LOW"}'])
+    output, _ = run_triage(client, StageConfig("m"), "s", "b", FailureCounters())
+
+    # All three votes said OTHER; had the first call been counted the share
+    # would be 3/4, not 3/3.
+    assert output.confidence == pytest.approx(1.0)
+    assert output.case_type is CaseType.CLAIM
 
 
 def test_the_triage_model_is_never_asked_for_a_confidence():

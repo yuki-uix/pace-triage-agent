@@ -42,19 +42,36 @@ def _token_spans(tokens: Sequence) -> list[tuple[int, int, float]]:
     return spans
 
 
-def from_logprobs(content: str, tokens: Sequence, value: str) -> Confidence | None:
+def from_logprobs(content: str, tokens: Sequence, value: str,
+                  key: str | None = None) -> Confidence | None:
     """Probability the model assigned to the label string it actually emitted.
 
     The product over the tokens spanning the value, which is the model's
     probability of that exact label rather than of one convenient token of it.
     Returns None when the value cannot be located, so the caller falls back
     rather than inventing a number.
+
+    **The value is located after its key, not by first occurrence.** Models
+    restate the permitted values before answering, and a first-occurrence match
+    then measures the echo instead of the decision. Caught by probe: with the
+    real value token at p=0.55 behind an echoed copy, first-occurrence matching
+    returned 1.0000 — a malformed-looking response wearing maximum certainty,
+    the same failure class as a coerced boolean confidence, and harder to see
+    because the JSON is perfectly valid.
     """
     if not tokens:
         return None
 
     rebuilt = "".join(token.token for token in tokens)
-    start = rebuilt.find(value)
+
+    search_from = 0
+    if key is not None:
+        key_at = rebuilt.rfind(f'"{key}"')
+        if key_at == -1:
+            return None
+        search_from = key_at + len(key) + 2
+
+    start = rebuilt.find(value, search_from)
     if start == -1:
         return None
     end = start + len(value)

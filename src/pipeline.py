@@ -206,14 +206,17 @@ def _derive_confidence(client, config, enquiry, decision, last_response,
 
     if tokens:
         derived = from_logprobs(last_response["content"], tokens,
-                                decision.case_type.value)
+                                decision.case_type.value, key="case_type")
         if derived is not None:
             return derived
 
-    # Fallback: independent samples, modal vote share. Triples the cost, which
-    # is why it is the fallback and why the trace says which path ran.
-    votes = [decision.case_type.value]
-    for _ in range(max(config.self_consistency_samples - 1, 0)):
+    # Fallback: independent samples, modal vote share (ADR-002). Every vote is
+    # drawn at temperature 0.7. The first call's answer is deliberately NOT
+    # reused as a vote: it was sampled at the provider default, and possibly
+    # from a prompt carrying a retry note, so mixing it in would compute a
+    # modal share over samples from different distributions.
+    votes: list[str] = []
+    for _ in range(max(config.self_consistency_samples, 1)):
         started = time.perf_counter()
         response = client.chat.completions.create(
             model=config.model,

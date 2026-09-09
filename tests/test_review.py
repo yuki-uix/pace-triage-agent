@@ -197,3 +197,56 @@ def test_a_confident_looking_draft_is_not_shown_as_certain(tmp_path):
 
     assert "confidence 0.999" in shown
     assert "1.00" not in shown
+
+
+# ---- the edit path must not manufacture corrections that did not happen
+
+def test_an_edit_without_an_editor_is_refused(tmp_path, monkeypatch):
+    """Pressing 'e' with no $EDITOR used to record the untouched draft as a
+    correction - the same confusion the accept path already guards against."""
+    monkeypatch.delenv("EDITOR", raising=False)
+    from src.review import EditFailed, edit_text
+
+    with pytest.raises(EditFailed):
+        edit_text("Dear customer.")
+
+
+def test_an_editor_that_fails_is_refused(tmp_path):
+    from src.review import EditFailed, edit_text
+
+    with pytest.raises(EditFailed):
+        edit_text("Dear customer.", editor="false")
+
+
+def test_an_unchanged_draft_is_not_recorded_as_a_correction():
+    """Corrections feed back as golden samples; untouched drafts would poison it."""
+    from src.review import EditFailed, edit_text
+
+    with pytest.raises(EditFailed, match="unchanged"):
+        edit_text("Dear customer.", editor="true")
+
+
+def test_a_failed_edit_re_asks_and_leaves_the_item_undecided(tmp_path):
+    from src.review import EditFailed
+
+    path = queue_file(tmp_path, 1)
+    session = Session(["e", "a"])
+
+    def refuse(text: str) -> str:
+        raise EditFailed("no $EDITOR set")
+
+    review(path, session.read, session.write, editor=refuse)
+
+    assert decisions(path) == ["accept"]
+    assert "edit not recorded" in session.text
+
+
+def test_a_real_editor_subprocess_round_trips(tmp_path):
+    """The path the injected editor in the other tests never exercises."""
+    from src.review import edit_text
+
+    script = tmp_path / "editor.sh"
+    script.write_text("#!/bin/sh\nprintf 'Dear Ms Chan.' > \"$1\"\n", encoding="utf-8")
+    script.chmod(0o755)
+
+    assert edit_text("Dear customer.", editor=str(script)) == "Dear Ms Chan."

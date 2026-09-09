@@ -132,18 +132,40 @@ def render(item: Item, position: int, total: int) -> str:
     ])
 
 
+class EditFailed(RuntimeError):
+    """The edit did not happen. Never silently treated as a no-op correction.
+
+    An unchanged draft recorded as a reviewer correction is worse than no
+    record: the point of keeping the edited text is that corrections can come
+    back as golden samples later, and feeding untouched drafts into that would
+    poison it. The accept path already guards against exactly this confusion.
+    """
+
+
 def edit_text(text: str, editor: str | None = None) -> str:
-    """Open the draft in $EDITOR. Falls back to returning it unchanged."""
+    """Open the draft in $EDITOR and return what came back.
+
+    Raises rather than returning the original when the editor is missing, fails,
+    or leaves the text untouched.
+    """
     editor = editor or os.environ.get("EDITOR")
     if not editor:
-        return text
+        raise EditFailed("no $EDITOR set; set one, or use accept or discard")
+
     with tempfile.NamedTemporaryFile("w", suffix=".txt", encoding="utf-8",
                                      delete=False) as handle:
         handle.write(text)
         path = handle.name
-    subprocess.run([*editor.split(), path], check=False)
-    edited = pathlib.Path(path).read_text(encoding="utf-8")
-    os.unlink(path)
+    try:
+        result = subprocess.run([*editor.split(), path], check=False)
+        if result.returncode != 0:
+            raise EditFailed(f"{editor!r} exited {result.returncode}; nothing recorded")
+        edited = pathlib.Path(path).read_text(encoding="utf-8")
+    finally:
+        os.unlink(path)
+
+    if edited.strip() == text.strip():
+        raise EditFailed("the draft came back unchanged; nothing recorded")
     return edited
 
 
@@ -180,8 +202,13 @@ def review(path: str, read: Callable[[str], str], write: Callable[[str], None],
                 break
             if answer in KEYS:
                 decision = KEYS[answer]
-                text = editor(items[index].draft_reply) if decision is Decision.EDIT \
-                    else None
+                text = None
+                if decision is Decision.EDIT:
+                    try:
+                        text = editor(items[index].draft_reply)
+                    except EditFailed as failure:
+                        write(f"  edit not recorded: {failure}\n")
+                        continue
                 items[index] = items[index].decided(decision, text)
                 save_queue(path, items)  # after every decision, not at the end
                 outcome.reviewed += 1

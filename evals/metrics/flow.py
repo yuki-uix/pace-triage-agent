@@ -71,10 +71,27 @@ class CaseResult:
     no_output: bool = False
 
 
+# GEval renames itself: a metric constructed as "tone match" reports its
+# __name__ as "tone match [GEval]". Comparing that against a constant holding
+# the bare name matched nothing, so the refusal branch never fired for any
+# judged metric. The tests missed it because they parametrised over the constant
+# and handed those same bare names back to `applies` - a test checking a
+# constant against itself, never against a real metric's name.
+GEVAL_SUFFIX = " [GEval]"
+
+
+def canonical_name(metric_name: str) -> str:
+    """The name a metric is known by here, whatever the library calls it."""
+    if metric_name.endswith(GEVAL_SUFFIX):
+        return metric_name[: -len(GEVAL_SUFFIX)]
+    return metric_name
+
+
 def applies(metric_name: str, test_case: LLMTestCase) -> bool:
     """The branch. Refusal records skip draft-quality metrics, nothing else."""
     tags = set((test_case.metadata or {}).get("tags") or [])
-    if Tag.REFUSAL.value in tags and metric_name in SKIPPED_WHEN_REFUSING:
+    if (Tag.REFUSAL.value in tags
+            and canonical_name(metric_name) in SKIPPED_WHEN_REFUSING):
         return False
     return True
 
@@ -92,7 +109,7 @@ def evaluate_case(test_case: LLMTestCase, metrics) -> CaseResult:
                         no_output=not meta.get("produced_output", False))
 
     for metric in metrics:
-        name = metric.__name__
+        name = canonical_name(metric.__name__)
         if not applies(name, test_case):
             result.skipped.append(name)
             continue

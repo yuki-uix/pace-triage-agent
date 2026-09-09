@@ -38,6 +38,10 @@ class JudgeUsage:
     failures: list[str] = field(default_factory=list)
 
     @property
+    def thinking_disabled_retries(self) -> int:
+        return sum(1 for f in self.failures if "thinking off" in f)
+
+    @property
     def continuous_scoring_rate(self) -> float:
         """Share of judge calls that could be scored continuously."""
         return self.with_logprobs / self.calls if self.calls else 0.0
@@ -50,6 +54,7 @@ class JudgeUsage:
             "prompt_tokens": self.prompt_tokens,
             "completion_tokens": self.completion_tokens,
             "reasoning_tokens": self.reasoning_tokens,
+            "thinking_disabled_retries": self.thinking_disabled_retries,
             "failures": self.failures,
         }
 
@@ -92,29 +97,71 @@ class DashScopeJudge(DeepEvalBaseLLM):
         if logprobs and getattr(logprobs, "content", None):
             self.usage.with_logprobs += 1
 
-    def _request(self, prompt: str, top_logprobs: int | None):
-        kwargs: dict = {"model": self.model, "max_tokens": 4096,
+    # Generous, because the judge reasons before answering and the amount it
+    # reasons varies: the same prompt came back at 1210 and 657 reasoning tokens
+    # on consecutive calls. When the budget runs out inside the reasoning the
+    # model returns an empty string, and DeepEval reports it as "invalid JSON"
+    # from a bad evaluation model rather than as truncation.
+    MAX_TOKENS = 16384
+
+    def _request(self, prompt: str, top_logprobs: int | None,
+                 thinking: bool = True):
+        kwargs: dict = {"model": self.model, "max_tokens": self.MAX_TOKENS,
                         "messages": [{"role": "user", "content": prompt}]}
+        if not thinking:
+            kwargs["extra_body"] = {"enable_thinking": False}
         if top_logprobs is not None:
             kwargs.update(logprobs=True, top_logprobs=top_logprobs)
         return kwargs
+
+    def _is_empty(self, response) -> bool:
+        return not (response.choices[0].message.content or "").strip()
 
     def generate(self, prompt: str, *args, **kwargs) -> str:
         response = self._client.chat.completions.create(
             **self._request(prompt, None))
         self._record(response)
+        if self._is_empty(response):
+            response = self._retry_without_thinking(prompt, None)
         return response.choices[0].message.content or ""
+
+    def _retry_without_thinking(self, prompt: str, top_logprobs: int | None):
+        """One retry with reasoning off, recorded rather than silent.
+
+        An empty answer means the budget went entirely into reasoning. Turning
+        reasoning off gets an answer, but it is a different instrument from the
+        one the other calls used, so the count is reported: a judge that scored
+        some cases with reasoning and others without is a fact about the results,
+        not an implementation detail.
+        """
+        self.usage.failures.append("empty response; retried with thinking off")
+        response = self._client.chat.completions.create(
+            **self._request(prompt, top_logprobs, thinking=False))
+        self._record(response)
+        return response
 
     async def a_generate(self, prompt: str, *args, **kwargs) -> str:
         response = await self._async_client.chat.completions.create(
             **self._request(prompt, None))
         self._record(response)
+        if self._is_empty(response):
+            response = await self._a_retry_without_thinking(prompt, None)
         return response.choices[0].message.content or ""
+
+    async def _a_retry_without_thinking(self, prompt: str,
+                                        top_logprobs: int | None):
+        self.usage.failures.append("empty response; retried with thinking off")
+        response = await self._async_client.chat.completions.create(
+            **self._request(prompt, top_logprobs, thinking=False))
+        self._record(response)
+        return response
 
     def generate_raw_response(self, prompt: str, top_logprobs: int = 5, **kwargs):
         response = self._client.chat.completions.create(
             **self._request(prompt, top_logprobs))
         self._record(response)
+        if self._is_empty(response):
+            response = self._retry_without_thinking(prompt, top_logprobs)
         return response, 0.0
 
     async def a_generate_raw_response(self, prompt: str, top_logprobs: int = 5,
@@ -122,4 +169,6 @@ class DashScopeJudge(DeepEvalBaseLLM):
         response = await self._async_client.chat.completions.create(
             **self._request(prompt, top_logprobs))
         self._record(response)
+        if self._is_empty(response):
+            response = await self._a_retry_without_thinking(prompt, top_logprobs)
         return response, 0.0

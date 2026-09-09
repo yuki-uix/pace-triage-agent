@@ -346,3 +346,51 @@ def test_a_case_with_no_output_scores_nothing_at_all():
     assert result.scores == {}
     assert sorted(result.skipped) == ["case type", "priority"]
     assert result.no_output is True
+
+
+# ---- the branch, checked against what the metrics actually call themselves
+
+from deepeval.models.base_model import DeepEvalBaseLLM
+
+
+class StubJudge(DeepEvalBaseLLM):
+    """Enough of a model for GEval to be constructed. Never called.
+
+    No API key, no network: this test is about what the metric calls itself.
+    """
+
+    def load_model(self, *a, **k): return self
+    def get_model_name(self, *a, **k): return "stub"
+    def generate(self, *a, **k): raise AssertionError("no judging in this test")
+    async def a_generate(self, *a, **k): raise AssertionError("no judging here")
+
+
+@pytest.mark.parametrize("build", [
+    "commitment_groundedness", "tone_match", "summary_quality",
+])
+def test_the_refusal_branch_fires_for_the_real_judged_metrics(build):
+    """The regression the old test could not catch.
+
+    `test_draft_quality_metrics_do_not_run_on_a_refusal` parametrises over
+    SKIPPED_WHEN_REFUSING and passes those same bare names to `applies` - a
+    constant checked against itself. GEval reports its name with a " [GEval]"
+    suffix, so nothing matched and the branch never fired for any judged metric.
+    This test asks the metric what it is called.
+    """
+    import evals.metrics.judged as judged
+
+    metric = getattr(judged, build)(StubJudge())
+    test_case = as_test_case(refusal_record(),
+                             {"case_type": "CLAIM", "priority": "NORMAL",
+                              "draft_reply": "We cannot confirm."})
+
+    assert metric.__name__.endswith(" [GEval]"), "library naming changed"
+    assert applies(metric.__name__, test_case) is False
+
+
+def test_canonical_name_strips_only_the_library_suffix():
+    from evals.metrics.flow import canonical_name
+
+    assert canonical_name("tone match [GEval]") == "tone match"
+    assert canonical_name("tone match") == "tone match"
+    assert canonical_name("entity groundedness") == "entity groundedness"

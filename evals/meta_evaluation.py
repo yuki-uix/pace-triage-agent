@@ -30,6 +30,7 @@ import pathlib
 from dataclasses import dataclass
 from statistics import mean
 
+from evals.metrics.flow import canonical_name
 from sklearn.metrics import cohen_kappa_score
 from scipy.stats import spearmanr
 
@@ -243,21 +244,48 @@ def _prepare(size: int, out: pathlib.Path, labels_path: pathlib.Path,
     counters = FailureCounters()
     rows, judge_scores = [], {}
 
+    # One bad judge response must not cost the whole run. A record that fails
+    # is recorded and skipped; losing fourteen paid-for drafts to the fifteenth
+    # is the kind of failure that makes people avoid re-running an evaluation.
+    problems: list[str] = []
+
     for record in records:
-        item = run(client, config, record.id, record.subject, record.body, counters)
         enquiry = f"Subject: {record.subject}\n\n{record.body}"
+        try:
+            item = run(client, config, record.id, record.subject, record.body,
+                       counters)
+        except Exception as exc:  # noqa: BLE001 - recorded, never swallowed
+            problems.append(f"{record.id}: pipeline: {type(exc).__name__}: {exc}")
+            print(f"  {record.id} SKIPPED (pipeline)", flush=True)
+            continue
+
         rows.append({"record_id": record.id, "enquiry": enquiry,
                      "summary": item.summary, "draft_reply": item.draft_reply})
 
         scored = LLMTestCase(input=enquiry, actual_output=item.draft_reply)
         summary_case = LLMTestCase(input=enquiry, actual_output=item.summary)
         for metric in metrics:
-            metric.measure(summary_case if metric.__name__ == "summary quality"
-                           else scored)
-            judge_scores[f"{record.id}|{metric.__name__}"] = metric.score
+            try:
+                name = canonical_name(metric.__name__)
+                metric.measure(summary_case if name == "summary quality" else scored)
+                judge_scores[f"{record.id}|{name}"] = metric.score
+            except Exception as exc:  # noqa: BLE001
+                problems.append(
+                    f"{record.id}: {canonical_name(metric.__name__)}: "
+                    f"{type(exc).__name__}: {exc}")
         print(f"  {record.id} scored", flush=True)
 
     out.mkdir(parents=True, exist_ok=True)
+
+    # Machine-readable drafts, written alongside the human worksheet. The
+    # worksheet is a document for a person; recovering data by parsing it is
+    # brittle and was: a NOISY record contained a forwarded-email '---' rule,
+    # which is also the worksheet's record separator, and a top-up script split
+    # the wrong block. Anything a later step needs gets its own file.
+    with open(out / "meta_eval_drafts.jsonl", "w", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
     with open(labels_path, "w", encoding="utf-8") as handle:
         for row in rows:
             for metric in METRICS:
@@ -268,10 +296,15 @@ def _prepare(size: int, out: pathlib.Path, labels_path: pathlib.Path,
         "scores": judge_scores,
         "usage": judge.usage.as_dict(),
         "contract_failures": counters.as_dict(),
+        "problems": problems,
     }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     worksheet = build_worksheet(rows, str(out / "meta_eval_worksheet.md"))
 
     print(f"\n{len(rows)} drafts written to {worksheet}")
+    if problems:
+        print(f"{len(problems)} judge/pipeline problem(s), none hidden:")
+        for problem in problems:
+            print(f"  - {problem}")
     print(f"judge scores: {judge_path}")
     print(f"label template (human: null): {labels_path}")
     print(f"continuous scoring rate: {judge.usage.continuous_scoring_rate:.0%} "

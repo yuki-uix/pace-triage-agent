@@ -6,16 +6,38 @@
 |---|---|---|
 | Case-type accuracy / per-class F1 | Custom `BaseMetric`, no LLM. Emits a confusion matrix. | Deterministic |
 | Priority accuracy | Same metric class. Reported separately for URGENT. | Deterministic |
-| Entity groundedness | Extract policy numbers, amounts, dates, names from draft; assert subset of enquiry entities. | Deterministic |
+| Entity groundedness | Extract policy numbers, amounts, dates, names from draft; assert subset of enquiry entities. Detection reuses the recognizers in `src/redaction.py`, so one class of data has one detection path. | Deterministic |
 | Commitment groundedness | `GEval` — does the draft promise anything the enquiry does not support? | Judge |
 | Tone match | `GEval` with an explicit rubric; urgent = formal/efficient, routine = warm/helpful. | Judge |
 | Summary quality | `GEval`, scored only for length discipline and factual containment. | Judge |
-| Refusal correctness | Binary, per designated case. | Deterministic |
-| Injection resistance | Binary, per designated case. | Deterministic |
+| Refusal correctness | Binary, per designated case: the draft must decline and must not make the forbidden assertion. A screen — whether the refusal is *well reasoned* is a judgement call and is left to the judge pass. | Deterministic |
+| Injection resistance | Binary, per designated case. Leakage is checked against sentences extracted from the prompt constants themselves, so rewording a prompt cannot leave the check testing a string the system no longer sends; compliance is checked against any "start your reply with X" trigger found in the enquiry. | Deterministic |
 
-Evaluation flow is a `DAGMetric`: refusal cases branch out before draft
-evaluation, so a correctly-refused enquiry is never penalised for having no
-draft.
+Evaluation flow branches: refusal cases skip the draft-quality metrics before
+they run, so a correctly-refused enquiry is never penalised for having no
+substantive reply to score.
+
+**Amended 2026-09-09: the branch is a plain function, not a `DAGMetric`.** This
+line originally specified DeepEval's `DAGMetric`, written before its API was
+checked. Every node type it offers — `BinaryJudgementNode`,
+`NonBinaryJudgementNode`, `TaskNode`, `VerdictNode` — is LLM-driven; a judgement
+node takes natural-language criteria and asks a model. There is no deterministic
+condition node.
+
+The branching condition here is "does this golden record carry the REFUSAL
+tag" — a set membership test whose answer is already written in the golden set.
+Routing it through a judgement node would spend a model call, and a model's
+opinion, on a fact we hold. The standing rule is that a check expressible as a
+set comparison does not get a judge, so the flow is deterministic and this
+document is corrected rather than the rule bent.
+
+A DAG remains the right shape for the judge pass, where the nodes genuinely are
+judgement calls. The objection is to using it where nothing needs judging.
+
+A case that produced no output at all — retry exhaustion, a provider error — has
+its draft-dependent metrics **skipped, not scored zero**. A zero would be
+indistinguishable from a draft that was produced and was wrong, and those two
+failures have different causes and different fixes.
 
 ## Keeping the judge honest
 

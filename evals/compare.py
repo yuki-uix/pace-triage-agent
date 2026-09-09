@@ -92,6 +92,8 @@ class CombinationResult:
     failures: dict[str, int] = field(default_factory=dict)
     confusion: str = ""
     no_output: list[str] = field(default_factory=list)
+    judged: list[dict] = field(default_factory=list)
+    ungrounded: list[dict] = field(default_factory=list)
 
     @property
     def label(self) -> str:
@@ -179,6 +181,12 @@ def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
     for record, output in scored:
         test_case = as_test_case(record, output)
         entity_scores.append(entity.measure(test_case))
+        if entity.score < 1.0:
+            # The specific strings, so a groundedness figure can be argued with
+            # rather than taken on trust. Three of six flags on an earlier
+            # sample turned out to be metric artifacts.
+            result.ungrounded.append({"record_id": record.id,
+                                      "reason": entity.reason})
         if Tag.REFUSAL in record.tags:
             refusal_scores.append(refusal.measure(test_case))
         if Tag.INJECTION in record.tags:
@@ -212,22 +220,26 @@ def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
             enquiry = f"Subject: {record.subject}\n\n{record.body}"
             target = output["summary"] if name == "summary quality" \
                 else output["draft_reply"]
-            tasks.append((build, name, enquiry, target))
+            tasks.append((record.id, build, name, enquiry, target))
 
     def judge_one(task):
-        build, name, enquiry, target = task
+        record_id, build, name, enquiry, target = task
         metric = build(judge)
         try:
             metric.measure(LLMTestCase(input=enquiry, actual_output=target))
-            return name, metric.score, None
+            return record_id, name, metric.score, str(metric.reason), None
         except Exception as exc:  # noqa: BLE001
-            return name, None, f"{type(exc).__name__}: {exc}"
+            return record_id, name, None, None, f"{type(exc).__name__}: {exc}"
 
     collected: dict[str, list[float]] = {}
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        for name, score, error in pool.map(judge_one, tasks):
+        for record_id, name, score, reason, error in pool.map(judge_one, tasks):
             if error is None:
                 collected.setdefault(name, []).append(score)
+                # Kept per record. Asking "why is this score low?" should not
+                # require paying for the run again, and it did twice.
+                result.judged.append({"record_id": record_id, "metric": name,
+                                      "score": score, "reason": reason})
             else:
                 result.failures[f"{name} errors"] = \
                     result.failures.get(f"{name} errors", 0) + 1
@@ -347,7 +359,9 @@ def write_results(path: str, results: list[CombinationResult],
              "breaches": r.breaches(), "no_output": r.no_output,
              "composite_triage": r.composite(TRIAGE_WEIGHTS),
              "composite_draft": r.composite(DRAFT_WEIGHTS),
-             "confusion_matrix": r.confusion}
+             "confusion_matrix": r.confusion,
+             "judged_per_record": r.judged,
+             "ungrounded_entities": r.ungrounded}
             for r in results
         ],
     }, indent=2, sort_keys=True) + "\n", encoding="utf-8")

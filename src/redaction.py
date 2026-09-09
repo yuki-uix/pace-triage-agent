@@ -72,7 +72,10 @@ GIVEN_NAMES = (
 POLICY_NUMBER = PatternRecognizer(
     supported_entity="POLICY_NUMBER",
     patterns=[
-        Pattern("policy-alpha-dash-digits", r"\b[A-Z]{1,4}-\d{2,}(?:-\d+)*\b", 0.8),
+        # The suffix may be alphanumeric: HKL-90595202-ZX was being truncated to
+        # HKL-90595202, which is a different identifier.
+        Pattern("policy-alpha-dash-digits",
+                r"\b[A-Z]{1,4}-\d{2,}(?:-[A-Z0-9]+)*\b", 0.8),
         Pattern("policy-alpha-digits", r"\b[A-Z]{1,3}\d{6,}\b", 0.7),
     ],
 )
@@ -84,6 +87,17 @@ HK_ID = PatternRecognizer(
 # a country context. A bare Hong Kong mobile — eight digits, no dialling code —
 # is read as a date instead. Measured, not assumed: "9123 4567" came back as
 # DATE_TIME with score 0.85.
+# Presidio ships no Hong Kong currency recognizer, so amounts were invisible.
+# A fabricated amount is among the most damaging things a draft can contain, so
+# this is not optional for the groundedness metric.
+HK_MONEY = PatternRecognizer(
+    supported_entity="MONEY",
+    patterns=[
+        Pattern("hkd-symbol", r"\bHK\$\s?[\d,]+(?:\.\d{2})?", 0.9),
+        Pattern("hkd-code", r"\bHKD\s?[\d,]+(?:\.\d{2})?", 0.9),
+        Pattern("bare-dollar", r"(?<![A-Z])\$\s?[\d,]{3,}(?:\.\d{2})?", 0.6),
+    ],
+)
 HK_PHONE = PatternRecognizer(
     supported_entity="PHONE_NUMBER",
     patterns=[Pattern("hk-8-digit", r"\b[2-9]\d{3}\s?\d{4}\b", 0.7)],
@@ -95,6 +109,7 @@ def build_analyzer() -> AnalyzerEngine:
     analyzer.registry.add_recognizer(POLICY_NUMBER)
     analyzer.registry.add_recognizer(HK_ID)
     analyzer.registry.add_recognizer(HK_PHONE)
+    analyzer.registry.add_recognizer(HK_MONEY)
     return analyzer
 
 

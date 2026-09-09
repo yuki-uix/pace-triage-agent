@@ -8,6 +8,12 @@ all-or-nothing choice.
 call of any kind in this module or anywhere else in `src/`. Output lands in a
 pending-queue JSONL that a human reviews.
 
+**Two outputs, two treatments.** The pending queue is the reviewer's work
+queue: it holds the draft in the clear, because a reviewer cannot review
+ciphertext. The trace store is the observability path and is redacted at the
+boundary (ADR-004). Confusing the two would either leak or make the queue
+useless, so they are separate objects with separate writers.
+
 **The enquiry is data.** It is never concatenated into an instruction. It
 arrives inside a delimited block that the system message names as untrusted
 content written by a member of the public. That is a structural property, not a
@@ -27,6 +33,7 @@ from openai import OpenAI
 from src.confidence import Confidence, ConfidenceMethod, by_self_consistency, from_logprobs
 from src.contract import FailureCounters, SchemaValidationError, call_with_contract
 from src.schema import DraftOutput, Priority, TriageDecision, TriageOutput
+from src.trace import TraceEntry, TraceStore
 
 OPEN, CLOSE = "<enquiry>", "</enquiry>"
 
@@ -159,7 +166,8 @@ def _record(trace: StageTrace, response, elapsed: float) -> None:
 
 
 def run_triage(client: OpenAI, config: StageConfig, subject: str, body: str,
-               counters: FailureCounters) -> tuple[TriageOutput, StageTrace]:
+               counters: FailureCounters, record_id: str = "",
+               store: TraceStore | None = None) -> tuple[TriageOutput, StageTrace]:
     """Classify, then derive a confidence rather than asking for one (ADR-002)."""
     trace = StageTrace(stage="triage", model=config.model,
                        thinking=config.enable_thinking)
@@ -191,6 +199,9 @@ def run_triage(client: OpenAI, config: StageConfig, subject: str, body: str,
 
     trace.confidence_method = confidence.method.value
     trace.confidence_detail = confidence.detail
+
+    _store(store, record_id, trace, TRIAGE_SYSTEM + "\n" + enquiry,
+           last_response.get("content", ""), counters)
 
     return (
         TriageOutput(case_type=decision.case_type, priority=decision.priority,
@@ -240,9 +251,34 @@ def _derive_confidence(client, config, enquiry, decision, last_response,
     return by_self_consistency(votes)
 
 
+def _store(store: TraceStore | None, record_id: str, trace: StageTrace,
+           prompt: str, response: str, counters: FailureCounters) -> None:
+    """The one way into the trace store, so the redaction cannot be bypassed."""
+    if store is None:
+        return
+    store.write(TraceEntry(
+        record_id=record_id,
+        stage=trace.stage,
+        model=trace.model,
+        thinking=trace.thinking,
+        attempts=trace.attempts,
+        prompt_tokens=trace.prompt_tokens,
+        completion_tokens=trace.completion_tokens,
+        reasoning_tokens=trace.reasoning_tokens,
+        seconds=trace.seconds,
+        confidence_method=trace.confidence_method,
+        confidence_detail=trace.confidence_detail,
+        extra_calls=trace.extra_calls,
+        prompt=prompt,
+        response=response,
+        raw_failures=tuple(counters.raw_failures),
+    ))
+
+
 def run_draft(client: OpenAI, config: StageConfig, subject: str, body: str,
-              triage: TriageOutput,
-              counters: FailureCounters) -> tuple[DraftOutput, StageTrace]:
+              triage: TriageOutput, counters: FailureCounters,
+              record_id: str = "",
+              store: TraceStore | None = None) -> tuple[DraftOutput, StageTrace]:
     trace = StageTrace(stage="draft", model=config.model,
                        thinking=config.enable_thinking)
     enquiry = wrap_enquiry(subject, body)
@@ -265,7 +301,14 @@ def run_draft(client: OpenAI, config: StageConfig, subject: str, body: str,
         _record(trace, response, time.perf_counter() - started)
         return response.choices[0].message.content or ""
 
-    return call_with_contract(call, DraftOutput, counters), trace
+    last_draft: dict = {}
+
+    output = call_with_contract(
+        lambda previous=None: last_draft.setdefault("content", call(previous)),
+        DraftOutput, counters)
+    _store(store, record_id, trace, DRAFT_SYSTEM + "\n" + context + enquiry,
+           last_draft.get("content", ""), counters)
+    return output, trace
 
 
 @dataclass
@@ -287,11 +330,13 @@ class PendingItem:
 
 
 def run(client: OpenAI, config: PipelineConfig, record_id: str, subject: str,
-        body: str, counters: FailureCounters) -> PendingItem:
+        body: str, counters: FailureCounters,
+        store: TraceStore | None = None) -> PendingItem:
     """Both stages for one enquiry. Returns a queue item; sends nothing."""
-    triage, triage_trace = run_triage(client, config.triage, subject, body, counters)
+    triage, triage_trace = run_triage(client, config.triage, subject, body,
+                                      counters, record_id, store)
     draft, draft_trace = run_draft(client, config.draft, subject, body, triage,
-                                   counters)
+                                   counters, record_id, store)
 
     return PendingItem(
         record_id=record_id,
@@ -322,6 +367,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--workers", type=int, default=6,
                         help="quality runs may be concurrent; latency runs may not")
+    parser.add_argument("--traces", default=None,
+                        help="write redacted traces here (ADR-004); needs "
+                             "TRACE_ENCRYPTION_KEY")
     args = parser.parse_args(argv[1:])
 
     load_env()
@@ -337,6 +385,12 @@ def main(argv: list[str]) -> int:
 
     # Enquiries only. The labels live in data/golden.jsonl and this module has
     # no reason to open that file.
+    store = None
+    if args.traces:
+        from src.trace import Redactor, TraceStore, load_key
+
+        store = TraceStore(args.traces, Redactor(load_key()))
+
     records = load_enquiries(args.dataset)[: args.limit]
     counters = FailureCounters()
     failed: list[str] = []
@@ -344,7 +398,7 @@ def main(argv: list[str]) -> int:
     def work(record):
         try:
             return run(client, config, record.id, record.subject, record.body,
-                       counters)
+                       counters, store)
         except Exception as exc:  # noqa: BLE001 - recorded, never swallowed
             failed.append(f"{record.id}: {type(exc).__name__}: {exc}")
             return None

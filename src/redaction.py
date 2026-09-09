@@ -18,6 +18,7 @@ detected. Records with Cantonese bodies are checked by hand for this.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import re
 from dataclasses import dataclass
@@ -113,6 +114,34 @@ def build_analyzer() -> AnalyzerEngine:
     return analyzer
 
 
+def merge_overlaps(results):
+    """Merge overlapping detections into spans covering their union.
+
+    `resolve_overlaps` picks one winner per span, which is right when the
+    question is "what is this?" and wrong when the question is "is all of it
+    covered?". Measured: in "policy P06421883" the HKID pattern matches
+    'P064218' at 0.9 and the policy pattern matches the full 'P06421883' at 0.7.
+    Highest-score-wins keeps the shorter one and leaves '83' in the clear - a
+    fragment of an identifier surviving the redaction boundary.
+
+    Redaction therefore merges rather than chooses. The merged span takes the
+    label of its highest-scoring member, which only affects how the entry is
+    described; what matters is that every detected character is covered.
+    """
+    ordered = sorted(results, key=lambda r: (r.start, -r.end))
+    merged: list = []
+    for result in ordered:
+        if merged and result.start <= merged[-1].end:
+            previous = merged[-1]
+            previous.end = max(previous.end, result.end)
+            if result.score > previous.score:
+                previous.entity_type = result.entity_type
+                previous.score = result.score
+        else:
+            merged.append(copy.copy(result))
+    return merged
+
+
 def resolve_overlaps(results):
     """Keep the highest-scoring detection per span.
 
@@ -187,7 +216,12 @@ def pseudonymise(record: EnquiryRecord, analyzer: AnalyzerEngine) -> Pseudonymis
         detections = analyzer.analyze(
             text=text, language="en", entities=list(PSEUDONYMISED_ENTITIES)
         )
-        for result in resolve_overlaps(detections):
+        # Merged, not chosen. Picking the higher-scoring detection can keep a
+        # span shorter than the identifier and leave a fragment behind: the HKID
+        # pattern matches 'P064218' inside 'P06421883' at a higher score, and the
+        # trailing '83' survives substitution. The frozen dataset was produced
+        # before this fix and was checked for the artifact; see the change log.
+        for result in merge_overlaps(detections):
             original = text[result.start : result.end].strip()
             if len(original) < 3 or original in mapping:
                 continue

@@ -97,10 +97,32 @@ on the path to logs and traces, not on the path to inference.
 address the customer by name and reference their actual policy. Redacting at the
 logging boundary gets the compliance benefit without the quality cost.
 
-**Exception to document.** If data residency requirements apply (Hong Kong PDPO,
-cross-border transfer to a non-local API), the inference boundary must be
-redacted too, with placeholder substitution and re-insertion after generation.
-This trade-off is discussed in the write-up rather than implemented.
+**Exception to document, not implemented.** If data residency requirements
+apply, the inference boundary would need redacting too, with placeholder
+substitution and re-insertion after generation. That is discussed in the write-up
+and deliberately not built: it costs draft quality, and the position is narrower
+than it is usually stated. **PDPO section 33, the cross-border transfer
+restriction, has never been brought into force**, so there is no statutory bar on
+transferring personal data out of Hong Kong. What applies is the PCPD's
+non-binding guidance, its 2022 recommended model contractual clauses, and the
+data user's standing obligations under the data protection principles, which
+follow the data to a processor wherever it sits. Inference for this case study
+ran against a Beijing-region endpoint (ADR-007).
+
+**The operator, and why the detection step was removed.** The first
+implementation ran Presidio over each trace field and encrypted the entities it
+found. Measured, it failed open: in a trace whose prompt was a system message
+plus a delimited enquiry, the policy number, phone number, email address and
+amount were all encrypted and the customer's name was not, because spaCy's NER
+is context-sensitive and misses in a long prompt what it finds in a short
+string. A compliance boundary that depends on a recall rate is not a boundary.
+
+The gate is now structural rather than statistical: every field on the trace
+entry that is not explicitly classified as non-sensitive is encrypted in full,
+with the classification derived from the type so an unclassified new field fails
+the tests instead of quietly reaching disk. Counts, timings, model names and the
+confidence method stay readable, which is what debugging throughput needs;
+reading content requires the key.
 
 **Operator choice.** Logs use reversible encryption rather than replacement, so a
 genuine dispute can still be traced to a customer. Replacement with `<PERSON>`

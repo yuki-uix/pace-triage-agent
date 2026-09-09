@@ -60,20 +60,28 @@ class EnquiryRecord(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _acceptable_types_track_the_mixed_topic_tag(self) -> EnquiryRecord:
-        """Guide rule 2: only mixed-topic records have defensible alternatives.
+    def _acceptable_types_are_well_formed(self) -> EnquiryRecord:
+        """Every mixed-topic record is ambiguous; not every ambiguous record is mixed.
 
-        Scoring lenient accuracy against `acceptable_types` on a record that is
-        not genuinely ambiguous would inflate the lenient number and destroy the
-        meaning of the gap between the two accuracies.
+        `acceptable_types` was originally admissible only on MIXED_TOPIC records.
+        Repeated blind relabelling then found a record that is not two topics at
+        all — a fraud report that also asks whether the policy is still in force —
+        which a second labeller read differently in every run. Ambiguity there is
+        a property of the category boundary, not of the email having two subjects,
+        and the guide says such a record should be reported as ambiguous rather
+        than silently scored wrong.
+
+        Still enforced: a MIXED_TOPIC record must list alternatives, the planned
+        label must be among them, and any record claiming ambiguity must say why.
+        Handing out `acceptable_types` freely would inflate lenient accuracy and
+        destroy the meaning of the gap between the strict and lenient numbers.
         """
-        mixed = Tag.MIXED_TOPIC in self.tags
-        if mixed and not self.acceptable_types:
+        if Tag.MIXED_TOPIC in self.tags and not self.acceptable_types:
             raise ValueError("a MIXED_TOPIC record must list acceptable_types")
-        if self.acceptable_types and not mixed:
-            raise ValueError("acceptable_types is only valid on a MIXED_TOPIC record")
         if self.acceptable_types and self.expected_type not in self.acceptable_types:
             raise ValueError("expected_type must be among acceptable_types")
+        if self.acceptable_types and not self.label_note:
+            raise ValueError("a record claiming ambiguity must record why")
         return self
 
     @model_validator(mode="after")

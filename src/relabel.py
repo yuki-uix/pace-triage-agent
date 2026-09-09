@@ -105,6 +105,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--dataset", default="data/enquiries.jsonl")
     parser.add_argument("--out", default="results/relabel.json")
     parser.add_argument("--workers", type=int, default=6)
+    parser.add_argument("--runs", type=int, default=1,
+                        help="repeat the whole pass; a single run cannot separate "
+                             "label drift from relabeller noise")
     args = parser.parse_args(argv[1:])
 
     load_env()
@@ -117,66 +120,86 @@ def main(argv: list[str]) -> int:
     records = load_records(args.dataset)
     counters, usage = FailureCounters(), Usage()
 
+    from collections import Counter
     from concurrent.futures import ThreadPoolExecutor
+    from statistics import mean, stdev
 
-    with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        opinions = list(
-            pool.map(lambda r: relabel(client, model, r, counters, usage), records)
-        )
+    kappas: list[tuple[float, float]] = []
+    contested: Counter[tuple[str, str]] = Counter()
+    seen: dict[tuple[str, str], set[str]] = {}
 
-    disagreements: list[Disagreement] = []
-    for record, opinion in zip(records, opinions):
-        common = dict(
-            record_id=record.id,
-            confidence=opinion.confidence,
-            tags=tuple(sorted(t.value for t in record.tags)),
-            acceptable=tuple(t.value for t in record.acceptable_types),
-        )
-        if opinion.case_type is not record.expected_type:
-            disagreements.append(Disagreement(
-                field="case_type", planned=record.expected_type.value,
-                second_opinion=opinion.case_type.value, **common))
-        if opinion.priority is not record.expected_priority:
-            disagreements.append(Disagreement(
-                field="priority", planned=record.expected_priority.value,
-                second_opinion=opinion.priority.value, **common))
+    for run in range(args.runs):
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            opinions = list(
+                pool.map(lambda r: relabel(client, model, r, counters, usage), records)
+            )
 
-    kappa_type = cohen_kappa_score(
-        [r.expected_type.value for r in records],
-        [o.case_type.value for o in opinions],
-        labels=[c.value for c in CaseType],
-    )
-    kappa_priority = cohen_kappa_score(
-        [r.expected_priority.value for r in records],
-        [o.priority.value for o in opinions],
-        labels=[p.value for p in Priority],
-    )
+        for record, opinion in zip(records, opinions):
+            if opinion.case_type is not record.expected_type:
+                key = (record.id, "case_type")
+                contested[key] += 1
+                seen.setdefault(key, set()).add(opinion.case_type.value)
+            if opinion.priority is not record.expected_priority:
+                key = (record.id, "priority")
+                contested[key] += 1
+                seen.setdefault(key, set()).add(opinion.priority.value)
 
-    needs_human = [d for d in disagreements if not d.defensible_under_the_guide]
+        kappas.append((
+            cohen_kappa_score(
+                [r.expected_type.value for r in records],
+                [o.case_type.value for o in opinions],
+                labels=[c.value for c in CaseType],
+            ),
+            cohen_kappa_score(
+                [r.expected_priority.value for r in records],
+                [o.priority.value for o in opinions],
+                labels=[p.value for p in Priority],
+            ),
+        ))
+        print(f"run {run + 1}/{args.runs}: kappa case_type "
+              f"{kappas[-1][0]:.3f}, priority {kappas[-1][1]:.3f}", flush=True)
 
-    print(f"{len(records)} records relabelled blind by {model}\n")
-    print(f"Cohen's kappa, case_type: {kappa_type:.3f}")
-    print(f"Cohen's kappa, priority:  {kappa_priority:.3f}\n")
-    print(f"{len(disagreements)} disagreement(s); "
-          f"{len(needs_human)} need human adjudication\n")
+    def spread(values: list[float]) -> str:
+        if len(values) == 1:
+            return f"{values[0]:.3f} (single run - no spread measurable)"
+        return (f"{mean(values):.3f} +/- {stdev(values):.3f} "
+                f"(min {min(values):.3f}, max {max(values):.3f})")
 
-    for d in sorted(disagreements, key=lambda d: d.record_id):
-        marker = "  " if d.defensible_under_the_guide else "->"
-        note = " (listed in acceptable_types)" if d.defensible_under_the_guide else ""
-        print(f"{marker} {d.record_id} {d.field:<9} plan={d.planned:<16}"
-              f" second={d.second_opinion:<16} conf={d.confidence:.2f}"
-              f" tags={','.join(d.tags) or '-'}{note}")
+    planned = {r.id: r for r in records}
+    print(f"\n{len(records)} records x {args.runs} run(s), blind, by {model}\n")
+    print(f"Cohen's kappa, case_type: {spread([k[0] for k in kappas])}")
+    print(f"Cohen's kappa, priority:  {spread([k[1] for k in kappas])}\n")
+
+    always = [k for k, n in contested.items() if n == args.runs]
+    sometimes = [k for k, n in contested.items() if n < args.runs]
+    print(f"{len(always)} contested in every run; "
+          f"{len(sometimes)} contested in some runs only\n")
+    print("A record contested in every run is a label worth arguing about. One")
+    print("contested intermittently is mostly relabeller noise and adjudicating")
+    print("it would be reading signal into a coin flip.\n")
+
+    for key, count in contested.most_common():
+        record_id, field = key
+        record = planned[record_id]
+        current = (record.expected_type if field == "case_type"
+                   else record.expected_priority).value
+        marker = "->" if count == args.runs else "  "
+        print(f"{marker} {record_id} {field:<9} {count}/{args.runs}  "
+              f"plan={current:<16} second={'/'.join(sorted(seen[key]))}")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as handle:
         json.dump({
             "model": model,
             "records": len(records),
-            "kappa_case_type": kappa_type,
-            "kappa_priority": kappa_priority,
-            "disagreements": [vars(d) | {
-                "defensible_under_the_guide": d.defensible_under_the_guide
-            } for d in disagreements],
+            "runs": args.runs,
+            "kappa_per_run": [{"case_type": k[0], "priority": k[1]} for k in kappas],
+            "contested": [
+                {"record_id": rid, "field": field, "runs_contested": count,
+                 "of_runs": args.runs,
+                 "second_opinions": sorted(seen[(rid, field)])}
+                for (rid, field), count in contested.most_common()
+            ],
             "usage": {"calls": usage.calls, "prompt_tokens": usage.prompt_tokens,
                       "completion_tokens": usage.completion_tokens,
                       "reasoning_tokens": usage.reasoning_tokens},

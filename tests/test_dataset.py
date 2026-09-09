@@ -34,9 +34,23 @@ def test_mixed_topic_record_must_list_acceptable_types():
         record(tags=["MIXED_TOPIC"], label_note="address change is the work item")
 
 
-def test_acceptable_types_without_the_mixed_topic_tag_is_rejected():
-    """Otherwise lenient accuracy inflates on records that are not ambiguous."""
-    with pytest.raises(ValidationError, match="only valid on a MIXED_TOPIC"):
+def test_acceptable_types_without_the_mixed_topic_tag_is_allowed_with_a_reason():
+    """Ambiguity is not the exclusive property of an email with two subjects.
+
+    A fraud report that also asks whether the policy is in force is one subject
+    on a category boundary, and a second labeller read it differently in every
+    run. It earns acceptable_types; it just has to say why.
+    """
+    result = record(
+        acceptable_types=["ADDRESS_CHANGE", "COMPLAINT"],
+        label_note="a second labeller reads this as a complaint in every run",
+    )
+    assert result.acceptable_types
+
+
+def test_claiming_ambiguity_without_a_reason_is_rejected():
+    """Handing out acceptable_types freely would inflate the lenient score."""
+    with pytest.raises(ValidationError, match="claiming ambiguity must record why"):
         record(acceptable_types=["ADDRESS_CHANGE", "COMPLAINT"])
 
 
@@ -50,7 +64,8 @@ def test_expected_type_must_be_among_the_acceptable_types():
 
 
 def test_mixed_topic_record_must_record_why_the_label_won():
-    with pytest.raises(ValidationError, match="why the label won"):
+    """Either validator may catch this first; both insist on a stated reason."""
+    with pytest.raises(ValidationError, match="must record why"):
         record(tags=["MIXED_TOPIC"], acceptable_types=["ADDRESS_CHANGE", "COMPLAINT"])
 
 

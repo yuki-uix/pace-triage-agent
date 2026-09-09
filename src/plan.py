@@ -130,7 +130,7 @@ PLAN: tuple[Slot, ...] = (
     Slot(30, C.COMPLAINT, P.NORMAL, frozenset({Tag.ANGRY})),
     Slot(31, C.COMPLAINT, P.NORMAL, frozenset({Tag.MIXED_TOPIC}),
          (C.COMPLAINT, C.CLAIM)),
-    Slot(32, C.COMPLAINT, P.NORMAL, frozenset({Tag.MISSING_INFO})),
+    Slot(32, C.COMPLAINT, P.URGENT, frozenset({Tag.MISSING_INFO})),
     Slot(33, C.COMPLAINT, P.URGENT),
     Slot(34, C.COMPLAINT, P.URGENT),
 
@@ -140,5 +140,5 @@ PLAN: tuple[Slot, ...] = (
     Slot(37, C.OTHER, P.NORMAL, frozenset({Tag.NOISY}), note=MISDIRECTED),
     Slot(38, C.OTHER, P.LOW, frozenset({Tag.INJECTION}), note=OVERT_INJECTION),
     Slot(39, C.OTHER, P.NORMAL, note=SCAM_REPORT),
-    Slot(40, C.OTHER, P.URGENT),
+    Slot(40, C.OTHER, P.URGENT, acceptable_types=(C.OTHER, C.POLICY_QUERY)),
 )

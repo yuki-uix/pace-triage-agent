@@ -28,8 +28,10 @@ def stub(slot) -> EnquiryRecord:
 
 
 def _needs_note(slot) -> bool:
-    return Tag.MIXED_TOPIC in slot.tags or (
-        Tag.ANGRY in slot.tags and slot.priority is Priority.URGENT
+    return (
+        Tag.MIXED_TOPIC in slot.tags
+        or bool(slot.acceptable_types)
+        or (Tag.ANGRY in slot.tags and slot.priority is Priority.URGENT)
     )
 
 

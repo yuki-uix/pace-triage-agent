@@ -32,7 +32,17 @@ CHECKED_ENTITIES: tuple[str, ...] = (
     "EMAIL_ADDRESS",
 )
 
-_WORD = re.compile(r"[A-Za-z0-9$]+")
+# Letter runs and digit runs separately, so "5:00pm" and "5:00 pm" tokenise
+# alike. Real drafts respace times and the first version flagged that as a
+# fabricated date.
+_WORD = re.compile(r"[A-Za-z]+|\d+")
+
+# A reply that opens "Dear Ms Cheung" to an enquiry signed "Cheung Ka Yan" is
+# being polite, not inventing a person. Honorifics are dropped before the name
+# is compared; the surname still has to be there.
+HONORIFICS = frozenset({
+    "mr", "mrs", "ms", "miss", "mx", "dr", "prof", "sir", "madam", "mdm",
+})
 
 
 def _normalise(text: str) -> str:
@@ -44,6 +54,10 @@ def _normalise(text: str) -> str:
 
 def _tokens(text: str) -> set[str]:
     return {token.lower() for token in _WORD.findall(text)}
+
+
+def _comparable_tokens(text: str) -> set[str]:
+    return _tokens(text) - HONORIFICS
 
 
 @dataclass(frozen=True)
@@ -85,7 +99,7 @@ def ungrounded_entities(enquiry: str, draft: str,
             continue
         if normalised in enquiry_normalised:
             continue
-        if _tokens(surface) <= enquiry_tokens:
+        if _comparable_tokens(surface) <= enquiry_tokens:
             continue
         findings.append(Ungrounded(entity_type, surface))
     return findings

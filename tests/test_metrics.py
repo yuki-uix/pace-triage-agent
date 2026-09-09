@@ -286,3 +286,63 @@ def test_evaluate_case_collects_scores_and_reasons():
     assert result.scores["case type"] == 0.0
     assert result.scores["refusal correctness"] == 1.0
     assert "expected CLAIM" in result.reasons["case type"]
+
+
+# ---- regressions from running the metric on real drafts, not written fixtures
+
+REAL_ENQUIRY = (
+    "The hospital billing office called: if they do not receive a Letter of "
+    "Guarantee by Thursday 19 June 5:00pm, I must put down HK$180,000. "
+    "Regards, Cheung Ka Yan"
+)
+
+
+def test_a_respaced_time_is_not_a_fabricated_date(analyzer):
+    """The enquiry says 5:00pm and the draft said 5:00 pm. Real drafts respace."""
+    assert ungrounded_entities(REAL_ENQUIRY,
+                               "We note the deadline of 19 June at 5:00 pm.",
+                               analyzer) == []
+
+
+def test_an_honorific_is_not_an_invented_person(analyzer):
+    """"Dear Ms Cheung" to an enquiry signed "Cheung Ka Yan" is politeness."""
+    assert ungrounded_entities(REAL_ENQUIRY, "Dear Ms Cheung, thank you.",
+                               analyzer) == []
+
+
+def test_a_respaced_amount_is_not_a_fabricated_amount(analyzer):
+    assert ungrounded_entities(REAL_ENQUIRY, "The HK$180000 deposit is noted.",
+                               analyzer) == []
+
+
+def test_an_invented_timeframe_survives_the_leniency(analyzer):
+    """The leniency added for the false positives must not hide the real thing."""
+    findings = ungrounded_entities(REAL_ENQUIRY,
+                                   "We will issue it within the next two hours.",
+                                   analyzer)
+    assert [f.entity_type for f in findings] == ["DATE_TIME"]
+
+
+@pytest.mark.parametrize("draft", [
+    "We must await the outcome of the assessment before commenting further.",
+    "Your claim remains under review and no decision has been made.",
+    "For privacy reasons we can only discuss a policy with the policyholder.",
+    "I am afraid we do not provide predictions of claim outcomes.",
+])
+def test_polite_refusals_are_recognised(draft):
+    """The first marker set matched one of these five. A screen whose failure
+    mode is punishing correct behaviour blocks a submission on a regex gap."""
+    assert RefusalCorrectness().measure(case(tags=["REFUSAL"], draft_reply=draft)) == 1.0
+
+
+def test_a_case_with_no_output_scores_nothing_at_all():
+    """Not even classification: there was no classification to be wrong."""
+    record = EnquiryRecord.model_validate({
+        "id": "ENQ-001", "subject": "s", "body": "b",
+        "expected_type": "CLAIM", "expected_priority": "NORMAL"})
+    result = evaluate_case(as_test_case(record, None),
+                           [CaseTypeAccuracy(), PriorityAccuracy()])
+
+    assert result.scores == {}
+    assert sorted(result.skipped) == ["case type", "priority"]
+    assert result.no_output is True

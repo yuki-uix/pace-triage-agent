@@ -96,7 +96,12 @@ def evaluate_case(test_case: LLMTestCase, metrics) -> CaseResult:
         if not applies(name, test_case):
             result.skipped.append(name)
             continue
-        if result.no_output and name != "case type":
+        if result.no_output:
+            # Every metric, including classification. A case that produced no
+            # output was not misclassified - there was no classification. Scoring
+            # it zero would put a schema failure into the accuracy denominator as
+            # a wrong answer, which is the one thing `docs/02-metrics.md` says
+            # failure counts must never do.
             result.skipped.append(name)
             continue
 

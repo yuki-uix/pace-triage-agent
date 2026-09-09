@@ -193,7 +193,13 @@ def run_triage(client: OpenAI, config: StageConfig, subject: str, body: str,
         last_response["logprobs"] = response.choices[0].logprobs
         return content
 
-    decision = call_with_contract(call, TriageDecision, counters)
+    try:
+        decision = call_with_contract(call, TriageDecision, counters)
+    except Exception:
+        _store(store, record_id, trace, TRIAGE_SYSTEM + "\n" + enquiry,
+               last_response.get("content", ""), counters)
+        raise
+
     confidence = _derive_confidence(client, config, enquiry, decision,
                                     last_response, trace, counters)
 
@@ -303,11 +309,25 @@ def run_draft(client: OpenAI, config: StageConfig, subject: str, body: str,
 
     last_draft: dict = {}
 
-    output = call_with_contract(
-        lambda previous=None: last_draft.setdefault("content", call(previous)),
-        DraftOutput, counters)
-    _store(store, record_id, trace, DRAFT_SYSTEM + "\n" + context + enquiry,
-           last_draft.get("content", ""), counters)
+    def capture(previous: SchemaValidationError | None = None) -> str:
+        # Assignment, not setdefault. setdefault returns the value already
+        # stored, so every retry handed the validator the first, malformed
+        # response - the stage burned three calls and could never recover from
+        # one bad reply.
+        content = call(previous)
+        last_draft["content"] = content
+        return content
+
+    prompt = DRAFT_SYSTEM + "\n" + context + enquiry
+    try:
+        output = call_with_contract(capture, DraftOutput, counters)
+    except Exception:
+        # A stage that failed is the one you most want a trace for.
+        _store(store, record_id, trace, prompt, last_draft.get("content", ""),
+               counters)
+        raise
+
+    _store(store, record_id, trace, prompt, last_draft.get("content", ""), counters)
     return output, trace
 
 

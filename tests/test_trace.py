@@ -215,3 +215,19 @@ def test_the_pending_queue_is_not_the_trace_store(tmp_path, redactor):
 
     assert "Chan Ka Yan" in item.draft_reply
     assert all("prompt" not in trace for trace in item.traces)
+
+
+def test_a_failed_stage_still_leaves_a_trace(tmp_path, redactor):
+    """The stage that failed is the one you most want a trace for."""
+    store = TraceStore(str(tmp_path / "t.jsonl"), redactor)
+    client = FakeClient(["not json", "still not json", "nope"],
+                        [token('{"case_type": "', 1.0)])
+
+    with pytest.raises(Exception):
+        run(client, PipelineConfig(StageConfig("a"), StageConfig("b")),
+            "ENQ-002", "s", PII, FailureCounters(), store)
+
+    written = (tmp_path / "t.jsonl").read_text(encoding="utf-8")
+    assert written.strip(), "a failed stage wrote no trace at all"
+    for probe in PROBES:
+        assert probe not in written

@@ -231,3 +231,30 @@ def test_there_is_no_send_path_anywhere_in_the_source():
             if SEND_PATTERNS.search(line):
                 offenders.append(f"{path}:{number}: {line.strip()}")
     assert offenders == [], "possible send path: " + "; ".join(offenders)
+
+
+def test_the_draft_stage_recovers_from_one_malformed_response():
+    """Regression: capturing the response with dict.setdefault meant every retry
+    re-validated the first, malformed reply. The stage burned three calls and
+    could never recover, and the whole suite stayed green because the draft
+    stage was only ever given one response to return."""
+    client = FakeClient(["not json", DRAFT_JSON])
+    triage = TriageOutput(case_type=CaseType.CLAIM, priority=Priority.LOW,
+                          confidence=0.5)
+    counters = FailureCounters()
+
+    output, _ = run_draft(client, StageConfig("m"), "s", "b", triage, counters)
+
+    assert output.draft_reply == "Dear customer,"
+    assert len(client.requests) == 2
+    assert counters.schema_failures == 1
+
+
+def test_the_triage_stage_recovers_from_one_malformed_response():
+    client = FakeClient(["not json", TRIAGE_JSON], CLAIM_TOKENS)
+    counters = FailureCounters()
+
+    output, _ = run_triage(client, StageConfig("m"), "s", "b", counters)
+
+    assert output.case_type is CaseType.CLAIM
+    assert counters.schema_failures == 1

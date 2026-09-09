@@ -1,6 +1,7 @@
 """The quota check, and a proof that the declared quotas are jointly satisfiable."""
 
 import json
+import pathlib
 
 import pytest
 
@@ -112,31 +113,66 @@ def test_load_records_rejects_a_malformed_line(tmp_path):
     path = tmp_path / "bad.jsonl"
     path.write_text('{"id": "ENQ-001"}\n', encoding="utf-8")
     with pytest.raises(Exception):
-        load_records(str(path))
+        load_records(str(path), str(path))
+
+
+def write_pair(tmp_path, records, separator="\n"):
+    """Write the two halves the way the generator does."""
+    enquiries = tmp_path / "enquiries.jsonl"
+    golden = tmp_path / "golden.jsonl"
+    enquiries.write_text(
+        separator.join(r.enquiry().model_dump_json() for r in records) + "\n",
+        encoding="utf-8")
+    golden.write_text(
+        separator.join(r.label().model_dump_json() for r in records) + "\n",
+        encoding="utf-8")
+    return str(enquiries), str(golden)
 
 
 def test_load_records_skips_blank_lines(tmp_path):
-    path = tmp_path / "ok.jsonl"
-    lines = [r.model_dump_json() for r in valid_dataset()[:2]]
-    path.write_text("\n\n".join(lines) + "\n", encoding="utf-8")
-    assert len(load_records(str(path))) == 2
+    enquiries, golden = write_pair(tmp_path, valid_dataset()[:2], separator="\n\n")
+    assert len(load_records(enquiries, golden)) == 2
 
 
-def test_cli_exits_nonzero_on_violations(tmp_path, capsys):
-    path = tmp_path / "short.jsonl"
-    lines = [r.model_dump_json() for r in valid_dataset()[:3]]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+def test_the_enquiries_file_carries_no_answers(tmp_path):
+    """Structural, not a discipline: the pipeline cannot read what is not there."""
+    enquiries, _ = write_pair(tmp_path, valid_dataset()[:3])
+    for line in pathlib.Path(enquiries).read_text(encoding="utf-8").splitlines():
+        assert sorted(json.loads(line)) == ["body", "id", "subject"]
 
-    assert main(["src.quotas", str(path)]) == 1
+
+def test_a_label_without_an_enquiry_raises(tmp_path):
+    """Otherwise the record silently never gets scored."""
+    enquiries, golden = write_pair(tmp_path, valid_dataset()[:3])
+    pathlib.Path(enquiries).write_text(
+        "\n".join(pathlib.Path(enquiries).read_text(encoding="utf-8").splitlines()[:2])
+        + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="unlabelled|orphaned"):
+        load_records(enquiries, golden)
+
+
+def test_an_enquiry_without_a_label_raises(tmp_path):
+    enquiries, golden = write_pair(tmp_path, valid_dataset()[:3])
+    pathlib.Path(golden).write_text(
+        "\n".join(pathlib.Path(golden).read_text(encoding="utf-8").splitlines()[:2])
+        + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="unlabelled|orphaned"):
+        load_records(enquiries, golden)
+
+
+def test_cli_exits_nonzero_on_violations(tmp_path, capsys, monkeypatch):
+    enquiries, golden = write_pair(tmp_path, valid_dataset()[:3])
+    monkeypatch.setattr("src.quotas.GOLDEN", golden)
+
+    assert main(["src.quotas", enquiries]) == 1
     assert "quota violation" in capsys.readouterr().err
 
 
-def test_cli_exits_zero_on_a_valid_dataset(tmp_path, capsys):
-    path = tmp_path / "good.jsonl"
-    lines = [r.model_dump_json() for r in valid_dataset()]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+def test_cli_exits_zero_on_a_valid_dataset(tmp_path, capsys, monkeypatch):
+    enquiries, golden = write_pair(tmp_path, valid_dataset())
+    monkeypatch.setattr("src.quotas.GOLDEN", golden)
 
-    assert main(["src.quotas", str(path)]) == 0
+    assert main(["src.quotas", enquiries]) == 0
     assert "all 15 quotas met" in capsys.readouterr().out
 
 

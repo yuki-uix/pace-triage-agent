@@ -17,7 +17,7 @@ import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
-from src.dataset import EnquiryRecord, Tag
+from src.dataset import Enquiry, EnquiryRecord, GoldenLabel, Tag
 from src.schema import CaseType, Priority
 
 MIN_RECORDS = 40
@@ -97,14 +97,45 @@ def check_quotas(records: Sequence[EnquiryRecord]) -> list[str]:
     return violations
 
 
-def load_records(path: str) -> list[EnquiryRecord]:
-    """Read a JSONL dataset. A record that does not validate raises here."""
+ENQUIRIES = "data/enquiries.jsonl"
+GOLDEN = "data/golden.jsonl"
+
+
+def _read(path: str, model):
     with open(path, encoding="utf-8") as handle:
-        return [
-            EnquiryRecord.model_validate_json(line)
-            for line in handle
-            if line.strip()
-        ]
+        return [model.model_validate_json(line) for line in handle if line.strip()]
+
+
+def load_enquiries(path: str = ENQUIRIES) -> list[Enquiry]:
+    """The emails, without their answers. This is what the pipeline reads."""
+    return _read(path, Enquiry)
+
+
+def load_golden(path: str = GOLDEN) -> list[GoldenLabel]:
+    """The answers. Frozen at tag `golden-v1`."""
+    return _read(path, GoldenLabel)
+
+
+def load_records(path: str = ENQUIRIES, golden_path: str = GOLDEN) -> list[EnquiryRecord]:
+    """The joined view, for generation, quota checking and scoring.
+
+    An id present in one file and missing from the other raises. A benchmark
+    whose halves have drifted apart is worse than no benchmark, and the failure
+    is otherwise silent - the missing record simply never gets scored.
+    """
+    enquiries = {enquiry.id: enquiry for enquiry in load_enquiries(path)}
+    labels = {label.id: label for label in load_golden(golden_path)}
+
+    only_enquiries = sorted(set(enquiries) - set(labels))
+    only_labels = sorted(set(labels) - set(enquiries))
+    if only_enquiries or only_labels:
+        raise ValueError(
+            f"enquiries and golden labels disagree; "
+            f"unlabelled: {only_enquiries}, orphaned labels: {only_labels}"
+        )
+
+    return [EnquiryRecord.join(enquiries[key], labels[key])
+            for key in sorted(enquiries)]
 
 
 def main(argv: Sequence[str]) -> int:
@@ -112,7 +143,7 @@ def main(argv: Sequence[str]) -> int:
         print("usage: python -m src.quotas <dataset.jsonl>", file=sys.stderr)
         return 2
 
-    records = load_records(argv[1])
+    records = load_records(argv[1], GOLDEN)
     violations = check_quotas(records)
 
     if violations:

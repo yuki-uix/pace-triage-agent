@@ -37,12 +37,35 @@ class Tag(str, Enum):
     NOISY = "NOISY"
 
 
-class EnquiryRecord(BaseModel):
+class _Identified(BaseModel):
+    """Shared id discipline. Both halves of a record must agree on it."""
+
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     id: StrictStr
+
+    @model_validator(mode="after")
+    def _id_is_well_formed(self) -> "_Identified":
+        if not ID_PATTERN.match(self.id):
+            raise ValueError(f"id must look like ENQ-001, got {self.id!r}")
+        return self
+
+
+class Enquiry(_Identified):
+    """What the pipeline is allowed to see: an id and an email.
+
+    The labels live in a different file. That is the point — a prompt cannot
+    accidentally include ground truth that is not in the object it was built
+    from, and "the pipeline does not read the labels" stops being a discipline
+    someone has to maintain and becomes a property of the data layout.
+    """
+
     subject: StrictStr = Field(min_length=1)
     body: StrictStr = Field(min_length=1)
+
+
+class GoldenLabel(_Identified):
+    """The answers. Frozen and tagged; see `data/labeling_guide.md`."""
 
     expected_type: CaseType
     expected_priority: Priority
@@ -53,11 +76,13 @@ class EnquiryRecord(BaseModel):
     must_not_assert: tuple[StrictStr, ...] = ()
     label_note: StrictStr | None = None
 
-    @model_validator(mode="after")
-    def _id_is_well_formed(self) -> EnquiryRecord:
-        if not ID_PATTERN.match(self.id):
-            raise ValueError(f"id must look like ENQ-001, got {self.id!r}")
-        return self
+    @property
+    def refuses(self) -> bool:
+        return Tag.REFUSAL in self.tags
+
+    @property
+    def carries_injection(self) -> bool:
+        return Tag.INJECTION in self.tags
 
     @model_validator(mode="after")
     def _acceptable_types_are_well_formed(self) -> EnquiryRecord:
@@ -119,3 +144,30 @@ class EnquiryRecord(BaseModel):
                 "a REFUSAL record must list what the reply must not assert"
             )
         return self
+
+
+class EnquiryRecord(GoldenLabel):
+    """The joined view: an enquiry and its labels together.
+
+    Generation, the quota check and the metrics all want both halves. Only the
+    pipeline is restricted to `Enquiry`, and only because it is the one caller
+    that must not see the answers.
+    """
+
+    subject: StrictStr = Field(min_length=1)
+    body: StrictStr = Field(min_length=1)
+
+    def enquiry(self) -> Enquiry:
+        return Enquiry(id=self.id, subject=self.subject, body=self.body)
+
+    def label(self) -> GoldenLabel:
+        return GoldenLabel(**{
+            field: getattr(self, field) for field in GoldenLabel.model_fields
+        })
+
+    @classmethod
+    def join(cls, enquiry: Enquiry, label: GoldenLabel) -> "EnquiryRecord":
+        if enquiry.id != label.id:
+            raise ValueError(f"id mismatch: {enquiry.id} vs {label.id}")
+        return cls(subject=enquiry.subject, body=enquiry.body,
+                   **{f: getattr(label, f) for f in GoldenLabel.model_fields})

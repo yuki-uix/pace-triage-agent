@@ -317,18 +317,25 @@ def main(argv: list[str]) -> int:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         records = list(pool.map(work, slots))
 
+    golden_out = str(pathlib.Path(args.out).with_name("golden.jsonl"))
+
     if args.merge:
-        existing = {r.id: r for r in load_records(args.out)}
+        existing = {r.id: r for r in load_records(args.out, golden_out)}
         existing.update({r.id: r for r in records})
         records = list(existing.values())
 
     records.sort(key=lambda r: r.id)
 
+    # Two files on purpose: the pipeline reads the enquiries and cannot see the
+    # answers, because they are not in the file it opens.
     with open(args.out, "w", encoding="utf-8") as handle:
         for record in records:
-            handle.write(record.model_dump_json() + "\n")
+            handle.write(record.enquiry().model_dump_json() + "\n")
+    with open(golden_out, "w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(record.label().model_dump_json() + "\n")
 
-    print(f"\nwrote {len(records)} records to {args.out}")
+    print(f"\nwrote {len(records)} records to {args.out} and {golden_out}")
     print(f"usage: {usage.report()}")
     print(f"contract failures: {counters.as_dict()}")
 

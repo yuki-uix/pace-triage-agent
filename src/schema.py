@@ -31,6 +31,21 @@ class Priority(str, Enum):
     LOW = "LOW"
 
 
+class TriageDecision(BaseModel):
+    """What the triage model is asked for — and confidence is not on the list.
+
+    ADR-002 derives confidence rather than asking for it, so the model-facing
+    contract cannot contain a `confidence` field: a model that supplied one
+    would be answering a question we deliberately do not ask. `TriageOutput`
+    below is this decision plus the confidence the pipeline computes.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    case_type: CaseType
+    priority: Priority
+
+
 class TriageOutput(BaseModel):
     """Stage 1. Short, fixed-format, high-frequency.
 

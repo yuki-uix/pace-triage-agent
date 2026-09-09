@@ -85,7 +85,7 @@ class Disagreement:
 
 def relabel(client: OpenAI, model: str, record: EnquiryRecord,
             counters: FailureCounters, usage: Usage) -> TriageOutput:
-    def call() -> str:
+    def call(previous=None) -> str:
         response = client.chat.completions.create(
             model=model,
             messages=[

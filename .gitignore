@@ -12,4 +12,8 @@ results/*.json
 # Evidence cited by the write-up is tracked; a stranger should be able to
 # read the numbers without paying to regenerate them.
 !results/relabel.json
+!results/meta_eval_judge.json
+!results/meta_eval_labels.jsonl
+!results/meta_eval_worksheet.md
+!results/meta_eval_drafts.jsonl
 traces/

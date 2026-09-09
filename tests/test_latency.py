@@ -189,3 +189,33 @@ def test_a_case_that_produced_nothing_is_not_timed():
     assert end_to_end == []
     assert stages["triage"].n == 0
     assert counters.retry_exhaustions == 2
+
+
+def test_a_failed_first_record_does_not_consume_the_warm_up():
+    """Warm-ups are counted among successful records, not by position.
+
+    Otherwise a first record that exhausts its retries takes the warm-up slot
+    silently and the report claims none was discarded while the first timed call
+    is the cold one.
+    """
+    class FirstRecordFails(PacedClient):
+        def _create(self, **kwargs):
+            self.calls += 1
+            if self.calls <= 3:          # the first record's triage retries out
+                return SimpleNamespace(
+                    choices=[SimpleNamespace(
+                        message=SimpleNamespace(content="not json"),
+                        logprobs=SimpleNamespace(content=CLAIM_TOKENS))],
+                    usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1,
+                                          completion_tokens_details=SimpleNamespace(
+                                              reasoning_tokens=0)))
+            return super()._create(**kwargs)
+
+    counters = FailureCounters()
+    stages, end_to_end, discarded = measure(
+        FirstRecordFails(), config(), records(3), counters, warmups=1)
+
+    assert counters.retry_exhaustions == 1
+    assert discarded == 1, "the warm-up must come from a record that succeeded"
+    assert stages["triage"].n == 1
+    assert len(end_to_end) == 1

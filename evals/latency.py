@@ -18,6 +18,7 @@ worse than one with a hole in it.
 from __future__ import annotations
 
 import json
+import math
 import os
 import pathlib
 import statistics
@@ -68,18 +69,12 @@ class StageSamples:
         if not self.seconds:
             return float("nan")
         ordered = sorted(self.seconds)
-        rank = max(1, math_ceil(0.95 * len(ordered)))
+        rank = max(1, math.ceil(0.95 * len(ordered)))
         return ordered[rank - 1]
 
     def mean_tokens(self) -> tuple[float, float]:
         return (statistics.mean(self.prompt_tokens) if self.prompt_tokens else 0.0,
                 statistics.mean(self.completion_tokens) if self.completion_tokens else 0.0)
-
-
-def math_ceil(value: float) -> int:
-    import math
-
-    return math.ceil(value)
 
 
 def load_prices(path: str = PRICES_PATH) -> dict:
@@ -115,7 +110,7 @@ def measure(client, config: PipelineConfig, records, counters: FailureCounters,
     end_to_end: list[float] = []
     discarded = 0
 
-    for index, record in enumerate(records):
+    for record in records:
         started = time.perf_counter()
         try:
             triage, triage_trace = run_triage(client, config.triage, record.subject,
@@ -128,9 +123,11 @@ def measure(client, config: PipelineConfig, records, counters: FailureCounters,
             continue
         elapsed = time.perf_counter() - started
 
-        if index < warmups:
-            # The first call carries connection setup and TLS; measuring it
-            # measures the network, not the model.
+        if discarded < warmups:
+            # Counted among the records that succeeded, not by position. A first
+            # record that exhausts its retries would otherwise consume the
+            # warm-up slot silently, and the report would claim none was taken
+            # while the first timed call was the cold one.
             discarded += 1
             continue
 
@@ -167,10 +164,10 @@ def render(stages: dict[str, StageSamples], end_to_end: list[float],
         lines += [
             "",
             f"end to end   median {statistics.median(ordered):.2f}s   "
-            f"p95 {ordered[max(1, math_ceil(0.95 * len(ordered))) - 1]:.2f}s   "
+            f"p95 {ordered[max(1, math.ceil(0.95 * len(ordered))) - 1]:.2f}s   "
             f"n={len(ordered)}",
             f"p95 at n={len(ordered)} is the "
-            f"{len(ordered) - max(1, math_ceil(0.95 * len(ordered))) + 1}"
+            f"{len(ordered) - max(1, math.ceil(0.95 * len(ordered))) + 1}"
             f"-slowest observation, not a fitted quantile.",
         ]
 

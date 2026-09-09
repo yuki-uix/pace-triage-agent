@@ -12,4 +12,5 @@ results/*.json
 # Evidence cited by the write-up is tracked; a stranger should be able to
 # read the numbers without paying to regenerate them.
 !results/relabel.json
+!results/latency.json
 traces/

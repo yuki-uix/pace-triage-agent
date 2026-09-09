@@ -114,12 +114,17 @@ def parse(raw: str, model_cls: type[M]) -> M:
 
 
 def call_with_contract(
-    call: Callable[[], str],
+    call: Callable[[SchemaValidationError | None], str],
     model_cls: type[M],
     counters: FailureCounters,
     max_attempts: int = DEFAULT_MAX_ATTEMPTS,
 ) -> M:
     """Call the model until the response validates, or give up loudly.
+
+    `call` receives the previous attempt's failure, or None on the first
+    attempt. Retrying with an identical prompt asks a model that just produced
+    malformed output to produce it again; the failure is the only new
+    information available, so it is handed back.
 
     `call` is expected to raise on transport or provider errors; those are not
     contract failures and are deliberately not caught or counted here.
@@ -129,7 +134,7 @@ def call_with_contract(
 
     failures: list[SchemaValidationError] = []
     for _ in range(max_attempts):
-        raw = call()
+        raw = call(failures[-1] if failures else None)
         try:
             return parse(raw, model_cls)
         except SchemaValidationError as exc:

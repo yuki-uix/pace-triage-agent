@@ -189,7 +189,7 @@ def generate_record(
 ) -> EnquiryRecord:
     prompt = build_prompt(slot)
 
-    def call() -> str:
+    def call(previous=None) -> str:
         response = client.chat.completions.create(
             model=model,
             messages=[

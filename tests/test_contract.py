@@ -22,7 +22,7 @@ def responder(*responses):
     """A stand-in model call that returns each response in turn."""
     queue = list(responses)
 
-    def call():
+    def call(previous=None):
         return queue.pop(0)
 
     return call
@@ -100,7 +100,7 @@ def test_attempts_are_bounded():
     counters = FailureCounters()
     calls = {"n": 0}
 
-    def call():
+    def call(previous=None):
         calls["n"] += 1
         return "nope"
 
@@ -114,7 +114,7 @@ def test_default_attempt_bound_is_applied_when_not_passed():
     counters = FailureCounters()
     calls = {"n": 0}
 
-    def call():
+    def call(previous=None):
         calls["n"] += 1
         return "nope"
 
@@ -132,7 +132,7 @@ def test_zero_attempts_is_a_programming_error():
 def test_provider_errors_propagate_and_are_not_counted_as_schema_failures():
     counters = FailureCounters()
 
-    def call():
+    def call(previous=None):
         raise TimeoutError("provider timed out")
 
     with pytest.raises(TimeoutError):
@@ -204,3 +204,20 @@ def test_the_same_boundary_serves_the_draft_stage():
 
     assert result.draft_reply == "Dear Ms Chan,"
     assert counters.schema_failures == 0
+
+
+def test_the_next_attempt_is_told_what_was_wrong_with_the_last():
+    """Retrying with an identical prompt just buys the same malformed answer."""
+    counters = FailureCounters()
+    seen: list[object] = []
+    queue = ["not json", VALID_RAW]
+
+    def call(previous=None):
+        seen.append(previous)
+        return queue.pop(0)
+
+    call_with_contract(call, TriageOutput, counters)
+
+    assert seen[0] is None
+    assert isinstance(seen[1], SchemaValidationError)
+    assert seen[1].raw == "not json"

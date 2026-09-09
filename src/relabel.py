@@ -115,7 +115,8 @@ def main(argv: list[str]) -> int:
         api_key=os.environ["DASHSCOPE_API_KEY"],
         base_url=os.environ["DASHSCOPE_BASE_URL"],
     )
-    model = os.environ["JUDGE_MODEL"]
+    # A different role from the quality judge, and a different model.
+    model = os.environ.get("RELABEL_MODEL") or os.environ["JUDGE_MODEL"]
 
     records = load_records(args.dataset)
     counters, usage = FailureCounters(), Usage()

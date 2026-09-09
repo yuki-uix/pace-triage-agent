@@ -163,7 +163,22 @@ defence itself is standard; the evidence is the differentiator.
 
 **Decision.** The two models under test are `qwen3.7-flash-2026-07-15` and
 `qwen3.7-plus-2026-05-26`, served by Alibaba Cloud Model Studio. The dataset
-generator is `kimi-k3` and the judge is `deepseek-v4-pro`.
+generator is `kimi-k3`, the blind second-opinion labeller is
+`deepseek-v4-pro`, and the quality judge is `glm-5.2`.
+
+**Amended 2026-09-09: the judge is `glm-5.2`, not `deepseek-v4-pro`.**
+`docs/02-metrics.md` requires GEval to weight the score token by
+`top_logprobs` rather than take the integer the model wrote, and requires
+the write-up to disclose whether the provider actually supplied them.
+Probed: `deepseek-v4-pro` rejects the parameter outright -
+`400 InternalError.Algo.InvalidParameter: The parameters logprobs is not
+supported` - and so does MiniMax. Using it would have left the metric
+silently coarser while the results table looked identical. `kimi-k3`
+supports logprobs but generated the dataset, and a generator scoring its own
+output is the self-preference bias this separation exists to prevent.
+`glm-5.2` supports logprobs and is a fourth family. DeepSeek stays as the
+second-opinion labeller, where logprobs are not needed and the numbers it
+produced are already recorded.
 
 **Why these two.** They are the cheap and mid tiers of the same generation. Same
 generation matters: pairing the newest flash with an older plus would confound

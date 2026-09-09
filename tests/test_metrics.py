@@ -315,12 +315,44 @@ def test_a_respaced_amount_is_not_a_fabricated_amount(analyzer):
                                analyzer) == []
 
 
-def test_an_invented_timeframe_survives_the_leniency(analyzer):
-    """The leniency added for the false positives must not hide the real thing."""
+def test_a_vague_invented_timeframe_is_the_judges_job_not_this_one(analyzer):
+    """ADR-003 splits groundedness deliberately.
+
+    "within the next two hours" asserts nothing an extractor can check against
+    the enquiry, and flagging it made faithful drafts look unfaithful: three of
+    six flags on fifteen real drafts were this artifact. An invented *timeframe*
+    is a commitment, and commitments are the judge's half of the split. What
+    this metric owes is the mechanically checkable half.
+    """
     findings = ungrounded_entities(REAL_ENQUIRY,
                                    "We will issue it within the next two hours.",
                                    analyzer)
-    assert [f.entity_type for f in findings] == ["DATE_TIME"]
+    assert findings == []
+
+
+def test_a_concrete_invented_date_is_still_caught(analyzer):
+    """The leniency must not reach the dates that can be checked."""
+    findings = ungrounded_entities(REAL_ENQUIRY,
+                                   "We will issue it on 25 December.", analyzer)
+    assert [f.text for f in findings] == ["25 December"]
+
+
+def test_a_grounded_date_wrapped_in_new_wording_is_not_a_fabrication(analyzer):
+    """NER returns "7pm on a weekday" as one span. The enquiry said 7pm; the
+    prose around it did not, and comparing the whole span called a grounded time
+    an invention."""
+    assert ungrounded_entities("Please call after 5:00pm.",
+                               "We will call after 5:00 pm on a weekday.",
+                               analyzer) == []
+
+
+def test_an_invented_phone_number_is_caught(analyzer):
+    """Found on a real draft: "the phone number provided (9771 7742)" where no
+    such number appeared in the enquiry - a number invented and attributed to
+    the customer."""
+    findings = ungrounded_entities(REAL_ENQUIRY,
+                                   "We will reach you on 9771 7742.", analyzer)
+    assert findings, "an invented number must not pass"
 
 
 @pytest.mark.parametrize("draft", [

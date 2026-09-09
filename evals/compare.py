@@ -22,6 +22,7 @@ import json
 import os
 import pathlib
 import subprocess
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from statistics import mean
@@ -97,9 +98,15 @@ class CombinationResult:
         return f"{self.triage_model.split('-')[1]} / {self.draft_model.split('-')[1]}"
 
     def breaches(self) -> list[str]:
+        """Only metrics that were actually measured can be breached.
+
+        A metric with no applicable records is reported as not measured, never
+        as a failure: disqualifying a model for a bar that could not be applied
+        would be a verdict about the sample, not about the model.
+        """
         broken = [f"{name} {self.scores[name]:.3f} < {bar}"
                   for name, bar in HARD_BARS.items()
-                  if name in self.scores and self.scores[name] < bar]
+                  if self.scores.get(name) is not None and self.scores[name] < bar]
         rate = self.failures.get("schema_failure_rate", 0.0)
         if rate > MAX_SCHEMA_FAILURE_RATE:
             broken.append(f"schema failure rate {rate:.3f} > {MAX_SCHEMA_FAILURE_RATE}")
@@ -107,7 +114,7 @@ class CombinationResult:
 
     def composite(self, weights: dict[str, float]) -> float | None:
         """None when a metric the weighting needs was not measured."""
-        if any(name not in self.scores for name in weights):
+        if any(self.scores.get(name) is None for name in weights):
             return None
         return sum(self.scores[name] * weight for name, weight in weights.items())
 
@@ -153,7 +160,13 @@ def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
                                   | {t.value for t in r.acceptable_types}) else 0.0
         for r, o in scored) if scored else 0.0
     result.scores["priority accuracy"] = priority_view.accuracy
-    result.scores["urgent recall"] = priority_view.recall(Priority.URGENT.value)
+    # None, not zero. A sample containing no URGENT records has an undefined
+    # urgent recall, and scoring it 0.0 disqualified every combination on a
+    # metric that was never measurable - the mirror image of the rule that a
+    # case producing no output is never counted as a wrong answer.
+    result.scores["urgent recall"] = (
+        priority_view.recall(Priority.URGENT.value)
+        if priority_view.support(Priority.URGENT.value) else None)
     result.scores["macro f1"] = mean(case_report.f1(label)
                                      for label in case_report.labels
                                      if case_report.support(label))
@@ -171,34 +184,57 @@ def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
         if Tag.INJECTION in record.tags:
             injection_scores.append(injection.measure(test_case))
 
-    result.scores["entity groundedness"] = mean(entity_scores) if entity_scores else 0.0
-    result.scores["refusal correctness"] = mean(refusal_scores) if refusal_scores else 0.0
+    result.scores["entity groundedness"] = (mean(entity_scores)
+                                            if entity_scores else None)
+    result.scores["refusal correctness"] = (mean(refusal_scores)
+                                            if refusal_scores else None)
     result.scores["injection resistance"] = (mean(injection_scores)
-                                             if injection_scores else 0.0)
+                                             if injection_scores else None)
     result.counts["refusal cases"] = len(refusal_scores)
     result.counts["injection cases"] = len(injection_scores)
 
     # Judged metrics. Refusal records branch out before these run.
-    judged = {build(judge): build for build in JUDGED_METRICS}
-    collected: dict[str, list[float]] = {}
-    for metric in judged:
-        name = canonical_name(metric.__name__)
+    #
+    # Concurrent, and measured rather than assumed: run serially this was the
+    # entire cost of the matrix. One pass took over four hours without finishing
+    # a single combination, because 114 judge calls per cell each wait on a model
+    # that reasons before answering. Estimating wall clock from token volume was
+    # the mistake - tokens were right, time is not a function of them.
+    #
+    # A fresh metric object per task: GEval stores its score and reason on the
+    # instance, so sharing one across threads would interleave results.
+    tasks = []
+    for build in JUDGED_METRICS:
+        name = canonical_name(build(judge).__name__)
         for record, output in scored:
             if Tag.REFUSAL in record.tags:
                 continue
             enquiry = f"Subject: {record.subject}\n\n{record.body}"
             target = output["summary"] if name == "summary quality" \
                 else output["draft_reply"]
-            try:
-                metric.measure(LLMTestCase(input=enquiry, actual_output=target))
-                collected.setdefault(name, []).append(metric.score)
-            except Exception:  # noqa: BLE001
-                collected.setdefault(f"{name} errors", []).append(1.0)
+            tasks.append((build, name, enquiry, target))
+
+    def judge_one(task):
+        build, name, enquiry, target = task
+        metric = build(judge)
+        try:
+            metric.measure(LLMTestCase(input=enquiry, actual_output=target))
+            return name, metric.score, None
+        except Exception as exc:  # noqa: BLE001
+            return name, None, f"{type(exc).__name__}: {exc}"
+
+    collected: dict[str, list[float]] = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for name, score, error in pool.map(judge_one, tasks):
+            if error is None:
+                collected.setdefault(name, []).append(score)
+            else:
+                result.failures[f"{name} errors"] = \
+                    result.failures.get(f"{name} errors", 0) + 1
+
     for name, values in collected.items():
-        if not name.endswith("errors"):
-            result.scores[name] = mean(values)
-        else:
-            result.failures[name] = len(values)
+        result.scores[name] = mean(values)
+        result.counts[f"{name} scored"] = len(values)
 
     total_calls = max(len(records) * 2, 1)
     result.counts["scored"] = len(scored)
@@ -211,15 +247,20 @@ def render(results: list[CombinationResult]) -> str:
     lines = ["", "2x2 matrix. Composite is reported only for combinations that "
                  "clear every hard bar.", ""]
     header = f"{'triage / draft':<26}"
-    columns = ["case type", "urgent recall", "entity groundedness",
+    columns = ["case type accuracy", "urgent recall", "entity groundedness",
                "commitment groundedness", "tone match", "summary quality"]
-    lines.append(header + "".join(c[:11].rjust(13) for c in columns))
+    lines.append(header + "".join(c[:12].rjust(14) for c in columns))
     for result in results:
         row = f"{result.label:<26}"
         for column in columns:
             value = result.scores.get(column)
-            row += ("n/a" if value is None else f"{value:.3f}").rjust(13)
+            row += ("not measured" if value is None else f"{value:.3f}").rjust(14)
         lines.append(row)
+
+    unmeasured = {name for r in results for name, v in r.scores.items() if v is None}
+    if unmeasured:
+        lines += ["", f"not measured in this run: {', '.join(sorted(unmeasured))} "
+                      "- reported as such, never as a failure"]
 
     lines += ["", "hard bars (docs/02-metrics.md):"]
     for result in results:
@@ -262,20 +303,34 @@ def main(argv: list[str]) -> int:
     records = load_records()[: args.limit]
 
     a, b = os.environ["TRIAGE_MODEL_A"], os.environ["TRIAGE_MODEL_B"]
-    results = []
+    results: list[CombinationResult] = []
+    pathlib.Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+
     for triage_model in (a, b):
         for draft_model in (a, b):
+            started = time.perf_counter()
             print(f"running {triage_model} / {draft_model} ...", flush=True)
             results.append(evaluate(client, judge, analyzer, triage_model,
                                     draft_model, records, args.workers))
-            print(f"  done: {results[-1].counts}", flush=True)
+            elapsed = time.perf_counter() - started
+            print(f"  done in {elapsed / 60:.1f} min: {results[-1].counts}",
+                  flush=True)
+            # Written after every cell. A four-hour run that persisted only at
+            # the end left nothing on disk when it was stopped.
+            write_results(args.out, results, judge)
 
     report = render(results)
     print(report)
+    write_results(args.out, results, judge)
+    print(f"\nwritten to {args.out}")
+    return 0
 
-    pathlib.Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    pathlib.Path(args.out).write_text(json.dumps({
+
+def write_results(path: str, results: list[CombinationResult],
+                  judge: DashScopeJudge) -> None:
+    pathlib.Path(path).write_text(json.dumps({
         "runs": 1,
+        "combinations_completed": len(results),
         "single_run_caveat": (
             "One pass. docs/02-metrics.md asks for three and mean +/- sd; the "
             "write-up must present these as single-run figures."),
@@ -296,8 +351,6 @@ def main(argv: list[str]) -> int:
             for r in results
         ],
     }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"\nwritten to {args.out}")
-    return 0
 
 
 if __name__ == "__main__":

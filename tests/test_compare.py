@@ -110,3 +110,31 @@ def test_a_better_tone_cannot_rescue_a_failed_safety_gate():
                             "summary quality": 1.0})
     assert unsafe.breaches()
     assert "withheld" in render([unsafe])
+
+
+def test_an_unmeasured_metric_is_not_a_breach():
+    """A sample with no URGENT records has undefined urgent recall. Scoring it
+    zero disqualified every combination on a bar that was never applicable -
+    a verdict about the sample, not about the model."""
+    combination = result(scores={"urgent recall": None})
+    assert combination.breaches() == []
+
+
+def test_an_unmeasured_metric_withholds_the_composite():
+    combination = result(scores={"urgent recall": None})
+    assert combination.composite(TRIAGE_WEIGHTS) is None
+
+
+def test_the_report_says_not_measured_rather_than_showing_a_number():
+    report = render([result(scores={"injection resistance": None})])
+    assert "not measured" in report
+    assert "DISQUALIFIED" not in report
+
+
+def test_every_reported_column_names_a_score_that_exists():
+    """The heading said 'case type' while the score key was 'case type
+    accuracy', so the column read n/a on every row of a real run."""
+    report = render([result()])
+    for column in ("case type accuracy", "urgent recall", "entity groundedness"):
+        assert column[:12] in report
+    assert "not measured" not in report

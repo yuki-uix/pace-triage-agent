@@ -20,6 +20,7 @@ not the models under test, not the generator, not the second-opinion labeller.
 from __future__ import annotations
 
 import os
+import threading
 from dataclasses import dataclass, field
 
 from deepeval.models.base_model import DeepEvalBaseLLM
@@ -36,6 +37,7 @@ class JudgeUsage:
     completion_tokens: int = 0
     reasoning_tokens: int = 0
     failures: list[str] = field(default_factory=list)
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     @property
     def thinking_disabled_retries(self) -> int:
@@ -88,14 +90,15 @@ class DashScopeJudge(DeepEvalBaseLLM):
     def _record(self, response) -> None:
         usage = response.usage
         details = getattr(usage, "completion_tokens_details", None)
-        self.usage.calls += 1
-        self.usage.prompt_tokens += usage.prompt_tokens
-        self.usage.completion_tokens += usage.completion_tokens
-        self.usage.reasoning_tokens += getattr(details, "reasoning_tokens", 0) or 0
-
         logprobs = getattr(response.choices[0], "logprobs", None)
-        if logprobs and getattr(logprobs, "content", None):
-            self.usage.with_logprobs += 1
+        has_logprobs = bool(logprobs and getattr(logprobs, "content", None))
+        with self.usage._lock:
+            self.usage.calls += 1
+            self.usage.prompt_tokens += usage.prompt_tokens
+            self.usage.completion_tokens += usage.completion_tokens
+            self.usage.reasoning_tokens += getattr(details, "reasoning_tokens", 0) or 0
+            if has_logprobs:
+                self.usage.with_logprobs += 1
 
     # Generous, because the judge reasons before answering and the amount it
     # reasons varies: the same prompt came back at 1210 and 657 reasoning tokens
@@ -134,7 +137,8 @@ class DashScopeJudge(DeepEvalBaseLLM):
         some cases with reasoning and others without is a fact about the results,
         not an implementation detail.
         """
-        self.usage.failures.append("empty response; retried with thinking off")
+        with self.usage._lock:
+            self.usage.failures.append("empty response; retried with thinking off")
         response = self._client.chat.completions.create(
             **self._request(prompt, top_logprobs, thinking=False))
         self._record(response)
@@ -150,7 +154,8 @@ class DashScopeJudge(DeepEvalBaseLLM):
 
     async def _a_retry_without_thinking(self, prompt: str,
                                         top_logprobs: int | None):
-        self.usage.failures.append("empty response; retried with thinking off")
+        with self.usage._lock:
+            self.usage.failures.append("empty response; retried with thinking off")
         response = await self._async_client.chat.completions.create(
             **self._request(prompt, top_logprobs, thinking=False))
         self._record(response)

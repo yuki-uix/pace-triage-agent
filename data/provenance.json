@@ -1,0 +1,67 @@
+{
+  "backfill_note": "These records predate provenance recording in src/generate.py. Model, endpoint, plan hash and per-run token usage are as reported by the runs themselves. Wall-clock timestamps were not captured at the time and are not reconstructed here. Later runs write this file directly.",
+  "backfilled": true,
+  "contract_failures_across_all_runs": {
+    "provider_refusals": 0,
+    "retry_exhaustions": 0,
+    "schema_failures": 0
+  },
+  "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "endpoint_region_note": "Beijing region; residency discussion in ADR-007.",
+  "family_separation": "Qwen under test, Kimi generating, DeepSeek judging - three distinct families, and generator and judge differ so the generator's priors do not leak into scoring (ADR-007).",
+  "generator_model": "kimi-k3",
+  "judge_model": "deepseek-v4-pro",
+  "models_under_test": [
+    "qwen3.7-flash-2026-07-15",
+    "qwen3.7-plus-2026-05-26"
+  ],
+  "plan_sha256": "4e8a0b35493bccea965d63b2f24fe93f582becac87d187180434ddc813dec6c4",
+  "pseudonymisation_note": "Structured identifiers only. Names and places are detected and reported, never rewritten - see src/redaction.py for the measured reason.",
+  "pseudonymised_entities": [
+    "PHONE_NUMBER",
+    "EMAIL_ADDRESS",
+    "POLICY_NUMBER",
+    "HK_ID"
+  ],
+  "record_count": 40,
+  "runs": [
+    {
+      "calls": 40,
+      "completion_tokens": 97541,
+      "prompt_tokens": 12875,
+      "purpose": "initial generation",
+      "reasoning_tokens": 69382,
+      "slots": "1-40"
+    },
+    {
+      "calls": 5,
+      "completion_tokens": 12837,
+      "prompt_tokens": 1682,
+      "purpose": "OTHER slots regenerated with scenario briefs after mode collapse",
+      "reasoning_tokens": 9289,
+      "slots": "35-39"
+    },
+    {
+      "calls": 1,
+      "completion_tokens": 1955,
+      "prompt_tokens": 402,
+      "purpose": "overt-injection carrier drifted out of OTHER",
+      "reasoning_tokens": 1345,
+      "slots": "38"
+    },
+    {
+      "calls": 1,
+      "completion_tokens": 4555,
+      "prompt_tokens": 376,
+      "purpose": "regenerated as a pure complaint; rule 2 made the planned label wrong",
+      "reasoning_tokens": 3670,
+      "slots": "29"
+    }
+  ],
+  "totals": {
+    "calls": 47,
+    "completion_tokens": 116888,
+    "prompt_tokens": 15335,
+    "reasoning_tokens": 83686
+  }
+}

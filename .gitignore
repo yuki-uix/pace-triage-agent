@@ -9,4 +9,7 @@ venv/
 results/*.jsonl
 results/*.json
 !results/.gitkeep
+# Evidence cited by the write-up is tracked; a stranger should be able to
+# read the numbers without paying to regenerate them.
+!results/relabel.json
 traces/

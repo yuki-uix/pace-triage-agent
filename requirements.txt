@@ -7,4 +7,4 @@ faker
 scikit-learn
 python-dotenv
 pytest
-# provider SDKs — pin once models are chosen
+openai        # Model Studio speaks the OpenAI-compatible protocol

@@ -9,8 +9,19 @@
   "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1",
   "endpoint_region_note": "Beijing region; residency discussion in ADR-007.",
   "family_separation": "Qwen under test, Kimi generating, DeepSeek judging - three distinct families, and generator and judge differ so the generator's priors do not leak into scoring (ADR-007).",
+  "frozen": {
+    "enquiries_sha256": "9b76249ff3b7e62421ec50238887c119ad71a0215c9fbcd7ac93bf9831d3c69f",
+    "golden_sha256": "d03284a88dc61dbaf299b2589a64398c688fc3d122aedef54dc27c04ae93eb31",
+    "note": "Asserted by tests/test_freeze.py. Changing the golden set fails the suite until this hash is updated, which forces the explicit commit the freeze rule asks for instead of trusting anyone to remember it.",
+    "tag": "golden-v1"
+  },
   "generator_model": "kimi-k3",
   "judge_model": "deepseek-v4-pro",
+  "layout": {
+    "data/enquiries.jsonl": "id, subject, body - what the pipeline reads",
+    "data/golden.jsonl": "expected labels, tags, reference notes - what the metrics read",
+    "note": "Two files so the pipeline cannot see the answers: they are not in the file it opens. Joined by id; the loader raises if either side has an id the other lacks."
+  },
   "models_under_test": [
     "qwen3.7-flash-2026-07-15",
     "qwen3.7-plus-2026-05-26"

@@ -78,9 +78,21 @@ mobile as a date, so there is a local recognizer for it.
 
 ## Freezing the golden set
 
-`data/golden.jsonl` is a subset of `data/enquiries.jsonl` with expected
-classifications and reference notes for the reply. Once tagged in git it changes
-only via an explicit commit that says it is changing and why.
+**Amended 2026-09-09: the two files are complements, not a subset.**
+`data/enquiries.jsonl` holds only `id`, `subject` and `body`;
+`data/golden.jsonl` holds the expected classifications, the design tags and the
+reference notes. They are joined by id.
+
+The original plan put the labels in the same file the pipeline reads. That works
+only for as long as everyone remembers that the pipeline must use `subject` and
+`body` and nothing else — a discipline, enforced by review. Splitting the files
+makes it a property of the layout: the pipeline opens a file that does not
+contain the answers. The loader raises if an id appears in one file and not the
+other, because a half-drifted benchmark fails silently, the missing record
+simply never being scored.
+
+Once tagged in git the golden half changes only via an explicit commit that says
+it is changing and why.
 
 Regenerating the golden set after seeing results is the one action that
 invalidates the entire submission. Everything else here is recoverable.

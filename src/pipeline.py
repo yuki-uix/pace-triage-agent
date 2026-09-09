@@ -310,7 +310,7 @@ def main(argv: list[str]) -> int:
     from concurrent.futures import ThreadPoolExecutor
 
     from src.generate import load_env
-    from src.quotas import load_records
+    from src.quotas import load_enquiries
 
     parser = argparse.ArgumentParser(description="Run the two-stage pipeline.")
     parser.add_argument("--dataset", default="data/enquiries.jsonl")
@@ -335,7 +335,9 @@ def main(argv: list[str]) -> int:
         draft=StageConfig(base.draft.model, enable_thinking=args.thinking),
     )
 
-    records = load_records(args.dataset)[: args.limit]
+    # Enquiries only. The labels live in data/golden.jsonl and this module has
+    # no reason to open that file.
+    records = load_enquiries(args.dataset)[: args.limit]
     counters = FailureCounters()
     failed: list[str] = []
 

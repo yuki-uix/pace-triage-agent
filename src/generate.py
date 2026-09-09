@@ -16,6 +16,9 @@ uses. One door, not two.
 from __future__ import annotations
 
 import argparse
+import datetime
+import hashlib
+import json
 import os
 import pathlib
 import sys
@@ -29,7 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from src.contract import FailureCounters, call_with_contract
 from src.dataset import EnquiryRecord, Tag
 from src.quotas import load_records
-from src.redaction import build_analyzer, pseudonymise
+from src.redaction import PSEUDONYMISED_ENTITIES, build_analyzer, pseudonymise
 from src.schema import CaseType, Priority
 
 
@@ -214,6 +217,55 @@ def generate_record(
     )
 
 
+def write_provenance(out_path, model, slots, usage, counters, review) -> None:
+    """Record how the data was made, next to the data.
+
+    AC 7 of the dataset issue requires the generator to be a different family
+    from both models under test. That was true, and unverifiable: nothing in the
+    artefact said which model wrote it. A claim about provenance that lives only
+    in a pull request description is not evidence a reviewer can check.
+
+    Merged rather than overwritten, because slots are regenerated individually.
+    """
+    path = pathlib.Path(out_path).with_name("provenance.json")
+    existing = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    plan_source = pathlib.Path("src/plan.py").read_bytes()
+
+    records = existing.get("records", {})
+    stamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+    for slot in slots:
+        records[slot.record_id] = {
+            "generator_model": model,
+            "generated_at": stamp,
+            "names_flagged_for_review": list(review.get(slot.record_id, ())),
+        }
+
+    path.write_text(json.dumps({
+        "generator_model": model,
+        "generator_family": "distinct from both models under test (ADR-007)",
+        "models_under_test": [
+            os.environ.get("TRIAGE_MODEL_A"), os.environ.get("TRIAGE_MODEL_B"),
+        ],
+        "endpoint": os.environ.get("DASHSCOPE_BASE_URL"),
+        "plan_sha256": hashlib.sha256(plan_source).hexdigest(),
+        "last_run_at": stamp,
+        "last_run_slots": [s.record_id for s in slots],
+        "pseudonymised_entities": list(PSEUDONYMISED_ENTITIES),
+        "pseudonymisation_note": (
+            "Structured identifiers only. Names and places are detected and "
+            "reported, never rewritten - see src/redaction.py."
+        ),
+        "cumulative_usage_this_run": {
+            "calls": usage.calls, "prompt_tokens": usage.prompt_tokens,
+            "completion_tokens": usage.completion_tokens,
+            "reasoning_tokens": usage.reasoning_tokens,
+        },
+        "contract_failures_this_run": counters.as_dict(),
+        "records": records,
+    }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"provenance written to {path}")
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", required=True, help="JSONL file to write")
@@ -279,6 +331,8 @@ def main(argv: list[str]) -> int:
     print(f"\nwrote {len(records)} records to {args.out}")
     print(f"usage: {usage.report()}")
     print(f"contract failures: {counters.as_dict()}")
+
+    write_provenance(args.out, model, slots, usage, counters, review)
 
     flagged = sum(len(v) for v in review.values())
     print(

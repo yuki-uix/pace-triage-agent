@@ -166,14 +166,31 @@ def main(argv: list[str]) -> int:
                 f"(min {min(values):.3f}, max {max(values):.3f})")
 
     planned = {r.id: r for r in records}
+
     print(f"\n{len(records)} records x {args.runs} run(s), blind, by {model}\n")
     print(f"Cohen's kappa, case_type: {spread([k[0] for k in kappas])}")
     print(f"Cohen's kappa, priority:  {spread([k[1] for k in kappas])}\n")
 
+    def documented(key: tuple[str, str]) -> bool:
+        """The record already declares this alternative as defensible.
+
+        A record carrying `acceptable_types` has been adjudicated: lenient
+        accuracy credits either label and the guide asks for the ambiguity to be
+        reported, not resolved. Counting it as outstanding would invite someone
+        to 'fix' a label that is deliberately contestable.
+        """
+        record_id, field = key
+        if field != "case_type":
+            return False
+        allowed = {t.value for t in planned[record_id].acceptable_types}
+        return bool(allowed) and seen[key] <= allowed
+
     always = [k for k, n in contested.items() if n == args.runs]
+    outstanding = [k for k in always if not documented(k)]
     sometimes = [k for k, n in contested.items() if n < args.runs]
-    print(f"{len(always)} contested in every run; "
-          f"{len(sometimes)} contested in some runs only\n")
+    print(f"{len(always)} contested in every run, of which {len(outstanding)} "
+          f"outstanding ({len(always) - len(outstanding)} already documented as "
+          f"ambiguous); {len(sometimes)} contested in some runs only\n")
     print("A record contested in every run is a label worth arguing about. One")
     print("contested intermittently is mostly relabeller noise and adjudicating")
     print("it would be reading signal into a coin flip.\n")
@@ -183,9 +200,13 @@ def main(argv: list[str]) -> int:
         record = planned[record_id]
         current = (record.expected_type if field == "case_type"
                    else record.expected_priority).value
-        marker = "->" if count == args.runs else "  "
+        if count == args.runs:
+            marker = "  " if documented(key) else "->"
+        else:
+            marker = "  "
+        note = "  (declared in acceptable_types)" if documented(key) else ""
         print(f"{marker} {record_id} {field:<9} {count}/{args.runs}  "
-              f"plan={current:<16} second={'/'.join(sorted(seen[key]))}")
+              f"plan={current:<16} second={'/'.join(sorted(seen[key]))}{note}")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as handle:
@@ -197,7 +218,8 @@ def main(argv: list[str]) -> int:
             "contested": [
                 {"record_id": rid, "field": field, "runs_contested": count,
                  "of_runs": args.runs,
-                 "second_opinions": sorted(seen[(rid, field)])}
+                 "second_opinions": sorted(seen[(rid, field)]),
+                 "documented_as_ambiguous": documented((rid, field))}
                 for (rid, field), count in contested.most_common()
             ],
             "usage": {"calls": usage.calls, "prompt_tokens": usage.prompt_tokens,

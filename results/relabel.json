@@ -1,0 +1,152 @@
+{
+  "model": "deepseek-v4-pro",
+  "records": 40,
+  "runs": 3,
+  "kappa_per_run": [
+    {
+      "case_type": 0.9097744360902256,
+      "priority": 0.8830409356725146
+    },
+    {
+      "case_type": 0.9097744360902256,
+      "priority": 0.8832684824902723
+    },
+    {
+      "case_type": 0.9699474079639369,
+      "priority": 0.8052580331061344
+    }
+  ],
+  "contested": [
+    {
+      "record_id": "ENQ-040",
+      "field": "case_type",
+      "runs_contested": 3,
+      "of_runs": 3,
+      "second_opinions": [
+        "POLICY_QUERY"
+      ],
+      "documented_as_ambiguous": true
+    },
+    {
+      "record_id": "ENQ-014",
+      "field": "priority",
+      "runs_contested": 2,
+      "of_runs": 3,
+      "second_opinions": [
+        "LOW"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-036",
+      "field": "priority",
+      "runs_contested": 2,
+      "of_runs": 3,
+      "second_opinions": [
+        "LOW"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-039",
+      "field": "case_type",
+      "runs_contested": 2,
+      "of_runs": 3,
+      "second_opinions": [
+        "POLICY_QUERY"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-024",
+      "field": "priority",
+      "runs_contested": 2,
+      "of_runs": 3,
+      "second_opinions": [
+        "URGENT"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-002",
+      "field": "priority",
+      "runs_contested": 1,
+      "of_runs": 3,
+      "second_opinions": [
+        "NORMAL"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-019",
+      "field": "case_type",
+      "runs_contested": 1,
+      "of_runs": 3,
+      "second_opinions": [
+        "COMPLAINT"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-016",
+      "field": "case_type",
+      "runs_contested": 1,
+      "of_runs": 3,
+      "second_opinions": [
+        "COMPLAINT"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-028",
+      "field": "priority",
+      "runs_contested": 1,
+      "of_runs": 3,
+      "second_opinions": [
+        "URGENT"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-035",
+      "field": "priority",
+      "runs_contested": 1,
+      "of_runs": 3,
+      "second_opinions": [
+        "NORMAL"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-001",
+      "field": "priority",
+      "runs_contested": 1,
+      "of_runs": 3,
+      "second_opinions": [
+        "NORMAL"
+      ],
+      "documented_as_ambiguous": false
+    },
+    {
+      "record_id": "ENQ-006",
+      "field": "priority",
+      "runs_contested": 1,
+      "of_runs": 3,
+      "second_opinions": [
+        "NORMAL"
+      ],
+      "documented_as_ambiguous": false
+    }
+  ],
+  "usage": {
+    "calls": 120,
+    "prompt_tokens": 71934,
+    "completion_tokens": 35898,
+    "reasoning_tokens": 32751
+  },
+  "contract_failures": {
+    "schema_failures": 0,
+    "retry_exhaustions": 0,
+    "provider_refusals": 0
+  }
+}

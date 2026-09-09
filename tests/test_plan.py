@@ -138,3 +138,29 @@ def test_the_dataset_labels_match_the_plan():
         assert record.expected_priority is slot.priority, record.id
         assert record.tags == slot.tags, record.id
         assert record.acceptable_types == slot.acceptable_types, record.id
+
+
+def test_provenance_records_how_the_dataset_was_made():
+    """AC 7 requires a cross-family generator; the artefact must let you check it.
+
+    A provenance claim that lives only in a pull request description is not
+    something a reviewer can verify from a clone.
+    """
+    import json
+    import pathlib
+
+    path = pathlib.Path("data/provenance.json")
+    if not path.exists():
+        pytest.skip("dataset not generated")
+
+    provenance = json.loads(path.read_text(encoding="utf-8"))
+    generator = provenance["generator_model"]
+    under_test = provenance["models_under_test"]
+
+    assert generator not in under_test
+    family = generator.split("-")[0]
+    assert all(not m.startswith(family) for m in under_test), (
+        f"generator {generator} shares a family with a model under test"
+    )
+    assert provenance["judge_model"] not in under_test
+    assert provenance["plan_sha256"]

@@ -139,15 +139,22 @@ def load_records(path: str = ENQUIRIES, golden_path: str = GOLDEN) -> list[Enqui
 
 
 def main(argv: Sequence[str]) -> int:
-    if len(argv) != 2:
-        print("usage: python -m src.quotas <dataset.jsonl>", file=sys.stderr)
-        return 2
+    import argparse
 
-    records = load_records(argv[1], GOLDEN)
+    parser = argparse.ArgumentParser(
+        description="Check a dataset against the quotas in docs/03-data-spec.md.")
+    parser.add_argument("dataset", nargs="?", default=ENQUIRIES,
+                        help=f"enquiries JSONL (default: {ENQUIRIES})")
+    parser.add_argument("--golden", default=GOLDEN,
+                        help=f"golden labels JSONL (default: {GOLDEN})")
+    args = parser.parse_args(list(argv[1:]))
+
+    records = load_records(args.dataset, args.golden)
     violations = check_quotas(records)
 
     if violations:
-        print(f"{len(violations)} quota violation(s) in {argv[1]}:", file=sys.stderr)
+        print(f"{len(violations)} quota violation(s) in {args.dataset}:",
+              file=sys.stderr)
         for violation in violations:
             print(f"  - {violation}", file=sys.stderr)
         return 1

@@ -176,8 +176,18 @@ def test_cli_exits_zero_on_a_valid_dataset(tmp_path, capsys, monkeypatch):
     assert "all 15 quotas met" in capsys.readouterr().out
 
 
-def test_cli_usage_error():
-    assert main(["src.quotas"]) == 2
+def test_the_cli_defaults_to_the_shipped_dataset():
+    """The first free command a stranger runs must work with no arguments."""
+    if not pathlib.Path("data/enquiries.jsonl").exists():
+        pytest.skip("dataset not generated")
+    assert main(["src.quotas"]) == 0
+
+
+def test_an_unknown_flag_is_a_usage_error():
+    """It used to crash with a traceback: --help was read as a filename."""
+    with pytest.raises(SystemExit) as exit_info:
+        main(["src.quotas", "--nonsense"])
+    assert exit_info.value.code == 2
 
 
 def test_records_round_trip_through_json():

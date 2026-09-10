@@ -1,10 +1,25 @@
-pydantic>=2
-deepeval
-presidio-analyzer
+# Pinned loosely: this is a case study, not a service. What matters is that a
+# clean checkout installs something that runs.
+
+pydantic>=2            # the output contract
+openai                 # Model Studio speaks the OpenAI-compatible protocol
+deepeval               # the evaluation harness
+presidio-analyzer      # entity detection, shared by redaction and groundedness
 presidio-anonymizer
-spacy
-faker
-scikit-learn
-python-dotenv
+spacy                  # required by presidio; the model is a separate download
+scikit-learn           # Cohen's kappa, Brier score
+scipy                  # Spearman, in the judge meta-evaluation
 pytest
-openai        # Model Studio speaks the OpenAI-compatible protocol
+
+# No longer declared, having been declared and never imported:
+#   faker         - the data spec called for Faker-generated entities; that was
+#                   tried, made the data worse, and was cut back to structured
+#                   identifiers only (docs/03-data-spec.md, src/redaction.py).
+#                   Verified absent from a clean install.
+#   python-dotenv - src/generate.py reads .env itself in a dozen lines. Note it
+#                   still arrives transitively via deepeval, so a clean install
+#                   has it; what changed is that this project no longer claims
+#                   to depend on it.
+#
+# Verified by installing this file into an empty virtualenv and importing every
+# line. The spacy model is a separate download and is not covered by that check.

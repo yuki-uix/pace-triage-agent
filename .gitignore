@@ -14,6 +14,7 @@ results/*.json
 !results/relabel.json
 !results/latency.json
 !results/comparison.json
+!results/calibration.json
 !results/meta_eval_judge.json
 !results/meta_eval_labels.jsonl
 !results/meta_eval_worksheet.md

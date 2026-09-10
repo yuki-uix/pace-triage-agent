@@ -1,0 +1,753 @@
+{
+  "golden_set": "golden-v1",
+  "models": {
+    "qwen3.7-flash-2026-07-15": {
+      "brier": 0.04915906297164333,
+      "buckets": [
+        {
+          "accuracy": 0.0,
+          "high": 0.5,
+          "low": 0.0,
+          "mean_confidence": 0.29718544728303486,
+          "n": 1,
+          "wilson_high": 0.7934567085261071,
+          "wilson_low": 0.0
+        },
+        {
+          "accuracy": 0.3333333333333333,
+          "high": 0.6,
+          "low": 0.5,
+          "mean_confidence": 0.541592771722552,
+          "n": 3,
+          "wilson_high": 0.792345044873512,
+          "wilson_low": 0.061490315276160556
+        },
+        {
+          "accuracy": 1.0,
+          "high": 0.8,
+          "low": 0.7,
+          "mean_confidence": 0.7258814912655596,
+          "n": 2,
+          "wilson_high": 1.0,
+          "wilson_low": 0.34237195288961925
+        },
+        {
+          "accuracy": 1.0,
+          "high": 0.9,
+          "low": 0.8,
+          "mean_confidence": 0.830199695896202,
+          "n": 2,
+          "wilson_high": 1.0,
+          "wilson_low": 0.34237195288961925
+        },
+        {
+          "accuracy": 0.96875,
+          "high": 1.0001,
+          "low": 0.9,
+          "mean_confidence": 0.9895860882946448,
+          "n": 32,
+          "wilson_high": 0.9944622826374491,
+          "wilson_low": 0.8425539219962727
+        }
+      ],
+      "confidence_methods": [
+        "LOGPROBS"
+      ],
+      "ece": 0.06191390533889502,
+      "failure_counts": {
+        "provider_refusals": 0,
+        "retry_exhaustions": 0,
+        "schema_failures": 0
+      },
+      "n": 40,
+      "per_record": [
+        {
+          "confidence": 0.9988544700048955,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-001"
+        },
+        {
+          "confidence": 0.9983564853652517,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-002"
+        },
+        {
+          "confidence": 0.9981831540735664,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-003"
+        },
+        {
+          "confidence": 0.99742012427625,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-004"
+        },
+        {
+          "confidence": 0.997556856193495,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-005"
+        },
+        {
+          "confidence": 0.9995705410903937,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-006"
+        },
+        {
+          "confidence": 0.9491939542174557,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-007"
+        },
+        {
+          "confidence": 0.9993928598420051,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-008"
+        },
+        {
+          "confidence": 0.9977618592760367,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-009"
+        },
+        {
+          "confidence": 0.999778076325624,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-010"
+        },
+        {
+          "confidence": 0.9996437948854983,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-011"
+        },
+        {
+          "confidence": 0.9978831890879143,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-012"
+        },
+        {
+          "confidence": 0.9997822472479584,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-013"
+        },
+        {
+          "confidence": 0.9611886421380124,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-014"
+        },
+        {
+          "confidence": 0.997914087965954,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-015"
+        },
+        {
+          "confidence": 0.9956514154851774,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-016"
+        },
+        {
+          "confidence": 0.9978557488698345,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-017"
+        },
+        {
+          "confidence": 0.9804869454646529,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-018"
+        },
+        {
+          "confidence": 0.9966048141700751,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-019"
+        },
+        {
+          "confidence": 0.995017438954401,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-020"
+        },
+        {
+          "confidence": 0.9756303170837298,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-021"
+        },
+        {
+          "confidence": 0.997535239099348,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-022"
+        },
+        {
+          "confidence": 0.9921328198219775,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-023"
+        },
+        {
+          "confidence": 0.9970181951443328,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-024"
+        },
+        {
+          "confidence": 0.9991529017226839,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-025"
+        },
+        {
+          "confidence": 0.999435505204064,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-026"
+        },
+        {
+          "confidence": 0.9995729363644044,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-027"
+        },
+        {
+          "confidence": 0.7321728709249236,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-028"
+        },
+        {
+          "confidence": 0.9934586155436593,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-029"
+        },
+        {
+          "confidence": 0.9471759759201628,
+          "confidence_method": "LOGPROBS",
+          "correct": false,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-030"
+        },
+        {
+          "confidence": 0.8541130408320803,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-031"
+        },
+        {
+          "confidence": 0.9598534983882656,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-032"
+        },
+        {
+          "confidence": 0.5198418159171218,
+          "confidence_method": "LOGPROBS",
+          "correct": false,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-033"
+        },
+        {
+          "confidence": 0.29718544728303486,
+          "confidence_method": "LOGPROBS",
+          "correct": false,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-034"
+        },
+        {
+          "confidence": 0.7195901116061956,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-035"
+        },
+        {
+          "confidence": 0.9602383911216992,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-036"
+        },
+        {
+          "confidence": 0.8062863509603237,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-037"
+        },
+        {
+          "confidence": 0.9874537250798555,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-038"
+        },
+        {
+          "confidence": 0.5588272087804032,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-039"
+        },
+        {
+          "confidence": 0.5461092904701313,
+          "confidence_method": "LOGPROBS",
+          "correct": false,
+          "expected_type": "OTHER",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-040"
+        }
+      ]
+    },
+    "qwen3.7-plus-2026-05-26": {
+      "brier": 0.05744563946949831,
+      "buckets": [
+        {
+          "accuracy": 0.5,
+          "high": 0.6,
+          "low": 0.5,
+          "mean_confidence": 0.5506910523084606,
+          "n": 2,
+          "wilson_high": 0.9054713451991339,
+          "wilson_low": 0.09452865480086614
+        },
+        {
+          "accuracy": 0.5,
+          "high": 0.9,
+          "low": 0.8,
+          "mean_confidence": 0.8433922897867648,
+          "n": 2,
+          "wilson_high": 0.9054713451991339,
+          "wilson_low": 0.09452865480086614
+        },
+        {
+          "accuracy": 0.9722222222222222,
+          "high": 1.0001,
+          "low": 0.9,
+          "mean_confidence": 0.9938913307798095,
+          "n": 36,
+          "wilson_high": 0.9950797197044302,
+          "wilson_low": 0.8582996626496918
+        }
+      ],
+      "confidence_methods": [
+        "LOGPROBS"
+      ],
+      "ece": 0.039206364806589844,
+      "failure_counts": {
+        "provider_refusals": 0,
+        "retry_exhaustions": 0,
+        "schema_failures": 0
+      },
+      "n": 40,
+      "per_record": [
+        {
+          "confidence": 0.9999618544219127,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-001"
+        },
+        {
+          "confidence": 0.9999349157918666,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-002"
+        },
+        {
+          "confidence": 0.9999657880041377,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-003"
+        },
+        {
+          "confidence": 0.9999697216940339,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-004"
+        },
+        {
+          "confidence": 0.9997157652004746,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-005"
+        },
+        {
+          "confidence": 0.9999594701577309,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-006"
+        },
+        {
+          "confidence": 0.998032382698488,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "POLICY_QUERY",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-007"
+        },
+        {
+          "confidence": 0.9998089432761957,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-008"
+        },
+        {
+          "confidence": 0.9999830724960057,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-009"
+        },
+        {
+          "confidence": 0.9996268937932941,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-010"
+        },
+        {
+          "confidence": 0.9999916554164369,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-011"
+        },
+        {
+          "confidence": 0.9999959468980535,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-012"
+        },
+        {
+          "confidence": 0.9999932051145561,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "ADDRESS_CHANGE",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-013"
+        },
+        {
+          "confidence": 0.9985580948695499,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-014"
+        },
+        {
+          "confidence": 0.9998175229270617,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-015"
+        },
+        {
+          "confidence": 0.9998050108239788,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-016"
+        },
+        {
+          "confidence": 0.9997617542423547,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-017"
+        },
+        {
+          "confidence": 0.999753771238546,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-018"
+        },
+        {
+          "confidence": 0.999792618530657,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-019"
+        },
+        {
+          "confidence": 0.9973612393785165,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "PREMIUM_BILLING",
+          "predicted_type": "PREMIUM_BILLING",
+          "record_id": "ENQ-020"
+        },
+        {
+          "confidence": 0.9707089999113611,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-021"
+        },
+        {
+          "confidence": 0.9565324689054415,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-022"
+        },
+        {
+          "confidence": 0.9981820314582028,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-023"
+        },
+        {
+          "confidence": 0.9999952316511552,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-024"
+        },
+        {
+          "confidence": 0.9999991655356624,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-025"
+        },
+        {
+          "confidence": 0.9999995231630692,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-026"
+        },
+        {
+          "confidence": 0.9999992847447459,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "CLAIM",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-027"
+        },
+        {
+          "confidence": 0.992715843925351,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-028"
+        },
+        {
+          "confidence": 0.9999164396566956,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-029"
+        },
+        {
+          "confidence": 0.999984145372485,
+          "confidence_method": "LOGPROBS",
+          "correct": false,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "ADDRESS_CHANGE",
+          "record_id": "ENQ-030"
+        },
+        {
+          "confidence": 0.9818681216590655,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-031"
+        },
+        {
+          "confidence": 0.9962987243822365,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-032"
+        },
+        {
+          "confidence": 0.8146697334598764,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-033"
+        },
+        {
+          "confidence": 0.5580192926629532,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "COMPLAINT",
+          "predicted_type": "COMPLAINT",
+          "record_id": "ENQ-034"
+        },
+        {
+          "confidence": 0.9934758428399595,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-035"
+        },
+        {
+          "confidence": 0.9045874942370308,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-036"
+        },
+        {
+          "confidence": 0.9945632584096799,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-037"
+        },
+        {
+          "confidence": 0.999471705247151,
+          "confidence_method": "LOGPROBS",
+          "correct": true,
+          "expected_type": "OTHER",
+          "predicted_type": "OTHER",
+          "record_id": "ENQ-038"
+        },
+        {
+          "confidence": 0.8721148461136533,
+          "confidence_method": "LOGPROBS",
+          "correct": false,
+          "expected_type": "OTHER",
+          "predicted_type": "POLICY_QUERY",
+          "record_id": "ENQ-039"
+        },
+        {
+          "confidence": 0.543362811953968,
+          "confidence_method": "LOGPROBS",
+          "correct": false,
+          "expected_type": "OTHER",
+          "predicted_type": "CLAIM",
+          "record_id": "ENQ-040"
+        }
+      ]
+    }
+  },
+  "no_recalibration_fitted": true,
+  "runs": 1
+}

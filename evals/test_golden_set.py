@@ -158,13 +158,21 @@ def test_refusal_correctness_is_perfect_everywhere(comparison):
 
 # ------------------------------- the README must not drift from the results
 
-README = pathlib.Path("README.md")
+# Both documents quote the same numbers, and both are hand-written while the
+# results are regenerated. Deliverable C drifting would be worse than the README
+# drifting, not better.
+CITING_DOCUMENTS = (pathlib.Path("README.md"), pathlib.Path("writeup.md"))
 
 
 def readme() -> str:
-    if not README.exists():  # pragma: no cover
+    if not CITING_DOCUMENTS[0].exists():  # pragma: no cover
         pytest.skip("README not present")
-    return README.read_text(encoding="utf-8")
+    return CITING_DOCUMENTS[0].read_text(encoding="utf-8")
+
+
+def documents() -> list[tuple[str, str]]:
+    return [(path.name, path.read_text(encoding="utf-8"))
+            for path in CITING_DOCUMENTS if path.exists()]
 
 
 def short(model: str) -> str:
@@ -175,16 +183,17 @@ MATRIX_COLUMNS = ("case type accuracy", "urgent recall", "entity groundedness",
                   "commitment groundedness", "tone match", "summary quality")
 
 
-def test_every_matrix_number_in_the_readme_matches_the_results(comparison):
+@pytest.mark.parametrize("document", [p.name for p in CITING_DOCUMENTS])
+def test_every_matrix_number_cited_matches_the_results(comparison, document):
     """The claim this repository makes is that a stranger can reproduce every
-    number. The README is hand-written and the results are regenerated, so
-    without this they drift - and drift always flatters the README.
+    number. Both documents are hand-written and the results are regenerated, so
+    without this they drift - and drift always flatters the document.
     """
-    text = readme()
+    text = dict(documents())[document]
     for combination in comparison["combinations"]:
         label = f"{short(combination['triage_model'])} / {short(combination['draft_model'])}"
         rows = [line for line in text.splitlines() if line.startswith(f"| {label} |")]
-        assert rows, f"no README row for {label}"
+        assert rows, f"no {document} row for {label}"
 
         cells = [cell.strip() for cell in rows[0].strip("|").split("|")][1:]
         recorded = [combination["scores"][name] for name in MATRIX_COLUMNS]
@@ -202,15 +211,16 @@ def test_the_calibration_numbers_in_the_readme_match(calibration):
         assert row in text, f"README calibration row for {short(model)} is stale"
 
 
-def test_the_latency_numbers_in_the_readme_match():
+@pytest.mark.parametrize("document", [p.name for p in CITING_DOCUMENTS])
+def test_the_latency_numbers_cited_match(document):
     path = RESULTS / "latency.json"
     if not path.exists():
         pytest.skip("latency results not present")
 
-    text = readme()
+    text = dict(documents())[document]
     for stage, data in json.loads(path.read_text(encoding="utf-8"))["stages"].items():
         fragment = f"{data['median_seconds']:.2f}s | {data['p95_seconds']:.2f}s"
-        assert fragment in text, f"README latency row for {stage} is stale"
+        assert fragment in text, f"{document} latency row for {stage} is stale"
 
 
 def test_the_kappa_figures_in_the_readme_match():
@@ -238,3 +248,45 @@ def test_every_command_the_readme_lists_is_importable():
     assert modules, "the README lists no runnable commands"
     for module in modules:
         importlib.import_module(module)
+
+
+def test_the_writeup_reports_the_injection_resistance_it_measured(comparison):
+    """ADR-006's whole argument is that the number is the differentiator."""
+    text = dict(documents()).get("writeup.md")
+    if text is None:  # pragma: no cover
+        pytest.skip("writeup not present")
+
+    measured = {c["scores"]["injection resistance"] for c in comparison["combinations"]}
+    assert measured == {1.0}, "the write-up's claim no longer matches the results"
+    assert "1.000 across all four combinations" in text
+
+
+def test_the_writeup_does_not_claim_a_judge_agreement_figure():
+    """Until a person labels the worksheet there is no such number.
+
+    The first version of this test asserted that the word "incomplete" appeared,
+    which a heading satisfied while the body claimed a fabricated figure. It was
+    checking for a word rather than for the absence of a claim - the same weak
+    assertion this repository has caught elsewhere. It now looks for the claim.
+    """
+    import re as _re
+
+    text = dict(documents()).get("writeup.md")
+    if text is None:  # pragma: no cover
+        pytest.skip("writeup not present")
+
+    labels = RESULTS / "meta_eval_labels.jsonl"
+    if labels.exists():
+        filled = [line for line in labels.read_text(encoding="utf-8").splitlines()
+                  if line.strip() and json.loads(line).get("human") is not None]
+        if filled:
+            pytest.skip("labels exist; the section should now carry a figure")
+
+    claims = _re.findall(
+        r"(?:judge\s*/\s*human agreement|agreement with (?:a )?human)"
+        r"[^.\n]{0,40}?(?:is|of|was|=|:)\s*(\d?\.\d+)", text, _re.IGNORECASE)
+    assert not claims, (
+        f"the write-up states a judge/human agreement figure {claims} while no "
+        "human labels exist. That number certifies every other quality number "
+        "in the document and cannot be produced by a model.")
+    assert "judge/human agreement" in text, "the gap must still be named"

@@ -290,3 +290,28 @@ def test_the_writeup_does_not_claim_a_judge_agreement_figure():
         "human labels exist. That number certifies every other quality number "
         "in the document and cannot be produced by a model.")
     assert "judge/human agreement" in text, "the gap must still be named"
+
+
+def test_the_confidence_examples_in_the_writeup_come_from_the_recorded_run(calibration):
+    """A number that is not in results/ cannot be reproduced by a reader.
+
+    The first draft cited 0.2251 for the ambiguous record, taken from an ad-hoc
+    probe during development. The calibration run has that record at 0.5461, and
+    a different record as the least confident one. The guard covered the matrix
+    and latency tables and not the prose, which is where the error was.
+    """
+    text = dict(documents()).get("writeup.md")
+    if text is None:  # pragma: no cover
+        pytest.skip("writeup not present")
+
+    flash = next(data for model, data in calibration["models"].items()
+                 if "flash" in model)
+    lowest = sorted(flash["per_record"], key=lambda row: row["confidence"])[:3]
+
+    for row in lowest:
+        claim = f"{row['record_id']} at {row['confidence']:.4f}"
+        assert claim in text, f"the write-up does not cite {claim} as recorded"
+
+    assert lowest[0]["correct"] is False, (
+        "the write-up argues the least confident record is also wrong; "
+        "the recorded run no longer supports that")

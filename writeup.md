@@ -44,10 +44,15 @@ string it actually emitted, located after its key in the JSON.
 
 The uncertainty sits almost entirely on the first token of the enum value —
 `ADDRESS_CHANGE` came back at 0.7365 with `OTHER` at 0.128 on an ambiguous
-enquiry, while the continuation token was 1.0000. On the golden set, the one
-record three blind relabelling runs had already flagged as genuinely ambiguous
-scored **0.2251** and was misclassified. A verbalised score would have said 0.9
-for that record, as it does for everything.
+enquiry, while the continuation token was 1.0000.
+
+On the golden set the score does what it is for. The least confident record for
+`flash` is **ENQ-034 at 0.2972**, and it is wrong: a `COMPLAINT` routed to
+`CLAIM`. The next two lowest are **ENQ-033 at 0.5198**, the same mistake, and
+**ENQ-040 at 0.5461**, the record three blind relabelling runs had already
+flagged as genuinely ambiguous. The model is least certain exactly where it is
+systematically weakest, which is what a confidence score is supposed to do. A
+verbalised score would have said 0.9 for all three, as it does for everything.
 
 *Rejected: asking the model for a confidence.* It would have answered.
 

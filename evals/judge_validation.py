@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import time
 
 from deepeval.test_case import LLMTestCase
 
@@ -43,7 +44,9 @@ def main(argv: list[str]) -> int:
     enquiries = {row.id: row for row in load_enquiries()}
     scored, failures = [], []
 
-    for row in rows:
+    total = len(rows)
+    run_started = time.perf_counter()
+    for index, row in enumerate(rows, start=1):
         enquiry = enquiries[row.record_id]
         email = f"Subject: {enquiry.subject}\n\n{enquiry.body}"
         case = LLMTestCase(
@@ -51,20 +54,44 @@ def main(argv: list[str]) -> int:
             actual_output=row.draft_reply,
             context=reference_context(email),
         )
+        item_started = time.perf_counter()
+        print(
+            f"[{index:02d}/{total}] {row.variant_id} scoring "
+            f"(expected band {row.expected_band})...",
+            flush=True,
+        )
         try:
-            metric.measure(case)
+            # DeepEval's animated indicator is noisy in captured/non-interactive
+            # terminals and hides which paid call is running. Our stable line
+            # progress is more useful and survives in CI logs.
+            metric.measure(case, _show_indicator=False)
             score = float(metric.score)
+            predicted_band = judge_band(score)
             scored.append({
                 "variant_id": row.variant_id,
                 "record_id": row.record_id,
                 "expected_band": row.expected_band,
                 "judge_score": score,
-                "judge_band": judge_band(score),
+                "judge_band": predicted_band,
                 "reason": metric.reason,
             })
+            elapsed = time.perf_counter() - item_started
+            average = (time.perf_counter() - run_started) / index
+            eta = average * (total - index)
+            print(
+                f"[{index:02d}/{total}] {row.variant_id} done: "
+                f"score={score:.3f}, band={predicted_band}, "
+                f"{elapsed:.1f}s, ETA~{eta:.0f}s",
+                flush=True,
+            )
         except Exception as exc:  # noqa: BLE001 - persisted, not hidden
             failures.append(
                 f"{row.variant_id}: {type(exc).__name__}: {exc}"
+            )
+            print(
+                f"[{index:02d}/{total}] {row.variant_id} FAILED: "
+                f"{type(exc).__name__}: {exc}",
+                flush=True,
             )
 
     expected = [item["expected_band"] for item in scored]

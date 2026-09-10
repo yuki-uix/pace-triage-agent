@@ -81,6 +81,11 @@ The paid command exits non-zero if any judge call fails, but still records every
 successful item and every failure in the output file. It does not overwrite
 `results/meta_eval_judge.json` or the 2x2 comparison.
 
+Progress is printed as two stable lines per item: one before the request and one
+after it with the score, predicted band, elapsed time and approximate ETA.
+DeepEval's animated indicator is disabled because captured terminals render it
+as repeated `You're running...` fragments rather than useful progress.
+
 **The paid runs.** Each writes to `results/` and each is the source of exactly
 one table in the write-up.
 

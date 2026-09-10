@@ -24,6 +24,14 @@ def test_high_band_examples_have_no_seeded_faults():
     assert all(row.fault_tags for row in rows if row.expected_band < 3)
 
 
+def test_middle_bands_isolate_one_fault_and_low_band_has_multiple():
+    rows = load_validation_set()
+    assert all(len(row.fault_tags) == 1 for row in rows
+               if row.expected_band in {1, 2})
+    assert all(len(row.fault_tags) >= 2 for row in rows
+               if row.expected_band == 0)
+
+
 def test_band_range_and_variant_suffix_cannot_drift():
     row = load_validation_set()[0].model_dump(mode="json")
     row["expected_score_range"] = [0, 2]

@@ -54,3 +54,8 @@ Do not combine its scores with the natural-output agreement figure. The natural
 set estimates behaviour on this system's outputs; the balanced set tests whether
 the judge can distinguish all four rubric bands, including whether it falsely
 penalises careful answers.
+
+The first run and the reasons for revising the middle-band constructions are
+recorded in `docs/judge-validation-pilot-v1.md`. Dataset changes are made from
+the rubric-level adjudication documented there, not by copying the judge's
+predicted bands into the expected labels.

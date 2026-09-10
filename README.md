@@ -61,6 +61,26 @@ The unit tests, also free:
 .venv/bin/python -m pytest tests/
 ```
 
+### Running the balanced judge validation
+
+Run these commands from the repository root after completing Quick start and
+setting `DASHSCOPE_API_KEY`, `DASHSCOPE_BASE_URL` and `JUDGE_MODEL` in `.env`:
+
+```bash
+cd /path/to/pace-triage-agent
+
+# Free: validate the challenge-set contract, evidence IDs and 6/6/6/6 balance.
+.venv/bin/python -m src.judge_validation
+
+# Paid: 24 judge calls. The output path is explicit and may be changed.
+.venv/bin/python -m evals.judge_validation \
+  --out results/judge_validation.json
+```
+
+The paid command exits non-zero if any judge call fails, but still records every
+successful item and every failure in the output file. It does not overwrite
+`results/meta_eval_judge.json` or the 2x2 comparison.
+
 **The paid runs.** Each writes to `results/` and each is the source of exactly
 one table in the write-up.
 

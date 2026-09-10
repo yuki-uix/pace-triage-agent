@@ -38,23 +38,36 @@ from scipy.stats import spearmanr
 # band, not a decimal: asking a person for 0.73 invents a precision they do not
 # have, and the judge's decimal is compared by banding it the same way.
 BANDS: tuple[tuple[int, int], ...] = ((0, 2), (3, 5), (6, 8), (9, 10))
+TONE_AND_SUMMARY_BANDS: tuple[tuple[int, int], ...] = (
+    (0, 3), (4, 6), (7, 8), (9, 10),
+)
 METRICS: tuple[str, ...] = (
     "commitment groundedness", "tone match", "summary quality",
     "domain correctness",
 )
 
 
-def band_of(score_out_of_ten: float) -> int:
+def bands_for(metric: str) -> tuple[tuple[int, int], ...]:
+    if metric in {"tone match", "summary quality"}:
+        return TONE_AND_SUMMARY_BANDS
+    if metric in {"commitment groundedness", "domain correctness"}:
+        return BANDS
+    raise ValueError(f"unknown metric: {metric}")
+
+
+def band_of(score_out_of_ten: float,
+            metric: str = "commitment groundedness") -> int:
     """Index of the rubric band a 0-10 score falls in."""
-    for index, (low, high) in enumerate(BANDS):
+    for index, (low, high) in enumerate(bands_for(metric)):
         if low <= score_out_of_ten <= high:
             return index
     raise ValueError(f"score {score_out_of_ten} is outside 0-10")
 
 
-def judge_band(normalised_score: float) -> int:
+def judge_band(normalised_score: float,
+               metric: str = "commitment groundedness") -> int:
     """GEval returns 0-1; the rubric is 0-10."""
-    return band_of(round(normalised_score * 10))
+    return band_of(round(normalised_score * 10), metric)
 
 
 @dataclass
@@ -107,6 +120,9 @@ def build_worksheet(rows: list[dict], path: str) -> str:
         "Score each draft 0-10 on each dimension, using the bands below. Write "
         "your score in the `human` field of the matching row in the JSONL file "
         "next to this one.",
+        "",
+        "Read `docs/05-human-labeling.md` before starting. It defines the "
+        "closed-book boundary, practice examples and blind workflow.",
         "",
         "The judge's own scores are not shown here on purpose: seeing them first "
         "would anchor your judgement, and an anchored human column measures "
@@ -177,6 +193,38 @@ def load_human_labels(path: str) -> dict[tuple[str, str], int]:
     return labels
 
 
+@dataclass(frozen=True)
+class LabelProgress:
+    total: int
+    completed: int
+    missing: tuple[tuple[str, str], ...]
+
+
+def label_progress(path: str) -> LabelProgress:
+    """Report progress without loading or exposing any judge score."""
+    rows: dict[tuple[str, str], int | None] = {}
+    for line in pathlib.Path(path).read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        key = (row["record_id"], row["metric"])
+        if key[1] not in METRICS:
+            raise ValueError(f"unknown metric in human-label row: {key[1]}")
+        if key in rows:
+            raise ValueError(f"duplicate human-label row: {key[0]} {key[1]}")
+        value = row.get("human")
+        if value is not None and (not isinstance(value, int) or isinstance(value, bool)
+                                  or not 0 <= value <= 10):
+            raise ValueError(f"{key[0]} {key[1]}: {value} is not an integer 0-10")
+        rows[key] = value
+    missing = tuple(key for key, value in rows.items() if value is None)
+    return LabelProgress(
+        total=len(rows),
+        completed=len(rows) - len(missing),
+        missing=missing,
+    )
+
+
 def select(records, size: int = 15):
     """A spread across case types, excluding refusal records.
 
@@ -208,7 +256,7 @@ def main(argv: list[str]) -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="Judge meta-evaluation.")
-    parser.add_argument("phase", choices=["prepare", "score"])
+    parser.add_argument("phase", choices=["prepare", "status", "score"])
     parser.add_argument("--size", type=int, default=15)
     parser.add_argument("--out-dir", default="results")
     args = parser.parse_args(argv[1:])
@@ -217,6 +265,8 @@ def main(argv: list[str]) -> int:
     labels_path = out / "meta_eval_labels.jsonl"
     judge_path = out / "meta_eval_judge.json"
 
+    if args.phase == "status":
+        return _status(labels_path)
     if args.phase == "score":
         return _score(labels_path, judge_path)
     return _prepare(args.size, out, labels_path, judge_path)
@@ -327,10 +377,35 @@ def _prepare(size: int, out: pathlib.Path, labels_path: pathlib.Path,
     return 0
 
 
+def _status(labels_path: pathlib.Path) -> int:
+    if not labels_path.exists():
+        print("run the prepare phase first", flush=True)
+        return 2
+    progress = label_progress(str(labels_path))
+    print(f"human labels: {progress.completed}/{progress.total} complete")
+    if progress.missing:
+        missing_records = list(dict.fromkeys(record_id
+                                             for record_id, _ in progress.missing))
+        print("records still incomplete: " + ", ".join(missing_records))
+        print("judge scores remain hidden")
+        return 1
+    print("label set complete; it is safe to run the score phase")
+    return 0
+
+
 def _score(labels_path: pathlib.Path, judge_path: pathlib.Path) -> int:
     if not labels_path.exists() or not judge_path.exists():
         print("run the prepare phase first", flush=True)
         return 2
+
+    progress = label_progress(str(labels_path))
+    if progress.missing:
+        print(
+            f"human labels are incomplete: {progress.completed}/{progress.total}; "
+            "agreement remains hidden to prevent anchoring."
+        )
+        print("run the status phase to list incomplete records")
+        return 1
 
     human = load_human_labels(str(labels_path))
     judged = json.loads(judge_path.read_text(encoding="utf-8"))["scores"]
@@ -342,17 +417,30 @@ def _score(labels_path: pathlib.Path, judge_path: pathlib.Path) -> int:
               "the one figure that certifies every other figure.")
         return 1
 
+    missing_judge = [
+        (record_id, metric)
+        for record_id, metric in human
+        if judged.get(f"{record_id}|{metric}") is None
+    ]
+    if missing_judge:
+        print(f"judge output is missing {len(missing_judge)} prepared label(s)")
+        for record_id, metric in missing_judge:
+            print(f"  - {record_id}: {metric}")
+        return 2
+
     print(f"judge: {json.loads(judge_path.read_text(encoding='utf-8'))['judge_model']}")
     print(f"{len(human)} human labels\n")
-    for metric in METRICS:
+    labelled_metrics = [metric for metric in METRICS
+                        if any(name == metric for _, name in human)]
+    for metric in labelled_metrics:
         pairs = [(score, judged.get(f"{record_id}|{metric}"))
                  for (record_id, name), score in sorted(human.items())
                  if name == metric and judged.get(f"{record_id}|{metric}") is not None]
         if not pairs:
             print(f"{metric:26} no labels")
             continue
-        print(agreement([band_of(h) for h, _ in pairs],
-                        [judge_band(j) for _, j in pairs], metric).render())
+        print(agreement([band_of(h, metric) for h, _ in pairs],
+                        [judge_band(j, metric) for _, j in pairs], metric).render())
     return 0
 
 

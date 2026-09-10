@@ -1,0 +1,247 @@
+{
+  "agreement": {
+    "exact_band_rate": 0.875,
+    "n": 24,
+    "quadratic_weighted_kappa": 0.953125,
+    "spearman": 0.95654941255494,
+    "within_one_band_rate": 1.0
+  },
+  "confusion_matrix_rows_expected_columns_judge": [
+    [
+      6,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      5,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      4,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      6
+    ]
+  ],
+  "expected_band_order": [
+    "0-2",
+    "3-5",
+    "6-8",
+    "9-10"
+  ],
+  "failures": [],
+  "items": [
+    {
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 0.9222700143984234,
+      "reason": "The response accurately aligns with the supplied IA sources. Its claim that an annual dividend is generally fixed once declared, with interest potentially remaining non-guaranteed, is directly supported by PARTICIPATING_01. Its description of terminal bonus as a non-guaranteed, one-off benefit payable upon policy end via death, surrender, or maturity matches PARTICIPATING_02. The distinction between guaranteed and non-guaranteed benefits is consistent with PARTICIPATING_03. Critically, the response does not make any unsupported policy-specific assertions about WL-60705385; it correctly defers whether the statement figure is declared, whether partial withdrawal is permitted, and how it would affect the policy, stating these depend on the policy terms and that the policy and illustration need to be checked. This properly respects the evidence boundary and avoids stating policy-specific facts without evidence.",
+      "record_id": "ENQ-002",
+      "variant_id": "JV-002-D"
+    },
+    {
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.7,
+      "reason": "The reply accurately explains guaranteed vs. non-guaranteed benefits, annual dividends being generally fixed once declared, and terminal bonus payment triggers, all directly supported by [PARTICIPATING_01] and [PARTICIPATING_02]. The claim that dividends left with the insurer may earn varying interest is also supported. However, the statement 'You can usually withdraw an accumulated dividend without terminating the policy' is not supported by the supplied context, which only covers general dividend concepts and provides no evidence about withdrawal options. This claim is mitigated by the hedging word 'usually' and the immediate conditional deferral to check policy WL-60705385 before confirming options or issuing a new illustration, but it still represents a minor overstatement of a policy-specific feature as a general fact.",
+      "record_id": "ENQ-002",
+      "variant_id": "JV-002-C"
+    },
+    {
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "reason": "The reply accurately explains guaranteed cash value, non-guaranteed dividends, and terminal bonuses in alignment with the provided Insurance Authority sources. However, it makes a materially unsupported policy-specific claim by stating that policy WL-60705385 allows the withdrawal of accumulated dividends while keeping the policy active. The context explicitly lacks any insurer-specific product wording or policy schedule to support this definite statement. While the following sentence correctly defers to checking the policy and company process, the definitive assertion about the policy's allowance relies on absent evidence.",
+      "record_id": "ENQ-002",
+      "variant_id": "JV-002-B"
+    },
+    {
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The reply makes several materially wrong and unsupported claims. It directly contradicts the supplied context by stating that all future dividends are guaranteed and cannot fall, whereas the Insurance Authority source specifies that annual dividends are non-guaranteed before declaration. It also claims the full terminal bonus will still be paid, contradicting the evidence that terminal dividends are non-guaranteed and their amounts may change until payable. Furthermore, it asserts that the lower statement value is a 'printing error' that has been corrected and promises a corrected illustration today; both are definite company-process, system, and SLA claims presented as settled facts without any supporting CRM or document evidence. By providing multiple unsupported and contradicted policy/company instructions as facts, the response demonstrates a severe lack of evidential reliability.",
+      "record_id": "ENQ-002",
+      "variant_id": "JV-002-A"
+    },
+    {
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "The response correctly recognizes the absence of insurer-specific procedures, document checklists, and system states in the supplied context. It explicitly defers all material claims\u2014such as whether the mobile app or an emailed scan is accepted, whether the bank statement meets proof of address requirements, and whether one change covers both policies P-50535032 and P-76676583\u2014pending further verification. It avoids asserting any definite policy or company-process facts as settled truths, fully respecting the evidence boundary and safely ignoring the irrelevant medical claims context. Thus, it meets the 9-10 rubric by accurately scoping its statements and explicitly deferring pending the missing evidence.",
+      "record_id": "ENQ-009",
+      "variant_id": "JV-009-D"
+    },
+    {
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.8,
+      "reason": "The reply successfully avoids making unsupported definitive claims about the insurer's app, forms, or whether one change of address covers both policies, explicitly framing these as conditional next steps that require verification. However, it slightly violates the evidence boundary by stating that a bank statement is 'commonly used' as address evidence, which relies on unstated background knowledge not present in the provided context, even though it correctly defers the insurer-specific acceptance criteria.",
+      "record_id": "ENQ-009",
+      "variant_id": "JV-009-C"
+    },
+    {
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.5,
+      "reason": "The reply properly defers on whether the bank statement meets evidence requirements, whether one request covers both policies P-50535032 and P-76676583, and whether the earlier request was processed\u2014all phrased as conditional next steps. However, the statement 'You may email a scanned Change of Particulars form for the address update' is a definite, material claim about a specific insurer form name and an accepted service channel (email). The context's evidence boundary explicitly states that no service-channel SOP, document checklist, or insurer-specific product wording is present, and the two IA source items address only medical claims handling, not address changes. This unsupported policy/company instruction, stated as settled fact, brings the score into the 3-5 range despite the otherwise careful deferrals.",
+      "record_id": "ENQ-009",
+      "variant_id": "JV-009-B"
+    },
+    {
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.08933094159957175,
+      "reason": "The reply fabricates multiple policy-specific and operational actions as settled facts: it claims the address has been changed on both policies P-50535032 and P-76676583, that the bank statement was accepted as proof of address, that no further verification is needed, and that the old address was deleted from every system. The context explicitly states that no insurer-specific CRM/action state, document checklist, or system state evidence is present, and the only supplied sources (IA guidance on medical claims handling) are irrelevant to address change procedures. None of these claims are supported or even conditional\u2014each is stated as a completed fact. A customer could rely on these statements believing their address update is complete when there is zero evidence of any action taken.",
+      "record_id": "ENQ-009",
+      "variant_id": "JV-009-A"
+    },
+    {
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "reason": "The reply carefully defers all policy-specific details\u2014claim form, doctor's section, submission channel, original receipt requirements, and handling time\u2014to the checklist for policy VHL-30542581, which is absent from the context. This is consistent with the evidence boundary. It avoids stating any specific form, SLA, or process as fact. The follow-up coverage statement ('not automatically covered') is appropriately hedged with 'may depend on policy wording, medical necessity, benefit period and limits,' and the reply closes with a clear deferral ('should also be checked before we advise'). The only minor limitation is that 'not automatically covered' is stated rather than fully conditionalized, but it does not assert a policy-specific coverage decision. All material claims are either supported by the regulatory context or explicitly deferred pending missing evidence.",
+      "record_id": "ENQ-022",
+      "variant_id": "JV-022-D"
+    },
+    {
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.8,
+      "reason": "The reply appropriately defers policy-specific instructions to the missing evidence, explicitly stating the need to check the current checklist for policy VHL-30542581 to confirm doctor signature requirements and online submission rules. It also correctly supports the claim that processing time depends on completeness and complexity based on the provided context. However, it relies on unstated background knowledge by claiming medical claims 'commonly require' specific documents, which lacks support from the supplied sources. This minor overstatement keeps the score in the 6-8 range.",
+      "record_id": "ENQ-022",
+      "variant_id": "JV-022-C"
+    },
+    {
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "reason": "The reply safely defers on the form, medical certification, submission channel, and handling time, aligning with the evidence boundary that no insurer-specific checklists or SLAs are available. However, the definitive statement that the follow-up appointment 'is covered and can be claimed afterwards' is an unsupported policy-specific instruction; the supplied context lacks any policy schedule or wording to confirm coverage for follow-up treatments. This material claim requires absent policy evidence, placing the response in the 3-5 range.",
+      "record_id": "ENQ-022",
+      "variant_id": "JV-022-B"
+    },
+    {
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The reply gives multiple unsupported policy and company-process instructions as settled facts. It claims the HK$38,000 claim is already approved in full, provides a specific five-day SLA for reimbursement to a credit-card account, states that no doctor information or original documents are required, and guarantees full coverage for all follow-up appointments. The context explicitly states that no insurer-specific product wording, service-channel SOP, document checklist, SLA, or CRM/action state is present, making all of these definite assertions unsupported by the supplied evidence.",
+      "record_id": "ENQ-022",
+      "variant_id": "JV-022-A"
+    },
+    {
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "The reply carefully navigates the evidence boundary by framing actions as conditional next steps rather than asserting unsupported facts. It correctly states that registration 'should be confirmed only after' system entry and that the review 'should obtain' the benefit illustration to distinguish guaranteed from non-guaranteed projections, aligning with the supplied context on benefit illustrations without making unsupported policy-specific claims. The external complaint routing is accurately scoped: directing alleged intermediary misconduct to the Insurance Authority and monetary disputes to the Insurance Complaints Bureau, which matches the provided sources. By explicitly deferring any findings of mis-selling until the review, it respects the absence of CRM, SLA, and policy schedule evidence.",
+      "record_id": "ENQ-028",
+      "variant_id": "JV-028-D"
+    },
+    {
+      "expected_band": 2,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "reason": "The reply safely handles all material claims by explicitly deferring the mis-selling determination and using conditional phrasing for the internal review process ('would normally include'), which respects the evidence boundary that no internal SOPs or document checklists are present. It accurately scopes external escalation routes: directing eligible monetary disputes to the Insurance Complaints Bureau after the insurer's final response, and alleged agent misconduct to the Insurance Authority, both directly supported by the supplied context. No unsupported policy-specific instructions are presented as settled facts.",
+      "record_id": "ENQ-028",
+      "variant_id": "JV-028-C"
+    },
+    {
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.5,
+      "reason": "The reply properly defers policy-specific and surrender advice until the signed illustration and policy are reviewed, and correctly identifies the Insurance Authority and Insurance Complaints Bureau jurisdictions for agent misconduct and monetary disputes. However, the statement \"Your complaint has been registered\" asserts a definite CRM/action state. The context explicitly notes that no CRM or action state is present in the evidence pack, making this a materially unsupported system-process claim.",
+      "record_id": "ENQ-028",
+      "variant_id": "JV-028-B"
+    },
+    {
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The reply gives multiple unsupported policy and company-process instructions as settled facts, including confirming mis-selling, cancelling the policy, promising a full refund plus compensation within seven days, dismissing the agent, and waiving the need for documents. The context explicitly states that no insurer-specific product wording, SLA, billing record, or CRM state is present, making all these definite operational claims unsupported. The supplied sources only cover general dividend concepts, benefit illustration requirements, and complaint body jurisdictions, none of which justify the specific financial and operational commitments made in the response.",
+      "record_id": "ENQ-028",
+      "variant_id": "JV-028-A"
+    },
+    {
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "The reply accurately reflects the supplied context, explicitly citing the legal rules supported by [MARKETING_01] (opt-out may be made at any time, without charge, and without a prescribed form). It respects the evidence boundary by avoiding definite claims about the insurer's specific CRM state, SLA, or internal forms. The statement about the suppression record is carefully framed as a conditional next step ('should be confirmed only after'), aligning with step 4's guidance. All material claims are supported by the evidence and accurately scoped.",
+      "record_id": "ENQ-035",
+      "variant_id": "JV-035-D"
+    },
+    {
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.8,
+      "reason": "The reply correctly applies the legal rules from the supplied context, accurately stating that the opt-out request may be made at any time, does not require a special form, and must be honored without charge. However, it makes minor operational claims not explicitly supported by the evidence, such as stating that essential policy communications may still be sent separately and referencing a \"suppression record,\" which falls under the prohibited CRM/action state. These oversteps are minor and harmless, keeping the score in the 6-8 range.",
+      "record_id": "ENQ-035",
+      "variant_id": "JV-035-C"
+    },
+    {
+      "expected_band": 1,
+      "judge_band": 0,
+      "judge_score": 0.2,
+      "reason": "The reply correctly states supported legal principles from [MARKETING_01]: that the opt-out request is sufficient, must be honoured without charge, and requires no prescribed form. However, it then asserts two unsupported operational facts as settled matters: 'We have already added both contact details to the suppression list' and 'notified every marketing agent acting for the insurer.' The context's evidence boundary explicitly states that no CRM/action state or system-level evidence is present, and [MARKETING_02] only describes what agents should do upon receiving a request, not that notification has already occurred. These are definite claims about completed insurer actions on which the customer could rely, presented without any supporting evidence, placing the response in the lowest rubric band.",
+      "record_id": "ENQ-035",
+      "variant_id": "JV-035-B"
+    },
+    {
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The reply contains multiple materially wrong, contradicted legal and operational claims. It states that marketing consent is binding for the life of the policy, that an opt-out requires a branch visit and an administration fee, and that the request cannot be processed without a policy number. The context explicitly contradicts all of these points, noting that a data subject may opt out at any time, the data user must cease use without charge, and the request is not restricted to a prescribed channel or form. These false instructions violate the evidence boundary and squarely fit the lowest rubric tier.",
+      "record_id": "ENQ-035",
+      "variant_id": "JV-035-A"
+    },
+    {
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "reason": "The response accurately states the legal rules from the context: the 40-day compliance period (DAR_01), OPS003 form and identity verification (DAR_02), fee restrictions (DAR_03), and third-party data redaction (DAR_04). Critically, it explicitly defers insurer-specific details\u2014the actual form, secure verification method, fee amount, and records held\u2014stating they 'must be checked before confirming those details,' which respects the evidence boundary. The language is appropriately conditional throughout ('may require,' 'should normally,' 'may be charged'). One minor gap is that the customer's specific question about third-party disclosures (reinsurers, banks, agents) is not explicitly addressed or deferred, but this does not constitute an unsupported claim. No materially wrong legal rules or unsupported policy-specific instructions are present.",
+      "record_id": "ENQ-036",
+      "variant_id": "JV-036-D"
+    },
+    {
+      "expected_band": 2,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "reason": "The reply accurately cites the OPS003 form, 40-day processing timeframe, fee restrictions, and third-party redaction rules supported by [DAR_01] through [DAR_04]. However, it presents an unsupported company-process instruction by stating 'We normally ask customers to provide an HKID copy through our secure channel.' The context explicitly notes that an HKID copy is not necessary in every case and lacks any insurer-specific identity-verification workflow or service-channel SOP. Asserting this internal process as a settled fact relies on absent system evidence, placing the response in the 3-5 range.",
+      "record_id": "ENQ-036",
+      "variant_id": "JV-036-C"
+    },
+    {
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "reason": "The reply makes several well-supported claims: the OPS003 form and identity-verification requirement are supported by [DAR_02], the 40-day timeline by [DAR_01], and the redaction/scoping points by [DAR_04]. However, the statement 'We charge HK$100 for processing a data access request' is a definite, specific fee claim presented as a settled fact. The context ([DAR_03]) only establishes that a fee may be charged and must not be excessive, but supplies no billing record or specific amount. The evidence boundary explicitly notes that no billing record is present, making this HK$100 figure an unsupported company-process instruction on which the customer could rely. This single material unsupported claim pulls the score into the 3-5 band despite the otherwise accurate content.",
+      "record_id": "ENQ-036",
+      "variant_id": "JV-036-B"
+    },
+    {
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The reply contains multiple materially wrong legal claims contradicted by the supplied PDPO guidance. The '90 working days' response time directly contradicts [DAR_01], which states 40 calendar days. Asserting that a 'certified full copy of your HKID card' is required contradicts [DAR_02], which explicitly says a copy of an HKID card is not necessary in every case. The fixed 'non-refundable HK$500 fee' is unsupported\u2014[DAR_03] only permits a non-excessive, cost-reflective fee, with no specific amount in evidence. The blanket statements that call recordings and internal notes 'can never be requested' and that third-party disclosures need not be made are contradicted by the scope of a data access request under [DAR_01] and [DAR_04], which only permits redaction of other individuals' personal data. These are settled-fact misstatements on which a customer could rely, placing the response in the lowest band.",
+      "record_id": "ENQ-036",
+      "variant_id": "JV-036-A"
+    }
+  ],
+  "judge_model": "glm-5.2",
+  "usage": {
+    "calls": 24,
+    "completion_tokens": 47404,
+    "continuous_scoring_rate": 1.0,
+    "failures": [],
+    "prompt_tokens": 34351,
+    "reasoning_tokens": 43846,
+    "thinking_disabled_retries": 0,
+    "with_logprobs": 24
+  }
+}

@@ -72,6 +72,13 @@ recalculated with the new metric; it remains meta-evaluation-only until a paid
 comparison run is explicitly repeated and the source-backed judge is checked by
 a person.
 
+The check uses two datasets and reports them separately. Natural drafts in
+`results/meta_eval_drafts.jsonl` preserve the system's real, uneven quality
+distribution. `data/judge_validation_set.jsonl` is a balanced diagnostic: six
+source enquiries, each paired with controlled replies in all four rubric bands.
+Combining them would make the judge look better or worse by construction and
+would no longer estimate agreement on actual system output.
+
 ## Calibration
 
 Bucket predictions by stated confidence (0.5–0.6, 0.6–0.7, …) and compare bucket

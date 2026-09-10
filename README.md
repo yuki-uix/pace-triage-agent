@@ -61,12 +61,38 @@ The unit tests, also free:
 .venv/bin/python -m pytest tests/
 ```
 
+### Running the balanced judge validation
+
+Run these commands from the repository root after completing Quick start and
+setting `DASHSCOPE_API_KEY`, `DASHSCOPE_BASE_URL` and `JUDGE_MODEL` in `.env`:
+
+```bash
+cd /path/to/pace-triage-agent
+
+# Free: validate the challenge-set contract, evidence IDs and 6/6/6/6 balance.
+.venv/bin/python -m src.judge_validation
+
+# Paid: 24 judge calls. The output path is explicit and may be changed.
+.venv/bin/python -m evals.judge_validation \
+  --out results/judge_validation.json
+```
+
+The paid command exits non-zero if any judge call fails, but still records every
+successful item and every failure in the output file. It does not overwrite
+`results/meta_eval_judge.json` or the 2x2 comparison.
+
+Progress is printed as two stable lines per item: one before the request and one
+after it with the score, predicted band, elapsed time and approximate ETA.
+DeepEval's animated indicator is disabled because captured terminals render it
+as repeated `You're running...` fragments rather than useful progress.
+
 **The paid runs.** Each writes to `results/` and each is the source of exactly
 one table in the write-up.
 
 | Command | Produces | Cost |
 |---|---|---|
 | `.venv/bin/python -m src.quotas data/enquiries.jsonl` | Dataset quota check | free |
+| `.venv/bin/python -m src.judge_validation` | Validate the balanced, source-backed judge challenge set | free |
 | `.venv/bin/python -m src.generate --out data/enquiries.jsonl` | Regenerates the dataset — **do not run**, see the freeze rule below | ~40 calls |
 | `.venv/bin/python -m src.relabel --runs 3` | `results/relabel.json` — inter-annotator agreement | 120 calls |
 | `.venv/bin/python -m evals.compare` | `results/comparison.json` — the 2×2 matrix, confusion matrices, judge reasons | ~800 calls, ~57 min |
@@ -74,6 +100,7 @@ one table in the write-up.
 | `.venv/bin/python -m evals.latency` | `results/latency.json` — **serial**, never merged with a quality run | 80 calls, ~5 min |
 | `.venv/bin/python -m evals.meta_evaluation prepare` | Worksheet + judge scores, including source-backed domain correctness | ~90 calls |
 | `.venv/bin/python -m evals.meta_evaluation score` | Judge/human agreement — **needs a person to fill the worksheet first** | free |
+| `.venv/bin/python -m evals.judge_validation` | Four-band challenge-set matrix for the source-backed domain judge | 24 calls |
 | `.venv/bin/python -m src.pipeline --traces results/traces.jsonl` | Fills the pending queue | 80 calls |
 | `.venv/bin/python -m src.review` | Review the pending queue | free |
 
@@ -170,7 +197,7 @@ someone has to keep.
 | Path | Contents |
 |---|---|
 | `src/` | Pipeline, schema, contract, redaction, trace store, review CLI |
-| `data/` | Enquiries, frozen golden set, labeling guide, provenance, price template |
+| `data/` | Enquiries, frozen golden set, balanced judge-validation set, labeling guide, provenance, price template |
 | `knowledge/` | Versioned first-party regulatory sources and atomic reference claims for the judge |
 | `evals/` | Metrics, comparison, calibration, latency, meta-evaluation |
 | `results/` | The numbers this README cites |

@@ -42,3 +42,26 @@ can make no promise and still state the law or a policy term incorrectly.
 The files are versioned rather than fetched during an evaluation. A live fetch
 would make two runs depend on different evidence and would make an unavailable
 website look like a model-quality change.
+
+## Balanced validation data
+
+`data/judge_validation_set.jsonl` is a controlled challenge set, separate from
+the natural model outputs in `results/meta_eval_drafts.jsonl`. It contains four
+counterfactual replies to each of six enquiries: one in every 0–2, 3–5, 6–8 and
+9–10 domain-correctness band. Each row names its seeded faults and evidence IDs.
+
+Do not combine its scores with the natural-output agreement figure. The natural
+set estimates behaviour on this system's outputs; the balanced set tests whether
+the judge can distinguish all four rubric bands, including whether it falsely
+penalises careful answers.
+
+The first run and the reasons for revising the middle-band constructions are
+recorded in `docs/judge-validation-pilot-v1.md`. Dataset changes are made from
+the rubric-level adjudication documented there, not by copying the judge's
+predicted bands into the expected labels.
+
+The rerun is preserved as `results/judge_validation_pilot_v2.json`; its summary,
+input fingerprints and mismatch adjudication are in
+`docs/judge-validation-pilot-v2.md`. Future runner outputs include the input
+SHA-256 values automatically so a paid result can be tied to the exact dataset,
+reference pack and judge rubric that produced it.

@@ -59,3 +59,9 @@ The first run and the reasons for revising the middle-band constructions are
 recorded in `docs/judge-validation-pilot-v1.md`. Dataset changes are made from
 the rubric-level adjudication documented there, not by copying the judge's
 predicted bands into the expected labels.
+
+The rerun is preserved as `results/judge_validation_pilot_v2.json`; its summary,
+input fingerprints and mismatch adjudication are in
+`docs/judge-validation-pilot-v2.md`. Future runner outputs include the input
+SHA-256 values automatically so a paid result can be tied to the exact dataset,
+reference pack and judge rubric that produced it.

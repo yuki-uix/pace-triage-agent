@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import pathlib
 import time
@@ -15,6 +16,22 @@ from src.judge import DashScopeJudge
 from src.judge_validation import load_validation_set, validate_set
 from src.quotas import load_enquiries
 from src.reference_pack import reference_context
+
+
+PROVENANCE_FILES = (
+    pathlib.Path("data/judge_validation_set.jsonl"),
+    pathlib.Path("knowledge/source_manifest.json"),
+    pathlib.Path("knowledge/reference_claims.jsonl"),
+    pathlib.Path("evals/metrics/judged.py"),
+)
+
+
+def input_sha256(paths: tuple[pathlib.Path, ...] = PROVENANCE_FILES) -> dict[str, str]:
+    """Fingerprint the inputs needed to interpret a paid validation run."""
+    return {
+        path.as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in paths
+    }
 
 
 def matrix(expected: list[int], predicted: list[int]) -> list[list[int]]:
@@ -98,6 +115,7 @@ def main(argv: list[str]) -> int:
     predicted = [item["judge_band"] for item in scored]
     result: dict = {
         "judge_model": judge.get_model_name(),
+        "input_sha256": input_sha256(),
         "expected_band_order": ["0-2", "3-5", "6-8", "9-10"],
         "confusion_matrix_rows_expected_columns_judge": matrix(expected, predicted),
         "items": scored,

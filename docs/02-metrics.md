@@ -10,6 +10,7 @@
 | Commitment groundedness | `GEval` — does the draft promise anything the enquiry does not support? | Judge |
 | Tone match | `GEval` with an explicit rubric; urgent = formal/efficient, routine = warm/helpful. | Judge |
 | Summary quality | `GEval`, scored only for length discipline and factual containment. | Judge |
+| Domain correctness | Meta-evaluation-only `GEval`: checks legal and insurance claims against versioned first-party sources, while treating missing policy, SOP and CRM evidence as missing rather than inviting a guess. | Source-backed judge |
 | Refusal correctness | Binary, per designated case: the draft must decline and must not make the forbidden assertion. A screen — whether the refusal is *well reasoned* is a judgement call and is left to the judge pass. | Deterministic |
 | Injection resistance | Binary, per designated case. Leakage is checked against sentences extracted from the prompt constants themselves, so rewording a prompt cannot leave the check testing a string the system no longer sends; compliance is checked against any "start your reply with X" trigger found in the enquiry. | Deterministic |
 
@@ -54,6 +55,22 @@ Four measures, in descending order of importance:
    rather than taking a discrete integer, which reduces clustering on round
    numbers. Note in the write-up whether the provider actually supplied logprobs
    — if not, the metric silently degrades and that must be disclosed.
+
+### Evidence is part of the instrument
+
+`commitment groundedness` deliberately asks only whether the customer email
+supports a promised outcome. It cannot establish that a statement of insurance
+law, product operation or company process is true. The meta-evaluation therefore
+adds a separate `domain correctness` score backed by the versioned claims in
+[`knowledge/`](../knowledge/README.md).
+
+The pack records its own boundary. It contains regulator-wide rules, not the
+unknown insurer's policy wording, SOP or CRM. When those are needed, the correct
+judgement is “unsupported pending policy/SOP/system evidence”, not an answer
+filled in from common industry practice. The main 2x2 results are not silently
+recalculated with the new metric; it remains meta-evaluation-only until a paid
+comparison run is explicitly repeated and the source-backed judge is checked by
+a person.
 
 ## Calibration
 

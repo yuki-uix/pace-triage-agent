@@ -38,7 +38,10 @@ from scipy.stats import spearmanr
 # band, not a decimal: asking a person for 0.73 invents a precision they do not
 # have, and the judge's decimal is compared by banding it the same way.
 BANDS: tuple[tuple[int, int], ...] = ((0, 2), (3, 5), (6, 8), (9, 10))
-METRICS: tuple[str, ...] = ("commitment groundedness", "tone match", "summary quality")
+METRICS: tuple[str, ...] = (
+    "commitment groundedness", "tone match", "summary quality",
+    "domain correctness",
+)
 
 
 def band_of(score_out_of_ten: float) -> int:
@@ -111,11 +114,12 @@ def build_worksheet(rows: list[dict], path: str) -> str:
         "",
     ]
     from evals.metrics.judged import (
-        COMMITMENT_RUBRIC, SUMMARY_RUBRIC, TONE_RUBRIC,
+        COMMITMENT_RUBRIC, DOMAIN_RUBRIC, SUMMARY_RUBRIC, TONE_RUBRIC,
     )
     for metric, rubric in (("commitment groundedness", COMMITMENT_RUBRIC),
                            ("tone match", TONE_RUBRIC),
-                           ("summary quality", SUMMARY_RUBRIC)):
+                           ("summary quality", SUMMARY_RUBRIC),
+                           ("domain correctness", DOMAIN_RUBRIC)):
         lines.append(f"## {metric}")
         lines.append("")
         for band in rubric:
@@ -224,12 +228,13 @@ def _prepare(size: int, out: pathlib.Path, labels_path: pathlib.Path,
 
     from openai import OpenAI
 
-    from evals.metrics.judged import JUDGED_METRICS
+    from evals.metrics.judged import META_EVALUATION_METRICS
     from src.contract import FailureCounters
     from src.generate import load_env
     from src.judge import DashScopeJudge
     from src.pipeline import PipelineConfig, StageConfig, run
     from src.quotas import load_records
+    from src.reference_pack import reference_context
     from deepeval.test_case import LLMTestCase
 
     load_env()
@@ -238,7 +243,7 @@ def _prepare(size: int, out: pathlib.Path, labels_path: pathlib.Path,
     config = PipelineConfig(StageConfig(os.environ["TRIAGE_MODEL_A"]),
                             StageConfig(os.environ["TRIAGE_MODEL_B"]))
     judge = DashScopeJudge()
-    metrics = [build(judge) for build in JUDGED_METRICS]
+    metrics = [build(judge) for build in META_EVALUATION_METRICS]
 
     records = select(load_records(), size)
     counters = FailureCounters()
@@ -264,10 +269,18 @@ def _prepare(size: int, out: pathlib.Path, labels_path: pathlib.Path,
 
         scored = LLMTestCase(input=enquiry, actual_output=item.draft_reply)
         summary_case = LLMTestCase(input=enquiry, actual_output=item.summary)
+        domain_case = LLMTestCase(
+            input=enquiry,
+            actual_output=item.draft_reply,
+            context=reference_context(enquiry),
+        )
         for metric in metrics:
             try:
                 name = canonical_name(metric.__name__)
-                metric.measure(summary_case if name == "summary quality" else scored)
+                case = summary_case if name == "summary quality" else scored
+                if name == "domain correctness":
+                    case = domain_case
+                metric.measure(case)
                 judge_scores[f"{record.id}|{name}"] = metric.score
             except Exception as exc:  # noqa: BLE001
                 problems.append(

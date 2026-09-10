@@ -1,0 +1,82 @@
+[
+  {
+    "id": "IA_LIFE_INSURANCE",
+    "publisher": "Insurance Authority",
+    "authority_type": "regulator",
+    "title": "Understanding Life Insurance",
+    "url": "https://www.ia.org.hk/en/infocenter/files/Understanding_Life_Insurance_Eng.pdf",
+    "topics": ["participating_policy"],
+    "verified_on": "2026-09-10",
+    "scope": "General life-insurance concepts; not the wording of any individual policy."
+  },
+  {
+    "id": "IA_GL28",
+    "publisher": "Insurance Authority",
+    "authority_type": "regulator",
+    "title": "Guideline on Benefit Illustrations for Long Term Insurance Policies",
+    "url": "https://www.ia.org.hk/english/legislative_framework/files/GL28_English.pdf",
+    "topics": ["participating_policy"],
+    "verified_on": "2026-09-10",
+    "scope": "Regulatory requirements for benefit illustrations; not a customer's actual illustration."
+  },
+  {
+    "id": "IA_MEDICAL_CLAIMS",
+    "publisher": "Insurance Authority",
+    "authority_type": "regulator",
+    "title": "Handling of medical insurance claims - the IA's expectations",
+    "url": "https://www.ia.org.hk/en/legislative_framework/Conduct_in_Focus_Issue_07_%28Special_Supplement_02%29.html",
+    "topics": ["medical_claim"],
+    "verified_on": "2026-09-10",
+    "scope": "Regulatory expectations; not an insurer-specific claim checklist or service level."
+  },
+  {
+    "id": "IA_COMPLAINTS",
+    "publisher": "Insurance Authority",
+    "authority_type": "regulator",
+    "title": "Lodge a complaint about an authorized insurer or licensed insurance intermediary",
+    "url": "https://www.ia.org.hk/en/consumer/lodge_a_complaint.html",
+    "topics": ["complaint"],
+    "verified_on": "2026-09-10",
+    "scope": "The Insurance Authority's remit and process; not an insurer's internal complaint status."
+  },
+  {
+    "id": "ICB_FAQ",
+    "publisher": "Insurance Complaints Bureau",
+    "authority_type": "complaints_scheme",
+    "title": "Insurance Complaints Bureau FAQ",
+    "url": "https://www.icb.org.hk/en/faq.html",
+    "topics": ["complaint"],
+    "verified_on": "2026-09-10",
+    "scope": "The Bureau's published jurisdiction and intake requirements."
+  },
+  {
+    "id": "PCPD_DIRECT_MARKETING",
+    "publisher": "Privacy Commissioner for Personal Data",
+    "authority_type": "regulator",
+    "title": "Guidance on Direct Marketing",
+    "url": "https://www.pcpd.org.hk/english/resources_centre/publications/files/GN_DM_e.pdf",
+    "topics": ["direct_marketing"],
+    "verified_on": "2026-09-10",
+    "scope": "Hong Kong direct-marketing obligations under the PDPO."
+  },
+  {
+    "id": "PCPD_DAR",
+    "publisher": "Privacy Commissioner for Personal Data",
+    "authority_type": "regulator",
+    "title": "Proper Handling of Data Access Request and Charging of Data Access Request Fee by Data Users",
+    "url": "https://www.pcpd.org.hk/english/resources_centre/publications/files/dar2020_e.pdf",
+    "topics": ["data_access"],
+    "verified_on": "2026-09-10",
+    "scope": "Data-access rights and duties under the PDPO; not an insurer's identity-verification workflow."
+  },
+  {
+    "id": "IA_LEVY",
+    "publisher": "Insurance Authority",
+    "authority_type": "regulator",
+    "title": "Financial arrangements - levy on insurance premiums",
+    "url": "https://www.ia.org.hk/en/aboutus/role/financial_arrangements.html",
+    "topics": ["premium_billing"],
+    "verified_on": "2026-09-10",
+    "scope": "The statutory levy rate and cap; not the reason for a particular debit."
+  }
+]

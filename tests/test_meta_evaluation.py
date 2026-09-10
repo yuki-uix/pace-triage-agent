@@ -19,6 +19,8 @@ from evals.meta_evaluation import (
 from evals.metrics.judged import (
     COMMITMENT_RUBRIC,
     COMMITMENT_STEPS,
+    DOMAIN_RUBRIC,
+    DOMAIN_STEPS,
     SUMMARY_RUBRIC,
     SUMMARY_STEPS,
     TONE_RUBRIC,
@@ -156,7 +158,9 @@ def test_a_label_outside_the_scale_raises(tmp_path):
 
 # ------------------------------------------------------- rubrics and judging
 
-@pytest.mark.parametrize("steps", [COMMITMENT_STEPS, TONE_STEPS, SUMMARY_STEPS])
+@pytest.mark.parametrize(
+    "steps", [COMMITMENT_STEPS, TONE_STEPS, SUMMARY_STEPS, DOMAIN_STEPS]
+)
 def test_evaluation_steps_are_specific_not_boilerplate(steps):
     """Auto-generated from a criteria string means an unexamined rubric.
 
@@ -172,7 +176,9 @@ def test_evaluation_steps_are_specific_not_boilerplate(steps):
                    for step in steps), "reads as an auto-generated criteria echo"
 
 
-@pytest.mark.parametrize("rubric", [COMMITMENT_RUBRIC, TONE_RUBRIC, SUMMARY_RUBRIC])
+@pytest.mark.parametrize(
+    "rubric", [COMMITMENT_RUBRIC, TONE_RUBRIC, SUMMARY_RUBRIC, DOMAIN_RUBRIC]
+)
 def test_rubric_bands_cover_the_whole_scale_without_gaps(rubric):
     covered = sorted(band.score_range for band in rubric)
     assert covered[0][0] == 0

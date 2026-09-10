@@ -1,8 +1,9 @@
-"""The three metrics that genuinely need a judge, and the argument for each.
+"""The judged metrics and the argument for each.
 
 Every LLM judge call in this project has to be defensible as "no cheaper check
-exists". These three are, and the reason is written next to each one. The
-rubrics and the evaluation steps are hand-written rather than generated from a
+exists". The main comparison has three such metrics; meta-evaluation adds a
+fourth, source-backed domain check. The reason is written next to each one. The
+rubrics and evaluation steps are hand-written rather than generated from a
 criteria string, because an auto-generated rubric is an unexamined rubric and
 the bands are where the judgement actually lives.
 """
@@ -15,6 +16,7 @@ from deepeval.test_case import LLMTestCaseParams
 
 INPUT = LLMTestCaseParams.INPUT
 OUTPUT = LLMTestCaseParams.ACTUAL_OUTPUT
+CONTEXT = LLMTestCaseParams.CONTEXT
 
 # Why this one cannot be a set comparison: a fabricated commitment need contain
 # no fabricated entity. "We will get back to you shortly" invents nothing an
@@ -115,6 +117,43 @@ SUMMARY_RUBRIC = [
         "for a reviewer to triage without opening it.")),
 ]
 
+# This is intentionally separate from commitment groundedness. A reply can make
+# no promise and still state a law, policy term or claims process incorrectly.
+# CONTEXT contains only versioned claims from `knowledge/`; its first item also
+# names the company and policy evidence that is absent.
+DOMAIN_STEPS = [
+    "Extract every insurance, legal and operational claim in the draft reply. "
+    "Include statements about benefits, dividends, surrender, claims, privacy, "
+    "complaints, fees, forms, documents, channels and processing state.",
+    "For each claim, identify an item in the supplied context that supports or "
+    "contradicts it. Do not use unstated background knowledge and do not treat a "
+    "general regulatory principle as an insurer-specific product rule.",
+    "Apply the evidence boundary in the context. A definite statement about an "
+    "individual policy, an insurer's app or form, a document checklist, an SLA, "
+    "a billing record or CRM state is unsupported when that evidence is absent.",
+    "Distinguish a careful conditional next step from a fact. 'We need to check "
+    "your policy' is safe; 'your policy allows this' is not supported merely "
+    "because the statement is plausible for some policies.",
+    "Score factual and evidential reliability, not helpfulness or tone. One "
+    "materially wrong legal rule or one policy-specific instruction on which a "
+    "customer could rely should dominate several harmless correct sentences.",
+]
+
+DOMAIN_RUBRIC = [
+    Rubric(score_range=(0, 2), expected_outcome=(
+        "The reply contains a contradicted legal or insurance claim, or gives "
+        "multiple unsupported policy/company instructions as settled facts.")),
+    Rubric(score_range=(3, 5), expected_outcome=(
+        "The general direction is plausible, but at least one material claim "
+        "requires absent policy, company-process or system evidence.")),
+    Rubric(score_range=(6, 8), expected_outcome=(
+        "Claims are consistent with the supplied sources and mostly respect "
+        "their scope, with only a minor overstatement or missing qualification.")),
+    Rubric(score_range=(9, 10), expected_outcome=(
+        "Every material claim is supported by the supplied evidence, accurately "
+        "scoped, or explicitly deferred pending the missing evidence.")),
+]
+
 
 def commitment_groundedness(model, threshold: float = 0.98) -> GEval:
     """The high-severity half of groundedness that a set comparison cannot see."""
@@ -150,4 +189,20 @@ def summary_quality(model, threshold: float = 0.7) -> GEval:
     )
 
 
+def domain_correctness(model, threshold: float = 0.9) -> GEval:
+    """Source-backed correctness without pretending general rules are a policy."""
+    return GEval(
+        name="domain correctness",
+        evaluation_params=[INPUT, OUTPUT, CONTEXT],
+        evaluation_steps=DOMAIN_STEPS,
+        rubric=DOMAIN_RUBRIC,
+        model=model,
+        threshold=threshold,
+    )
+
+
 JUDGED_METRICS = (commitment_groundedness, tone_match, summary_quality)
+# The recorded 2x2 comparison predates the reference pack. Keep its instrument
+# stable; the next paid run may deliberately promote this metric into the main
+# matrix after the source-backed judge itself has been human-validated.
+META_EVALUATION_METRICS = JUDGED_METRICS + (domain_correctness,)

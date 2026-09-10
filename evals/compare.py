@@ -94,6 +94,7 @@ class CombinationResult:
     no_output: list[str] = field(default_factory=list)
     judged: list[dict] = field(default_factory=list)
     ungrounded: list[dict] = field(default_factory=list)
+    per_record: list[dict] = field(default_factory=list)
 
     @property
     def label(self) -> str:
@@ -152,6 +153,16 @@ def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
     # none are listed separately and never counted as wrong answers.
     case_pairs = [(r.expected_type.value, o["case_type"]) for r, o in scored]
     priority_pairs = [(r.expected_priority.value, o["priority"]) for r, o in scored]
+    # Per record, because the aggregate cannot answer a later question. The
+    # calibration table needs the confidence beside the outcome, and a run that
+    # stored only means had to be repeated to get it.
+    result.per_record = [
+        {"record_id": r.id, "expected_type": r.expected_type.value,
+         "predicted_type": o["case_type"],
+         "expected_priority": r.expected_priority.value,
+         "predicted_priority": o["priority"], "confidence": o["confidence"]}
+        for r, o in scored
+    ]
     case_report = case_type_report(case_pairs)
     priority_view = priority_report(priority_pairs)
 
@@ -360,6 +371,7 @@ def write_results(path: str, results: list[CombinationResult],
              "composite_triage": r.composite(TRIAGE_WEIGHTS),
              "composite_draft": r.composite(DRAFT_WEIGHTS),
              "confusion_matrix": r.confusion,
+             "per_record": r.per_record,
              "judged_per_record": r.judged,
              "ungrounded_entities": r.ungrounded}
             for r in results

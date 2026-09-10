@@ -13,4 +13,9 @@ results/*.json
 # read the numbers without paying to regenerate them.
 !results/relabel.json
 !results/latency.json
+!results/comparison.json
+!results/meta_eval_judge.json
+!results/meta_eval_labels.jsonl
+!results/meta_eval_worksheet.md
+!results/meta_eval_drafts.jsonl
 traces/

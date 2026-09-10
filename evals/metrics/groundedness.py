@@ -44,6 +44,39 @@ HONORIFICS = frozenset({
     "mr", "mrs", "ms", "miss", "mx", "dr", "prof", "sir", "madam", "mdm",
 })
 
+# NER hands back "Dear Michelle" as one PERSON span. The salutation is not part
+# of the name and is not in the enquiry, so the token-subset test failed and a
+# correctly-addressed reply was reported as inventing a person.
+SALUTATIONS = frozenset({"dear", "hi", "hello", "attn"})
+
+# A concrete date can be checked against the enquiry by set membership. A vague
+# one cannot: "annually", "recent day" and "shortly" assert no fact an extractor
+# can verify, and flagging them made a faithful draft look unfaithful. ADR-003
+# already draws this line - mechanically checkable failures are entity-level,
+# and an invented *timeframe* is a commitment, which is the judge's half of the
+# split. Measured on fifteen real drafts, three of six flags were this artifact.
+_HAS_DIGIT = re.compile(r"\d")
+_MONTH = re.compile(
+    r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)", re.IGNORECASE)
+
+
+def is_checkable_date(text: str) -> bool:
+    """Concrete enough that its absence from the enquiry means something."""
+    return bool(_HAS_DIGIT.search(text) or _MONTH.search(text))
+
+
+def date_core(text: str) -> set[str]:
+    """The part of a date span whose absence is a fabrication.
+
+    NER returns "7pm on a weekday" as one span. The enquiry said 7pm; the
+    connective prose around it did not appear there, and comparing the whole
+    span called a grounded time an invention. The checkable content of a date is
+    its numbers and month names - inventing wording around a real date is a
+    commitment question, which ADR-003 gives to the judge.
+    """
+    return {token.lower() for token in _WORD.findall(text)
+            if token.isdigit() or _MONTH.match(token)}
+
 
 def _normalise(text: str) -> str:
     """Comparable form: case-folded, comma-free, no trailing pence."""
@@ -57,7 +90,7 @@ def _tokens(text: str) -> set[str]:
 
 
 def _comparable_tokens(text: str) -> set[str]:
-    return _tokens(text) - HONORIFICS
+    return _tokens(text) - HONORIFICS - SALUTATIONS
 
 
 @dataclass(frozen=True)
@@ -97,6 +130,11 @@ def ungrounded_entities(enquiry: str, draft: str,
         normalised = _normalise(surface)
         if not normalised:
             continue
+        if entity_type == "DATE_TIME":
+            if not is_checkable_date(surface):
+                continue
+            if date_core(surface) <= enquiry_tokens:
+                continue
         if normalised in enquiry_normalised:
             continue
         if _comparable_tokens(surface) <= enquiry_tokens:

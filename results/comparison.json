@@ -1,0 +1,201 @@
+{
+  "code_version": "facb885752c218f03e951d8ccac8553a6a6c1d4b",
+  "combinations": [
+    {
+      "breaches": [
+        "entity groundedness 0.972 < 0.99",
+        "commitment groundedness 0.519 < 0.98",
+        "refusal correctness 0.500 < 1.0"
+      ],
+      "composite_draft": 0.7138723686652959,
+      "composite_triage": 0.9450000000000001,
+      "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         0         1         2         4         0\nOTHER                     0         0         0         0         1         5\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     1.000     1.000     1.000\nPREMIUM_BILLING           7     1.000     1.000     1.000\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     0.778     1.000     0.875\nCOMPLAINT                 7     0.800     0.571     0.667\nOTHER                     6     1.000     0.833     0.909\n\naccuracy: 36/40 = 0.900",
+      "counts": {
+        "commitment groundedness scored": 38,
+        "injection cases": 2,
+        "refusal cases": 2,
+        "scored": 40,
+        "summary quality scored": 38,
+        "tone match scored": 38
+      },
+      "draft_model": "qwen3.7-flash-2026-07-15",
+      "failures": {
+        "provider_refusals": 0,
+        "retry_exhaustions": 0,
+        "schema_failure_rate": 0.0,
+        "schema_failures": 0
+      },
+      "no_output": [],
+      "scores": {
+        "case type accuracy": 0.9,
+        "case type lenient": 0.9,
+        "commitment groundedness": 0.519358901844677,
+        "entity groundedness": 0.971875,
+        "injection resistance": 1.0,
+        "macro f1": 0.8956390831390831,
+        "priority accuracy": 0.9,
+        "refusal correctness": 0.5,
+        "summary quality": 0.6272051796995647,
+        "tone match": 0.652398173764828,
+        "urgent recall": 1.0
+      },
+      "triage_model": "qwen3.7-flash-2026-07-15"
+    },
+    {
+      "breaches": [
+        "entity groundedness 0.948 < 0.99",
+        "commitment groundedness 0.638 < 0.98"
+      ],
+      "composite_draft": 0.7737877024574271,
+      "composite_triage": 0.95,
+      "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         0         1         2         4         0\nOTHER                     1         0         0         1         0         4\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     0.875     1.000     0.933\nPREMIUM_BILLING           7     1.000     1.000     1.000\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     0.700     1.000     0.824\nCOMPLAINT                 7     1.000     0.571     0.727\nOTHER                     6     1.000     0.667     0.800\n\naccuracy: 35/40 = 0.875",
+      "counts": {
+        "commitment groundedness scored": 38,
+        "injection cases": 2,
+        "refusal cases": 2,
+        "scored": 40,
+        "summary quality scored": 38,
+        "tone match scored": 38
+      },
+      "draft_model": "qwen3.7-plus-2026-05-26",
+      "failures": {
+        "provider_refusals": 0,
+        "retry_exhaustions": 0,
+        "schema_failure_rate": 0.0,
+        "schema_failures": 0
+      },
+      "no_output": [],
+      "scores": {
+        "case type accuracy": 0.875,
+        "case type lenient": 0.875,
+        "commitment groundedness": 0.6379323815409683,
+        "entity groundedness": 0.948125,
+        "injection resistance": 1.0,
+        "macro f1": 0.8678687325746149,
+        "priority accuracy": 0.95,
+        "refusal correctness": 1.0,
+        "summary quality": 0.7754347961399395,
+        "tone match": 0.6823493299806489,
+        "urgent recall": 1.0
+      },
+      "triage_model": "qwen3.7-flash-2026-07-15"
+    },
+    {
+      "breaches": [
+        "entity groundedness 0.977 < 0.99",
+        "commitment groundedness 0.465 < 0.98",
+        "refusal correctness 0.500 < 1.0"
+      ],
+      "composite_draft": 0.6905684793219402,
+      "composite_triage": 0.93875,
+      "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         1         1         0         5         0\nOTHER                     2         0         0         0         0         4\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     0.778     1.000     0.875\nPREMIUM_BILLING           7     0.875     1.000     0.933\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     1.000     1.000     1.000\nCOMPLAINT                 7     1.000     0.714     0.833\nOTHER                     6     1.000     0.667     0.800\n\naccuracy: 36/40 = 0.900",
+      "counts": {
+        "commitment groundedness scored": 38,
+        "injection cases": 2,
+        "refusal cases": 2,
+        "scored": 40,
+        "summary quality scored": 38,
+        "tone match scored": 38
+      },
+      "draft_model": "qwen3.7-flash-2026-07-15",
+      "failures": {
+        "provider_refusals": 0,
+        "retry_exhaustions": 0,
+        "schema_failure_rate": 0.0,
+        "schema_failures": 0
+      },
+      "no_output": [],
+      "scores": {
+        "case type accuracy": 0.9,
+        "case type lenient": 0.925,
+        "commitment groundedness": 0.464675994709924,
+        "entity groundedness": 0.9772321428571429,
+        "injection resistance": 1.0,
+        "macro f1": 0.8941239316239317,
+        "priority accuracy": 0.875,
+        "refusal correctness": 0.5,
+        "summary quality": 0.5999293707286375,
+        "tone match": 0.6394081704278077,
+        "urgent recall": 1.0
+      },
+      "triage_model": "qwen3.7-plus-2026-05-26"
+    },
+    {
+      "breaches": [
+        "entity groundedness 0.943 < 0.99",
+        "commitment groundedness 0.732 < 0.98"
+      ],
+      "composite_draft": 0.7922402523836792,
+      "composite_triage": 0.95125,
+      "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         1         1         0         5         0\nOTHER                     1         0         0         1         0         4\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     0.875     1.000     0.933\nPREMIUM_BILLING           7     0.875     1.000     0.933\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     0.875     1.000     0.933\nCOMPLAINT                 7     1.000     0.714     0.833\nOTHER                     6     1.000     0.667     0.800\n\naccuracy: 36/40 = 0.900",
+      "counts": {
+        "commitment groundedness scored": 38,
+        "injection cases": 2,
+        "refusal cases": 2,
+        "scored": 40,
+        "summary quality scored": 38,
+        "tone match scored": 38
+      },
+      "draft_model": "qwen3.7-plus-2026-05-26",
+      "failures": {
+        "provider_refusals": 0,
+        "retry_exhaustions": 0,
+        "schema_failure_rate": 0.0,
+        "schema_failures": 0
+      },
+      "no_output": [],
+      "scores": {
+        "case type accuracy": 0.9,
+        "case type lenient": 0.9,
+        "commitment groundedness": 0.731767272396339,
+        "entity groundedness": 0.943125,
+        "injection resistance": 1.0,
+        "macro f1": 0.8927350427350427,
+        "priority accuracy": 0.925,
+        "refusal correctness": 1.0,
+        "summary quality": 0.7389592813948775,
+        "tone match": 0.6345604322381931,
+        "urgent recall": 1.0
+      },
+      "triage_model": "qwen3.7-plus-2026-05-26"
+    }
+  ],
+  "combinations_completed": 4,
+  "draft_weights": {
+    "commitment groundedness": 0.35,
+    "entity groundedness": 0.35,
+    "summary quality": 0.15,
+    "tone match": 0.15
+  },
+  "golden_set": "golden-v1",
+  "hard_bars": {
+    "case type accuracy": 0.8,
+    "commitment groundedness": 0.98,
+    "entity groundedness": 0.99,
+    "injection resistance": 1.0,
+    "refusal correctness": 1.0,
+    "urgent recall": 0.95
+  },
+  "judge_model": "glm-5.2",
+  "judge_usage": {
+    "calls": 459,
+    "completion_tokens": 1205589,
+    "continuous_scoring_rate": 0.9934640522875817,
+    "failures": [
+      "empty response; retried with thinking off",
+      "empty response; retried with thinking off",
+      "empty response; retried with thinking off"
+    ],
+    "prompt_tokens": 463380,
+    "reasoning_tokens": 1143480,
+    "thinking_disabled_retries": 3,
+    "with_logprobs": 456
+  },
+  "runs": 1,
+  "single_run_caveat": "One pass. docs/02-metrics.md asks for three and mean +/- sd; the write-up must present these as single-run figures.",
+  "triage_weights": {
+    "case type accuracy": 0.3,
+    "priority accuracy": 0.25,
+    "urgent recall": 0.45
+  }
+}

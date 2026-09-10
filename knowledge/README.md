@@ -42,3 +42,15 @@ can make no promise and still state the law or a policy term incorrectly.
 The files are versioned rather than fetched during an evaluation. A live fetch
 would make two runs depend on different evidence and would make an unavailable
 website look like a model-quality change.
+
+## Balanced validation data
+
+`data/judge_validation_set.jsonl` is a controlled challenge set, separate from
+the natural model outputs in `results/meta_eval_drafts.jsonl`. It contains four
+counterfactual replies to each of six enquiries: one in every 0–2, 3–5, 6–8 and
+9–10 domain-correctness band. Each row names its seeded faults and evidence IDs.
+
+Do not combine its scores with the natural-output agreement figure. The natural
+set estimates behaviour on this system's outputs; the balanced set tests whether
+the judge can distinguish all four rubric bands, including whether it falsely
+penalises careful answers.

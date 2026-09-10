@@ -154,3 +154,87 @@ def test_commitment_groundedness_clears_its_bar_everywhere(comparison):
 def test_refusal_correctness_is_perfect_everywhere(comparison):
     for combination in combinations(comparison):
         assert combination["scores"]["refusal correctness"] == 1.0, label(combination)
+
+
+# ------------------------------- the README must not drift from the results
+
+README = pathlib.Path("README.md")
+
+
+def readme() -> str:
+    if not README.exists():  # pragma: no cover
+        pytest.skip("README not present")
+    return README.read_text(encoding="utf-8")
+
+
+def short(model: str) -> str:
+    return model.split("-")[1]
+
+
+MATRIX_COLUMNS = ("case type accuracy", "urgent recall", "entity groundedness",
+                  "commitment groundedness", "tone match", "summary quality")
+
+
+def test_every_matrix_number_in_the_readme_matches_the_results(comparison):
+    """The claim this repository makes is that a stranger can reproduce every
+    number. The README is hand-written and the results are regenerated, so
+    without this they drift - and drift always flatters the README.
+    """
+    text = readme()
+    for combination in comparison["combinations"]:
+        label = f"{short(combination['triage_model'])} / {short(combination['draft_model'])}"
+        rows = [line for line in text.splitlines() if line.startswith(f"| {label} |")]
+        assert rows, f"no README row for {label}"
+
+        cells = [cell.strip() for cell in rows[0].strip("|").split("|")][1:]
+        recorded = [combination["scores"][name] for name in MATRIX_COLUMNS]
+        assert len(cells) == len(recorded), f"{label}: column count changed"
+        for cell, value in zip(cells, recorded):
+            assert abs(float(cell) - value) < 0.0005, f"{label}: {cell} vs {value}"
+
+
+def test_the_calibration_numbers_in_the_readme_match(calibration):
+    text = readme()
+    for model, data in calibration["models"].items():
+        top = next(b for b in data["buckets"] if b["low"] == 0.9)
+        row = (f"| {short(model)} | {data['ece']:.4f} | {data['brier']:.4f} "
+               f"| {top['n']} of {data['n']} |")
+        assert row in text, f"README calibration row for {short(model)} is stale"
+
+
+def test_the_latency_numbers_in_the_readme_match():
+    path = RESULTS / "latency.json"
+    if not path.exists():
+        pytest.skip("latency results not present")
+
+    text = readme()
+    for stage, data in json.loads(path.read_text(encoding="utf-8"))["stages"].items():
+        fragment = f"{data['median_seconds']:.2f}s | {data['p95_seconds']:.2f}s"
+        assert fragment in text, f"README latency row for {stage} is stale"
+
+
+def test_the_kappa_figures_in_the_readme_match():
+    import statistics
+
+    path = RESULTS / "relabel.json"
+    if not path.exists():
+        pytest.skip("relabel results not present")
+
+    per_run = json.loads(path.read_text(encoding="utf-8"))["kappa_per_run"]
+    case = [run["case_type"] for run in per_run]
+    priority = [run["priority"] for run in per_run]
+
+    text = readme()
+    assert f"case type {statistics.mean(case):.3f} ± {statistics.stdev(case):.3f}" in text
+    assert f"priority {statistics.mean(priority):.3f} ± {statistics.stdev(priority):.3f}" in text
+
+
+def test_every_command_the_readme_lists_is_importable():
+    """`src.quotas --help` used to crash: it read --help as a filename."""
+    import importlib
+    import re as _re
+
+    modules = sorted(set(_re.findall(r"python -m ([a-z_]+\.[a-z_]+)", readme())))
+    assert modules, "the README lists no runnable commands"
+    for module in modules:
+        importlib.import_module(module)

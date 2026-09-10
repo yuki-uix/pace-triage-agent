@@ -7,12 +7,15 @@ from types import SimpleNamespace
 import pytest
 
 from evals.meta_evaluation import (
+    _score,
     BANDS,
     METRICS,
     agreement,
     band_of,
+    bands_for,
     build_worksheet,
     judge_band,
+    label_progress,
     load_human_labels,
     select,
 )
@@ -51,6 +54,14 @@ def test_the_judges_decimal_is_banded_the_same_way():
     assert judge_band(1.0) == 3
     assert judge_band(0.0) == 0
     assert judge_band(0.55) == band_of(6)
+
+
+@pytest.mark.parametrize("metric", ["tone match", "summary quality"])
+def test_metric_specific_band_boundaries_match_the_rubric(metric):
+    assert bands_for(metric) == ((0, 3), (4, 6), (7, 8), (9, 10))
+    assert band_of(3, metric) == 0
+    assert band_of(6, metric) == 1
+    assert band_of(7, metric) == 2
 
 
 # ---------------------------------------------------------------- agreement
@@ -156,6 +167,66 @@ def test_a_label_outside_the_scale_raises(tmp_path):
         load_human_labels(str(path))
 
 
+def test_label_progress_does_not_need_judge_scores(tmp_path):
+    path = tmp_path / "labels.jsonl"
+    path.write_text(
+        json.dumps({"record_id": "ENQ-001", "metric": "tone match", "human": 7})
+        + "\n"
+        + json.dumps({"record_id": "ENQ-002", "metric": "tone match", "human": None})
+        + "\n", encoding="utf-8")
+
+    progress = label_progress(str(path))
+    assert progress.total == 2
+    assert progress.completed == 1
+    assert progress.missing == (("ENQ-002", "tone match"),)
+
+
+def test_duplicate_human_label_rows_are_rejected(tmp_path):
+    row = json.dumps({"record_id": "ENQ-001", "metric": "tone match", "human": 7})
+    path = tmp_path / "labels.jsonl"
+    path.write_text(row + "\n" + row + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="duplicate"):
+        label_progress(str(path))
+
+
+def test_unknown_human_label_metric_is_rejected(tmp_path):
+    path = tmp_path / "labels.jsonl"
+    path.write_text(json.dumps({
+        "record_id": "ENQ-001", "metric": "overall vibes", "human": 7,
+    }) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unknown metric"):
+        label_progress(str(path))
+
+
+def test_score_refuses_partial_labels_before_reading_judge_output(
+        tmp_path, capsys):
+    labels = tmp_path / "labels.jsonl"
+    labels.write_text(json.dumps({
+        "record_id": "ENQ-001", "metric": "tone match", "human": None,
+    }) + "\n", encoding="utf-8")
+    judge = tmp_path / "judge.json"
+    judge.write_text("not json and must not be read", encoding="utf-8")
+
+    assert _score(labels, judge) == 1
+    assert "agreement remains hidden" in capsys.readouterr().out
+
+
+def test_score_refuses_missing_judge_rows(tmp_path, capsys):
+    labels = tmp_path / "labels.jsonl"
+    labels.write_text(json.dumps({
+        "record_id": "ENQ-001", "metric": "tone match", "human": 7,
+    }) + "\n", encoding="utf-8")
+    judge = tmp_path / "judge.json"
+    judge.write_text(json.dumps({
+        "judge_model": "test-judge", "scores": {},
+    }), encoding="utf-8")
+
+    assert _score(labels, judge) == 2
+    assert "missing 1 prepared label" in capsys.readouterr().out
+
+
 # ------------------------------------------------------- rubrics and judging
 
 @pytest.mark.parametrize(
@@ -187,9 +258,15 @@ def test_rubric_bands_cover_the_whole_scale_without_gaps(rubric):
         assert next_low == previous_high + 1
 
 
-def test_rubric_bands_match_the_banding_used_for_agreement():
+def test_rubric_bands_match_the_metric_specific_banding_used_for_agreement():
     """The worksheet, the rubric and the kappa must all use one scale."""
-    assert tuple(band.score_range for band in COMMITMENT_RUBRIC) == BANDS
+    for metric, rubric in (
+        ("commitment groundedness", COMMITMENT_RUBRIC),
+        ("tone match", TONE_RUBRIC),
+        ("summary quality", SUMMARY_RUBRIC),
+        ("domain correctness", DOMAIN_RUBRIC),
+    ):
+        assert tuple(band.score_range for band in rubric) == bands_for(metric)
 
 
 # ------------------------------------------------------------- judge wrapper

@@ -61,6 +61,33 @@ The unit tests, also free:
 .venv/bin/python -m pytest tests/
 ```
 
+### Completing the human judge labels
+
+The existing meta-evaluation packet contains 15 natural drafts and 45 empty
+human labels for commitment groundedness, tone match and summary quality. These
+dimensions do not require insurance expertise: they are scored against the
+customer email and the situation it describes. Read
+[`docs/05-human-labeling.md`](docs/05-human-labeling.md), complete
+`results/meta_eval_labels.jsonl` without opening the judge output, and check
+progress without revealing agreement:
+
+```bash
+.venv/bin/python -m evals.meta_evaluation status
+```
+
+The status command exits non-zero while rows remain empty. The score phase also
+refuses partial input, so an interim agreement result cannot anchor the remaining
+labels. Once status reports 45/45, compute agreement for free:
+
+```bash
+.venv/bin/python -m evals.meta_evaluation score
+```
+
+Domain correctness is a separate, source-dependent judgement. Its balanced
+validation is recorded in `docs/judge-validation-pilot-v2.md`; do not add domain
+labels to the older 45-row packet unless a new source-backed prepare run is
+deliberately commissioned.
+
 ### Running the balanced judge validation
 
 Run these commands from the repository root after completing Quick start and
@@ -99,7 +126,8 @@ one table in the write-up.
 | `.venv/bin/python -m evals.calibration` | `results/calibration.json` — reliability buckets, ECE, Brier | 80 calls, ~2 min |
 | `.venv/bin/python -m evals.latency` | `results/latency.json` — **serial**, never merged with a quality run | 80 calls, ~5 min |
 | `.venv/bin/python -m evals.meta_evaluation prepare` | Worksheet + judge scores, including source-backed domain correctness | ~90 calls |
-| `.venv/bin/python -m evals.meta_evaluation score` | Judge/human agreement — **needs a person to fill the worksheet first** | free |
+| `.venv/bin/python -m evals.meta_evaluation status` | Blind human-label progress; never reads judge scores | free |
+| `.venv/bin/python -m evals.meta_evaluation score` | Judge/human agreement — requires every prepared human row | free |
 | `.venv/bin/python -m evals.judge_validation` | Four-band challenge-set matrix for the source-backed domain judge | 24 calls |
 | `.venv/bin/python -m src.pipeline --traces results/traces.jsonl` | Fills the pending queue | 80 calls |
 | `.venv/bin/python -m src.review` | Review the pending queue | free |
@@ -210,6 +238,7 @@ someone has to keep.
 - [Metric definitions and pass/fail bar](docs/02-metrics.md)
 - [Dataset specification](docs/03-data-spec.md)
 - [Scope and plan](docs/04-scope.md)
+- [Human-labeling guide](docs/05-human-labeling.md)
 - [Labeling guide](data/labeling_guide.md)
 
 ## Known limitations

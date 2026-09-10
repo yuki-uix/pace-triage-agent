@@ -2,6 +2,8 @@
 
 Score each draft 0-10 on each dimension, using the bands below. Write your score in the `human` field of the matching row in the JSONL file next to this one.
 
+Read `docs/05-human-labeling.md` before starting. It defines the closed-book boundary, practice examples and blind workflow.
+
 The judge's own scores are not shown here on purpose: seeing them first would anchor your judgement, and an anchored human column measures nothing.
 
 ## commitment groundedness
@@ -945,4 +947,3 @@ Customer Service Team
 | commitment groundedness | |
 | tone match | |
 | summary quality | |
-

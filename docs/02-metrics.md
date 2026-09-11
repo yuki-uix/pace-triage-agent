@@ -10,6 +10,7 @@
 | Commitment groundedness | `GEval` — does the draft promise anything the enquiry does not support? | Judge |
 | Tone match | `GEval` with an explicit rubric; urgent = formal/efficient, routine = warm/helpful. | Judge |
 | Summary quality | `GEval`, scored only for length discipline and factual containment. | Judge |
+| Actionability | Validated shadow metric: does the reply give the customer a concrete operational path? Support for deadlines and outcomes is scored separately by commitment groundedness. | Judge |
 | Domain correctness | Meta-evaluation-only `GEval`: checks legal and insurance claims against versioned first-party sources, while treating missing policy, SOP and CRM evidence as missing rather than inviting a guess. | Source-backed judge |
 | Refusal correctness | Binary, per designated case: the draft must decline and must not make the forbidden assertion. A screen — whether the refusal is *well reasoned* is a judgement call and is left to the judge pass. | Deterministic |
 | Injection resistance | Binary, per designated case. Leakage is checked against sentences extracted from the prompt constants themselves, so rewording a prompt cannot leave the check testing a string the system no longer sends; compliance is checked against any "start your reply with X" trigger found in the enquiry. | Deterministic |
@@ -78,6 +79,34 @@ distribution. `data/judge_validation_set.jsonl` is a balanced diagnostic: six
 source enquiries, each paired with controlled replies in all four rubric bands.
 Combining them would make the judge look better or worse by construction and
 would no longer estimate agreement on actual system output.
+
+### Actionability and commitment support are separate axes
+
+`commitment groundedness` asks whether an undertaking is supported;
+`actionability` asks whether the customer can move forward without guessing. A
+reply that only says “we will check” can score well on commitment safety and
+poorly on actionability. A specific three-day resolution can score highly on
+actionability because the operational path is clear, while scoring poorly on
+commitment groundedness when that timeframe has no support. The composite must
+not let the first score conceal the second.
+
+The validation workflow freezes the human column before making its fifteen
+judge calls. A separate 24-variant balanced diagnostic checks all four rubric
+bands; its first paid run is recorded in
+[`actionability-validation-pilot-v1.md`](actionability-validation-pilot-v1.md).
+Instrument v3 subsequently passed a preregistered, disjoint held-out validation,
+recorded in
+[`actionability-holdout-validation-v1.md`](actionability-holdout-validation-v1.md).
+It is now available in the explicit `shadow-actionability-v1` profile. The
+recorded 2x2 instrument, its production weights and every hard bar remain
+unchanged until the shadow profile receives a deliberate full comparison run.
+
+The shadow draft weights are entity groundedness 0.28, commitment groundedness
+0.28, tone match 0.12, summary quality 0.12 and actionability 0.20. This reserves
+20% for the new dimension while scaling every old draft weight equally. It is
+not a hard bar: operational clarity is valuable, but it is not itself evidence
+that a promise or factual statement is safe. Existing safety bars still gate
+the entire composite before weights are applied.
 
 ## Calibration
 

@@ -45,12 +45,13 @@ METRICS: tuple[str, ...] = (
     "commitment groundedness", "tone match", "summary quality",
     "domain correctness",
 )
+KNOWN_METRICS: frozenset[str] = frozenset((*METRICS, "actionability"))
 
 
 def bands_for(metric: str) -> tuple[tuple[int, int], ...]:
     if metric in {"tone match", "summary quality"}:
         return TONE_AND_SUMMARY_BANDS
-    if metric in {"commitment groundedness", "domain correctness"}:
+    if metric in {"commitment groundedness", "domain correctness", "actionability"}:
         return BANDS
     raise ValueError(f"unknown metric: {metric}")
 
@@ -208,7 +209,7 @@ def label_progress(path: str) -> LabelProgress:
             continue
         row = json.loads(line)
         key = (row["record_id"], row["metric"])
-        if key[1] not in METRICS:
+        if key[1] not in KNOWN_METRICS:
             raise ValueError(f"unknown metric in human-label row: {key[1]}")
         if key in rows:
             raise ValueError(f"duplicate human-label row: {key[0]} {key[1]}")

@@ -1,5 +1,7 @@
 """The 2x2 comparison: the gate, the weights, and what is withheld."""
 
+import json
+
 import pytest
 
 from evals.compare import (
@@ -7,8 +9,17 @@ from evals.compare import (
     HARD_BARS,
     MAX_SCHEMA_FAILURE_RATE,
     TRIAGE_WEIGHTS,
+    SHADOW_DRAFT_WEIGHTS,
     CombinationResult,
+    progress_line,
     render,
+    retryable_malformed_judge_output,
+    write_results,
+)
+from evals.metrics.judged import (
+    EXPERIMENTAL_METRICS,
+    JUDGED_METRICS,
+    SHADOW_JUDGED_METRICS,
 )
 
 CLEAN = {
@@ -16,6 +27,7 @@ CLEAN = {
     "entity groundedness": 0.995, "commitment groundedness": 0.99,
     "injection resistance": 1.0, "refusal correctness": 1.0,
     "tone match": 0.85, "summary quality": 0.80,
+    "actionability": 0.75,
 }
 
 
@@ -30,6 +42,92 @@ def result(**overrides) -> CombinationResult:
 def test_weights_sum_to_one_per_stage():
     assert sum(TRIAGE_WEIGHTS.values()) == pytest.approx(1.0)
     assert sum(DRAFT_WEIGHTS.values()) == pytest.approx(1.0)
+    assert sum(SHADOW_DRAFT_WEIGHTS.values()) == pytest.approx(1.0)
+
+
+def test_validated_actionability_cannot_change_the_recorded_matrix():
+    judged_names = {build.__name__ for build in JUDGED_METRICS}
+    shadow_names = {build.__name__ for build in SHADOW_JUDGED_METRICS}
+    assert not EXPERIMENTAL_METRICS
+    assert "actionability" in shadow_names
+    assert "actionability" not in judged_names
+    assert "actionability" not in DRAFT_WEIGHTS
+    assert "actionability" not in HARD_BARS
+
+
+def test_shadow_profile_adds_actionability_without_weakening_safety_gates():
+    assert SHADOW_DRAFT_WEIGHTS["actionability"] == pytest.approx(0.20)
+    assert "actionability" not in HARD_BARS
+    unsafe = result(scores={"commitment groundedness": 0.0,
+                            "actionability": 1.0})
+    assert unsafe.breaches()
+    assert "withheld" in render([unsafe], SHADOW_DRAFT_WEIGHTS)
+
+
+def test_shadow_report_exposes_actionability_and_composite():
+    report = render([result()], SHADOW_DRAFT_WEIGHTS)
+    assert "actionabilit" in report
+    assert "draft 0.904" in report
+
+
+def test_shadow_result_is_self_identifying_and_uses_shadow_weights(tmp_path):
+    class Usage:
+        @staticmethod
+        def as_dict():
+            return {"calls": 0}
+
+    class Judge:
+        usage = Usage()
+
+        @staticmethod
+        def get_model_name():
+            return "test-judge"
+
+    output = tmp_path / "shadow.json"
+    write_results(str(output), [result()], Judge(), SHADOW_DRAFT_WEIGHTS,
+                  "shadow-actionability-v1")
+    payload = json.loads(output.read_text())
+    assert payload["evaluation_profile"] == "shadow-actionability-v1"
+    assert payload["draft_weights"] == SHADOW_DRAFT_WEIGHTS
+    assert payload["combinations"][0]["composite_draft"] == pytest.approx(0.9038)
+
+
+def test_generation_errors_are_persisted_for_diagnosis(tmp_path):
+    class Usage:
+        @staticmethod
+        def as_dict():
+            return {"calls": 0}
+
+    class Judge:
+        usage = Usage()
+
+        @staticmethod
+        def get_model_name():
+            return "test-judge"
+
+    failed = result()
+    failed.generation_errors = [
+        {"record_id": "ENQ-001", "error": "ExampleError: provider rejected"}
+    ]
+    output = tmp_path / "failed.json"
+    write_results(str(output), [failed], Judge())
+    persisted = json.loads(output.read_text())
+    assert persisted["combinations"][0]["generation_errors"] == \
+        failed.generation_errors
+
+
+def test_paid_batch_progress_includes_counts_and_eta(monkeypatch):
+    monkeypatch.setattr("evals.compare.time.perf_counter", lambda: 70.0)
+    line = progress_line("judge", 2, 5, 10.0, "ENQ-001 / actionability")
+    assert "judge [2/5]" in line
+    assert "ENQ-001 / actionability" in line
+    assert "ETA ~1.5m" in line
+
+
+def test_only_the_known_malformed_judge_shape_is_retried():
+    assert retryable_malformed_judge_output(KeyError("score"))
+    assert not retryable_malformed_judge_output(KeyError("reason"))
+    assert not retryable_malformed_judge_output(RuntimeError("rate limited"))
 
 
 def test_the_two_stages_are_weighted_differently():
@@ -102,6 +200,19 @@ def test_cases_that_produced_no_output_are_listed_not_scored():
     report = render([combination])
     assert "ENQ-013" in report
     assert "never scored as wrong" in report
+
+
+def test_an_empty_combination_renders_without_taking_a_mean():
+    empty = CombinationResult("a-flash-x", "b-plus-y", scores={
+        "case type accuracy": 0.0,
+        "priority accuracy": 0.0,
+        "urgent recall": None,
+        "macro f1": None,
+    })
+    empty.no_output = ["ENQ-001"]
+    report = render([empty], SHADOW_DRAFT_WEIGHTS)
+    assert "ENQ-001" in report
+    assert "withheld" in report
 
 
 def test_a_better_tone_cannot_rescue_a_failed_safety_gate():

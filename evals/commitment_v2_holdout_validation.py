@@ -114,6 +114,38 @@ def acceptance(result: dict) -> dict:
     return {"passed": all(criteria.values()), "criteria": criteria}
 
 
+def assignment_acceptance(result: dict) -> dict:
+    """A proof-of-concept gate for coursework, not a production safety claim.
+
+    The preregistered gate above remains untouched.  This profile asks whether
+    the judge is directionally useful for demonstrating the evidence-backed
+    workflow: at least two thirds of bands must match exactly, every miss must
+    stay within one adjacent band, agreement must remain strong, and the judge
+    must preserve the ordering around each rubric boundary.
+    """
+    judged, blind = result.get("agreement", {}), result["blind_review_agreement"]
+    criteria = {
+        "all_18_calls_completed": len(result["items"]) == 18 and not result["failures"],
+        "continuous_scoring_18_of_18": result["usage"]["with_logprobs"] == 18,
+        "judge_exact_at_least_12_of_18": judged.get("exact_band_rate", 0) >= 12 / 18,
+        "judge_kappa_at_least_0_80": judged.get("quadratic_weighted_kappa", 0) >= 0.80,
+        "judge_within_one_18_of_18": judged.get("within_one_band_rate", 0) == 1.0,
+        "judge_two_pairs_ordered_per_boundary": all(
+            value["total"] == 3 and value["ordered"] >= 2
+            for value in result["pair_ordering"]["by_boundary"].values()),
+        "blind_exact_at_least_12_of_18": blind["exact_band_rate"] >= 12 / 18,
+        "blind_kappa_at_least_0_80": blind["quadratic_weighted_kappa"] >= 0.80,
+        "blind_within_one_18_of_18": blind["within_one_band_rate"] == 1.0,
+        "blind_two_pairs_ordered_per_boundary": all(
+            value["total"] == 3 and value["ordered"] >= 2
+            for value in result["blind_pair_ordering"]["by_boundary"].values()),
+    }
+    return {"profile": "assignment-poc-v1", "passed": all(criteria.values()),
+            "criteria": criteria,
+            "claim": ("Suitable for demonstrating the end-to-end approach; "
+                      "not evidence of production safety or regulatory readiness.")}
+
+
 def main(argv: list[str]) -> int:
     import argparse
     parser = argparse.ArgumentParser(description="Score the commitment-v2 holdout.")

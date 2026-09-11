@@ -18,6 +18,27 @@ and 9/9 pairs ordered. Automated exact-band agreement is the only failed gate,
 so overall acceptance remains **failed**. The raw output and input fingerprints
 are preserved in `results/commitment_v2_holdout_v1.json`.
 
+## Assignment proof-of-concept interpretation
+
+The preregistered production-oriented gate is intentionally preserved as a
+failure; changing it after seeing the result would invalidate that claim.  For
+the assignment, a separate `assignment-poc-v1` profile asks a narrower question:
+is the judge reliable enough to demonstrate that the evidence-backed workflow
+runs end to end and distinguishes better-supported from worse-supported drafts?
+
+That profile requires at least 12/18 exact bands, quadratic-weighted kappa at
+least 0.80, 18/18 predictions within one adjacent band, and at least two of the
+three pairs ordered correctly at every boundary, for both the automated judge
+and blind review.  It is deliberately labelled as PoC evidence, not production
+safety or regulatory readiness.  Regrade the already-paid result without any
+model calls:
+
+```bash
+.venv/bin/python -m evals.commitment_v2_assignment_report \
+  results/commitment_v2_holdout_v1.json \
+  --out results/commitment_v2_assignment_report.json
+```
+
 ## Mismatch audit
 
 | Variant | Expected | Judge | Finding |

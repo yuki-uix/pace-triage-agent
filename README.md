@@ -280,6 +280,7 @@ one table in the write-up.
 | `.venv/bin/python -m evals.judge_validation` | Four-band challenge-set matrix for the source-backed domain judge | 24 calls |
 | `.venv/bin/python -m src.commitment_v2_validation` | Validate evidence IDs and the balanced commitment-v2 set | free |
 | `.venv/bin/python -m evals.commitment_v2_judge_validation` | Preregistered evidence-aware commitment Judge validation | 24 calls |
+| `.venv/bin/python -m evals.commitment_v2_assignment_report results/commitment_v2_holdout_v1.json` | Regrade the existing paid holdout against the coursework PoC profile | free |
 | `.venv/bin/python -m src.pipeline --traces results/traces.jsonl` | Fills the pending queue | 80 calls |
 | `.venv/bin/python -m src.review` | Review the pending queue | free |
 

@@ -117,6 +117,47 @@ SUMMARY_RUBRIC = [
         "for a reviewer to triage without opening it.")),
 ]
 
+# Actionability is deliberately not a synonym for making promises. A safe reply
+# can still tell the customer what evidence is missing, who needs to check it,
+# what the customer can do now, and what event will produce the next update.
+# Conversely, an invented three-day SLA is specific but not a usable plan.
+ACTIONABILITY_STEPS = [
+    "Read the enquiry and identify the outcome the customer needs, any urgency, "
+    "and every question that calls for a next step rather than an explanation.",
+    "Read the reply and extract the operational path it gives: what the customer "
+    "can do now, what information is needed, what the insurer will check, and "
+    "what event or condition leads to the next status update.",
+    "Distinguish a concrete conditional path from a generic assurance. 'We need "
+    "the policy schedule before confirming this' is useful when it names the "
+    "missing evidence; 'we will look into it' alone is not.",
+    "Do not reward a definite deadline, completed action or promised resolution "
+    "merely for sounding specific when the enquiry supplies no basis for it. "
+    "Unsafe certainty is not a substitute for an executable next step.",
+    "Score only actionability. Do not deduct for warmth, writing style or a "
+    "technical insurance error already handled by another metric, except when "
+    "that error makes the stated next step unusable.",
+]
+
+ACTIONABILITY_RUBRIC = [
+    Rubric(score_range=(0, 2), expected_outcome=(
+        "The customer is left without a usable next step, or a fabricated "
+        "outcome, deadline or completed action is presented instead of a safe "
+        "operational path.")),
+    Rubric(score_range=(3, 5), expected_outcome=(
+        "The reply says the matter will be checked or followed up, but leaves "
+        "material gaps about what is needed, what happens next, or when the "
+        "customer will know that the case has moved.")),
+    Rubric(score_range=(6, 8), expected_outcome=(
+        "The reply gives a clear and safe next step, required information and "
+        "the main conditional path, with one minor omission such as an unclear "
+        "owner, channel or next status point.")),
+    Rubric(score_range=(9, 10), expected_outcome=(
+        "The customer can act without guessing: the reply clearly states the "
+        "current evidence boundary, concrete next actions, required information "
+        "and the condition or supported timing for the next update, without "
+        "inventing a resolution.")),
+]
+
 # This is intentionally separate from commitment groundedness. A reply can make
 # no promise and still state a law, policy term or claims process incorrectly.
 # CONTEXT contains only versioned claims from `knowledge/`; its first item also
@@ -189,6 +230,18 @@ def summary_quality(model, threshold: float = 0.7) -> GEval:
     )
 
 
+def actionability(model, threshold: float = 0.7) -> GEval:
+    """Whether a safe reply still gives the customer a usable path forward."""
+    return GEval(
+        name="actionability",
+        evaluation_params=[INPUT, OUTPUT],
+        evaluation_steps=ACTIONABILITY_STEPS,
+        rubric=ACTIONABILITY_RUBRIC,
+        model=model,
+        threshold=threshold,
+    )
+
+
 def domain_correctness(model, threshold: float = 0.9) -> GEval:
     """Source-backed correctness without pretending general rules are a policy."""
     return GEval(
@@ -202,6 +255,10 @@ def domain_correctness(model, threshold: float = 0.9) -> GEval:
 
 
 JUDGED_METRICS = (commitment_groundedness, tone_match, summary_quality)
+# Kept outside JUDGED_METRICS until its own blind human validation is complete.
+# This prevents an experimental dimension from silently changing the recorded
+# 2x2 comparison, composite weights or hard-bar verdicts.
+EXPERIMENTAL_METRICS = (actionability,)
 # The recorded 2x2 comparison predates the reference pack. Keep its instrument
 # stable; the next paid run may deliberately promote this metric into the main
 # matrix after the source-backed judge itself has been human-validated.

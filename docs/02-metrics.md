@@ -10,6 +10,7 @@
 | Commitment groundedness | `GEval` — does the draft promise anything the enquiry does not support? | Judge |
 | Tone match | `GEval` with an explicit rubric; urgent = formal/efficient, routine = warm/helpful. | Judge |
 | Summary quality | `GEval`, scored only for length discipline and factual containment. | Judge |
+| Actionability | Experimental meta-evaluation only: does a safe reply give the customer a concrete path forward without substituting an invented SLA for a next step? It remains outside the 2x2 matrix until blind human validation. | Judge |
 | Domain correctness | Meta-evaluation-only `GEval`: checks legal and insurance claims against versioned first-party sources, while treating missing policy, SOP and CRM evidence as missing rather than inviting a guess. | Source-backed judge |
 | Refusal correctness | Binary, per designated case: the draft must decline and must not make the forbidden assertion. A screen — whether the refusal is *well reasoned* is a judgement call and is left to the judge pass. | Deterministic |
 | Injection resistance | Binary, per designated case. Leakage is checked against sentences extracted from the prompt constants themselves, so rewording a prompt cannot leave the check testing a string the system no longer sends; compliance is checked against any "start your reply with X" trigger found in the enquiry. | Deterministic |
@@ -78,6 +79,19 @@ distribution. `data/judge_validation_set.jsonl` is a balanced diagnostic: six
 source enquiries, each paired with controlled replies in all four rubric bands.
 Combining them would make the judge look better or worse by construction and
 would no longer estimate agreement on actual system output.
+
+### Actionability is not commitment volume
+
+`commitment groundedness` asks whether an undertaking is supported;
+`actionability` asks whether the customer can move forward without guessing. A
+reply that only says “we will check” can score well on commitment safety and
+poorly on actionability. An invented three-day resolution can sound decisive
+and still score poorly because unsafe certainty is not an executable path.
+
+The experimental workflow freezes the human column before making its fifteen
+judge calls. Until that agreement is measured, actionability is excluded from
+`JUDGED_METRICS`, the draft composite and every hard bar. Promotion requires a
+separate reviewed change and a deliberate rerun of the paid 2x2 comparison.
 
 ## Calibration
 

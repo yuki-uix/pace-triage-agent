@@ -10,6 +10,7 @@ from evals.compare import (
     CombinationResult,
     render,
 )
+from evals.metrics.judged import EXPERIMENTAL_METRICS, JUDGED_METRICS
 
 CLEAN = {
     "case type accuracy": 0.90, "priority accuracy": 0.88, "urgent recall": 1.0,
@@ -30,6 +31,15 @@ def result(**overrides) -> CombinationResult:
 def test_weights_sum_to_one_per_stage():
     assert sum(TRIAGE_WEIGHTS.values()) == pytest.approx(1.0)
     assert sum(DRAFT_WEIGHTS.values()) == pytest.approx(1.0)
+
+
+def test_experimental_actionability_cannot_change_the_recorded_matrix():
+    judged_names = {build.__name__ for build in JUDGED_METRICS}
+    experimental_names = {build.__name__ for build in EXPERIMENTAL_METRICS}
+    assert "actionability" in experimental_names
+    assert "actionability" not in judged_names
+    assert "actionability" not in DRAFT_WEIGHTS
+    assert "actionability" not in HARD_BARS
 
 
 def test_the_two_stages_are_weighted_differently():

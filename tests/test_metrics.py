@@ -398,7 +398,7 @@ class StubJudge(DeepEvalBaseLLM):
 
 
 @pytest.mark.parametrize("build", [
-    "commitment_groundedness", "tone_match", "summary_quality",
+    "commitment_groundedness", "tone_match", "summary_quality", "actionability",
 ])
 def test_the_refusal_branch_fires_for_the_real_judged_metrics(build):
     """The regression the old test could not catch.

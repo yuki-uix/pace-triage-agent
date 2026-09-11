@@ -88,6 +88,28 @@ validation is recorded in `docs/judge-validation-pilot-v2.md`; do not add domain
 labels to the older 45-row packet unless a new source-backed prepare run is
 deliberately commissioned.
 
+### Validating experimental actionability
+
+Actionability asks whether a safe reply still gives the customer a usable path
+forward. It is experimental and meta-evaluation-only: it does not change the
+recorded 2x2 matrix, composite weights or hard bars. Its workflow creates no
+judge output until all human labels are complete:
+
+```bash
+# Free: create a 15-row blind worksheet and null human-label template locally.
+.venv/bin/python -m evals.actionability_evaluation prepare
+
+# Free: check progress without calling or revealing the judge.
+.venv/bin/python -m evals.actionability_evaluation status
+
+# Paid: unlocked only after 15/15 labels; makes 15 judge calls.
+.venv/bin/python -m evals.actionability_evaluation score
+```
+
+Outputs default to `.local/actionability/`, outside the versioned evaluation
+artefacts. The score phase refuses to overwrite an existing paid result; use
+`--result` with a new path for a deliberate rerun.
+
 ### Running the balanced judge validation
 
 Run these commands from the repository root after completing Quick start and
@@ -128,6 +150,8 @@ one table in the write-up.
 | `.venv/bin/python -m evals.meta_evaluation prepare` | Worksheet + judge scores, including source-backed domain correctness | ~90 calls |
 | `.venv/bin/python -m evals.meta_evaluation status` | Blind human-label progress; never reads judge scores | free |
 | `.venv/bin/python -m evals.meta_evaluation score` | Judge/human agreement — requires every prepared human row | free |
+| `.venv/bin/python -m evals.actionability_evaluation prepare/status` | Blind actionability worksheet and progress | free |
+| `.venv/bin/python -m evals.actionability_evaluation score` | Experimental actionability judge/human agreement | 15 calls |
 | `.venv/bin/python -m evals.judge_validation` | Four-band challenge-set matrix for the source-backed domain judge | 24 calls |
 | `.venv/bin/python -m src.pipeline --traces results/traces.jsonl` | Fills the pending queue | 80 calls |
 | `.venv/bin/python -m src.review` | Review the pending queue | free |

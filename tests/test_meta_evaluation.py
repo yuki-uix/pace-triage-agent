@@ -20,6 +20,8 @@ from evals.meta_evaluation import (
     select,
 )
 from evals.metrics.judged import (
+    ACTIONABILITY_RUBRIC,
+    ACTIONABILITY_STEPS,
     COMMITMENT_RUBRIC,
     COMMITMENT_STEPS,
     DOMAIN_RUBRIC,
@@ -230,7 +232,8 @@ def test_score_refuses_missing_judge_rows(tmp_path, capsys):
 # ------------------------------------------------------- rubrics and judging
 
 @pytest.mark.parametrize(
-    "steps", [COMMITMENT_STEPS, TONE_STEPS, SUMMARY_STEPS, DOMAIN_STEPS]
+    "steps", [COMMITMENT_STEPS, TONE_STEPS, SUMMARY_STEPS, DOMAIN_STEPS,
+              ACTIONABILITY_STEPS]
 )
 def test_evaluation_steps_are_specific_not_boilerplate(steps):
     """Auto-generated from a criteria string means an unexamined rubric.
@@ -248,7 +251,8 @@ def test_evaluation_steps_are_specific_not_boilerplate(steps):
 
 
 @pytest.mark.parametrize(
-    "rubric", [COMMITMENT_RUBRIC, TONE_RUBRIC, SUMMARY_RUBRIC, DOMAIN_RUBRIC]
+    "rubric", [COMMITMENT_RUBRIC, TONE_RUBRIC, SUMMARY_RUBRIC, DOMAIN_RUBRIC,
+               ACTIONABILITY_RUBRIC]
 )
 def test_rubric_bands_cover_the_whole_scale_without_gaps(rubric):
     covered = sorted(band.score_range for band in rubric)
@@ -265,6 +269,7 @@ def test_rubric_bands_match_the_metric_specific_banding_used_for_agreement():
         ("tone match", TONE_RUBRIC),
         ("summary quality", SUMMARY_RUBRIC),
         ("domain correctness", DOMAIN_RUBRIC),
+        ("actionability", ACTIONABILITY_RUBRIC),
     ):
         assert tuple(band.score_range for band in rubric) == bands_for(metric)
 

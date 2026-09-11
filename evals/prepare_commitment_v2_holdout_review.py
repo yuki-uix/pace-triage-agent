@@ -13,7 +13,7 @@ from src.draft_evidence import draft_evidence
 SOURCE = pathlib.Path("data/commitment_v2_holdout_v1.jsonl")
 ENQUIRIES = pathlib.Path("data/enquiries.jsonl")
 DEFAULT_OUT = pathlib.Path(".local/commitment_v2_holdout_v1")
-SEED = 20260920
+SEED = 20260921
 
 
 def _jsonl(path: pathlib.Path) -> list[dict]:

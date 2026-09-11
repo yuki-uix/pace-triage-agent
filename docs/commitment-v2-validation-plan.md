@@ -63,3 +63,6 @@ Passing permits commitment v2 and evidence-backed drafting to enter a new,
 explicit comparison profile. It does not replace commitment v1, change existing
 hard bars, or make `--evidence-backed` the pipeline default. Those changes need
 a fresh full matrix and review of the commitment/actionability interaction.
+
+The pre-Judge blind-review history is recorded in
+[`commitment-v2-blind-validation.md`](commitment-v2-blind-validation.md).

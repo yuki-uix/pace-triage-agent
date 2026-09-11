@@ -203,6 +203,8 @@ any paid run, validate and prepare its local blind packet:
 
 The exact preregistered thresholds and local score format are in
 [`docs/commitment-v2-validation-plan.md`](docs/commitment-v2-validation-plan.md).
+The revised set's independent blind review passed and is documented in
+[`docs/commitment-v2-blind-validation.md`](docs/commitment-v2-blind-validation.md).
 Passing that check permits a new comparison profile; it does not silently alter
 the historical matrix or default pipeline.
 

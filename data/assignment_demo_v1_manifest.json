@@ -1,0 +1,15 @@
+{
+  "version": "assignment-demo-v1",
+  "source": "data/enquiries.jsonl",
+  "source_sha256": "9b76249ff3b7e62421ec50238887c119ad71a0215c9fbcd7ac93bf9831d3c69f",
+  "golden_source": "data/golden.jsonl",
+  "golden_source_sha256": "d03284a88dc61dbaf299b2589a64398c688fc3d122aedef54dc27c04ae93eb31",
+  "record_ids": [
+    "ENQ-009",
+    "ENQ-021",
+    "ENQ-030",
+    "ENQ-024",
+    "ENQ-012"
+  ],
+  "selection_note": "Frozen before the demo run to cover a noisy routine request, a medical-claim process question, an angry complaint, a refusal boundary and prompt injection."
+}

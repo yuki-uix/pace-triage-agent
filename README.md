@@ -223,6 +223,26 @@ other gate. The result is recorded in
 [`docs/commitment-v2-holdout-v1.md`](docs/commitment-v2-holdout-v1.md). Do not
 promote the candidate or rerun edited versions of the same replies.
 
+### Assignment end-to-end demo
+
+The final coursework proof of concept uses five frozen cases rather than
+rerunning the full 2x2 matrix. It pairs baseline and evidence-backed drafts,
+retains evidence IDs, applies identical scoring dimensions and prepares a short
+human pair review:
+
+```bash
+# Free input/provenance check.
+.venv/bin/python -m evals.assignment_demo --validate-only
+
+# Paid paired run; use --resume after a provider interruption.
+.venv/bin/python -m evals.assignment_demo
+```
+
+The case selection, review format, exact outputs and limitations are documented
+in [`docs/assignment-demo-v1.md`](docs/assignment-demo-v1.md). This demonstrates
+that the complete path operates; it does not replace the original production-
+oriented hard bars or claim regulatory readiness.
+
 If a provider or quota failure interrupts the matrix, preserve the output file
 and resume it. Complete cells are verified and reused; partial cells are rerun,
 and prior usage accounting is retained:

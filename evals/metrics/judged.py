@@ -117,45 +117,73 @@ SUMMARY_RUBRIC = [
         "for a reviewer to triage without opening it.")),
 ]
 
-# Actionability is deliberately not a synonym for making promises. A safe reply
-# can still tell the customer what evidence is missing, who needs to check it,
-# what the customer can do now, and what event will produce the next update.
-# Conversely, an invented three-day SLA is specific but not a usable plan.
+# Instrument v3. Actionability measures whether the reply supplies a concrete
+# operational path.
+# It deliberately does not judge whether a stated deadline, completed action or
+# promised outcome is supported: commitment groundedness owns that question.
+# Keeping the two dimensions orthogonal lets the evaluation distinguish a vague
+# but safe reply from a highly actionable reply built on an unsafe promise.
 ACTIONABILITY_STEPS = [
     "Read the enquiry and identify the outcome the customer needs, any urgency, "
     "and every question that calls for a next step rather than an explanation.",
     "Read the reply and extract the operational path it gives: what the customer "
     "can do now, what information is needed, what the insurer will check, and "
     "what event or condition leads to the next status update.",
-    "Distinguish a concrete conditional path from a generic assurance. 'We need "
-    "the policy schedule before confirming this' is useful when it names the "
-    "missing evidence; 'we will look into it' alone is not.",
-    "Do not reward a definite deadline, completed action or promised resolution "
-    "merely for sounding specific when the enquiry supplies no basis for it. "
-    "Unsafe certainty is not a substitute for an executable next step.",
-    "Score only actionability. Do not deduct for warmth, writing style or a "
-    "technical insurance error already handled by another metric, except when "
-    "that error makes the stated next step unusable.",
+    "Use four control points where applicable: (1) an immediate customer action "
+    "or an explicit statement that no action is required now; (2) the required "
+    "inputs; (3) a usable submission channel or responsible owner; and (4) a "
+    "customer-observable event, condition or date for the next status update.",
+    "First identify every independent customer request that needs operational "
+    "guidance. Score the whole reply, not only its strongest branch. If any such "
+    "request is entirely unaddressed, the reply cannot score above 8; if the "
+    "unaddressed request is the main purpose of the enquiry, it cannot score "
+    "above 5.",
+    "Distinguish a concrete operational path from a generic assurance. 'Submit "
+    "the policy schedule through the portal, then claims will review it' is "
+    "actionable; 'we will look into it' alone is not.",
+    "Replying to the current email is a usable channel when the reply says what "
+    "to send. Bare references to an app, online service, a form or customer "
+    "service are not complete routes when the customer must ask again for the "
+    "actual entry point or instructions.",
+    "Apply the band gates before choosing an exact score. If the customer can "
+    "only request instructions or trigger a hand-off and still cannot carry out "
+    "the main request, the maximum is 5 even when that hand-off has an owner or "
+    "will produce another message.",
+    "A promise to review or contact the customer is not itself a next-status "
+    "control point. It needs a customer-observable trigger, result state or "
+    "date; a preferred time of day without a date or trigger is not timing.",
+    "Customer-observable means the reply explicitly says the customer will "
+    "receive or see a confirmation, request, result or status. An internal event "
+    "such as 'we will process it', 'the review will find' or 'refund depends on "
+    "the review' is not observable unless the reply says how the customer learns "
+    "that it happened; without that, the maximum is 8.",
+    "Judge the specificity of a stated deadline, completed action or promised "
+    "resolution as part of the path, without deciding whether the enquiry "
+    "supports it. Unsupported commitments are penalised by commitment "
+    "groundedness, not by this metric.",
+    "Score only actionability. Do not deduct for warmth, writing style, "
+    "commitment support or technical insurance correctness handled by other "
+    "metrics, except when wording is so incomplete that no action can be taken.",
 ]
 
 ACTIONABILITY_RUBRIC = [
     Rubric(score_range=(0, 2), expected_outcome=(
-        "The customer is left without a usable next step, or a fabricated "
-        "outcome, deadline or completed action is presented instead of a safe "
-        "operational path.")),
+        "The customer cannot initiate even the first useful step from the "
+        "reply: it gives no usable action or route and no explicit no-action "
+        "state tied to a defined review.")),
     Rubric(score_range=(3, 5), expected_outcome=(
-        "The reply says the matter will be checked or followed up, but leaves "
-        "material gaps about what is needed, what happens next, or when the "
-        "customer will know that the case has moved.")),
+        "The customer can request instructions or start a hand-off, but cannot "
+        "yet carry out the main request from the reply; or two or more material "
+        "control points remain unclear.")),
     Rubric(score_range=(6, 8), expected_outcome=(
-        "The reply gives a clear and safe next step, required information and "
-        "the main conditional path, with one minor omission such as an unclear "
-        "owner, channel or next status point.")),
+        "The customer can carry out the main request or enter a defined review "
+        "path, but one material control point remains unclear, such as required "
+        "input, usable channel or owner, or a customer-observable next status.")),
     Rubric(score_range=(9, 10), expected_outcome=(
-        "The customer can act without guessing: the reply clearly states the "
-        "current evidence boundary, concrete next actions, required information "
-        "and the condition or supported timing for the next update, without "
-        "inventing a resolution.")),
+        "All applicable control points are present: immediate action or an "
+        "explicit no-action state, required inputs, a usable channel or owner, "
+        "and a customer-observable condition, result state or date for the next "
+        "update. Support is scored separately under commitment groundedness.")),
 ]
 
 # This is intentionally separate from commitment groundedness. A reply can make
@@ -231,7 +259,7 @@ def summary_quality(model, threshold: float = 0.7) -> GEval:
 
 
 def actionability(model, threshold: float = 0.7) -> GEval:
-    """Whether a safe reply still gives the customer a usable path forward."""
+    """Whether the reply gives the customer a concrete operational path."""
     return GEval(
         name="actionability",
         evaluation_params=[INPUT, OUTPUT],
@@ -255,10 +283,11 @@ def domain_correctness(model, threshold: float = 0.9) -> GEval:
 
 
 JUDGED_METRICS = (commitment_groundedness, tone_match, summary_quality)
-# Kept outside JUDGED_METRICS until its own blind human validation is complete.
-# This prevents an experimental dimension from silently changing the recorded
-# 2x2 comparison, composite weights or hard-bar verdicts.
-EXPERIMENTAL_METRICS = (actionability,)
+# The preregistered, disjoint held-out validation for instrument v3 passed. It
+# is therefore available in an explicit shadow profile, while JUDGED_METRICS
+# remains the immutable instrument used by the recorded 2x2 comparison.
+SHADOW_JUDGED_METRICS = JUDGED_METRICS + (actionability,)
+EXPERIMENTAL_METRICS = ()
 # The recorded 2x2 comparison predates the reference pack. Keep its instrument
 # stable; the next paid run may deliberately promote this metric into the main
 # matrix after the source-backed judge itself has been human-validated.

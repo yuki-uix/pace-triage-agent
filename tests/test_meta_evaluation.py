@@ -274,6 +274,29 @@ def test_rubric_bands_match_the_metric_specific_banding_used_for_agreement():
         assert tuple(band.score_range for band in rubric) == bands_for(metric)
 
 
+def test_actionability_leaves_commitment_support_to_its_own_metric():
+    text = " ".join(ACTIONABILITY_STEPS + [
+        band.expected_outcome for band in ACTIONABILITY_RUBRIC
+    ]).lower()
+    assert "commitment groundedness" in text
+    assert "support is scored separately" in text
+    assert "fabricated outcome" not in text
+    assert "without inventing a resolution" not in text
+
+
+def test_actionability_bands_define_operational_control_point_boundaries():
+    steps = " ".join(ACTIONABILITY_STEPS).lower()
+    outcomes = [band.expected_outcome.lower() for band in ACTIONABILITY_RUBRIC]
+    assert "four control points" in steps
+    assert "preferred time of day" in steps
+    assert "two or more material control points" in outcomes[1]
+    assert "one material control point" in outcomes[2]
+    assert "all applicable control points" in outcomes[3]
+    assert "maximum is 5" in steps
+    assert "maximum is 8" in steps
+    assert "receive or see" in steps
+
+
 # ------------------------------------------------------------- judge wrapper
 
 class FakeCompletions:

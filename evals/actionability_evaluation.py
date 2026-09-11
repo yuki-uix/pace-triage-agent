@@ -1,8 +1,8 @@
-"""Blind, meta-evaluation-only validation for the experimental actionability judge.
+"""Blind validation workflow for the actionability judge.
 
-The human column is completed before any judge output is created. This is
-separate from the recorded 2x2 comparison: an unvalidated metric must not change
-historical model-selection results merely because it was added to the codebase.
+The human column is completed before any judge output is created. This workflow
+remains separate from the recorded 2x2 comparison so validation reruns cannot
+silently change historical model-selection results.
 """
 
 from __future__ import annotations
@@ -41,14 +41,14 @@ def build_worksheet(rows: list[dict[str, str]], path: pathlib.Path) -> None:
     from evals.metrics.judged import ACTIONABILITY_RUBRIC
 
     lines = [
-        "# Experimental actionability: blind human worksheet",
+        "# Actionability: blind human worksheet",
         "",
         "Choose the rubric band before any judge score exists. Enter the score in",
         "`actionability_labels.jsonl`; this worksheet deliberately contains no",
         "judge output.",
         "",
-        "Actionability rewards a concrete, safe path forward. It does not reward",
-        "an invented deadline merely because the reply sounds decisive.",
+        "Actionability rewards a concrete operational path. Whether a stated",
+        "deadline or outcome is supported belongs to commitment groundedness.",
         "",
         "## Rubric",
         "",
@@ -210,7 +210,7 @@ def main(argv: list[str]) -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Blind validation for the experimental actionability metric."
+        description="Blind validation for the actionability metric."
     )
     parser.add_argument("phase", choices=["prepare", "status", "score"])
     parser.add_argument("--drafts", type=pathlib.Path, default=DEFAULT_DRAFTS)

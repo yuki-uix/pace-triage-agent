@@ -210,6 +210,14 @@ see [`docs/commitment-v2-validation-v1.md`](docs/commitment-v2-validation-v1.md)
 Commitment v2 therefore remains experimental pending a disjoint holdout. It does
 not alter the historical matrix or default pipeline.
 
+The disjoint boundary holdout and its blind review are now frozen. Its paid
+runner remains a separate, explicitly authorised step:
+
+```bash
+.venv/bin/python -m src.commitment_v2_holdout
+.venv/bin/python -m evals.commitment_v2_holdout_validation
+```
+
 If a provider or quota failure interrupts the matrix, preserve the output file
 and resume it. Complete cells are verified and reused; partial cells are rerun,
 and prior usage accounting is retained:

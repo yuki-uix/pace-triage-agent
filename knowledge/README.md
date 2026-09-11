@@ -10,10 +10,20 @@ and privacy facts. It is deliberately not a general-purpose RAG corpus.
 - `reference_claims.jsonl` contains one paraphrased, source-linked claim per
   line. Small claims are easier to audit than copied web pages and keep a
   changed page from silently changing an evaluation.
+- `service_catalogue_manifest.json` identifies the version and scope of a
+  synthetic internal operating contract for the fictional Harbourview Life
+  case study.
+- `service_catalogue.jsonl` contains its atomic, topic-routed service rules.
 
 Only first-party material from the Insurance Authority, the Privacy
 Commissioner for Personal Data and the Insurance Complaints Bureau is admitted.
 The loader enforces that domain allow-list.
+
+The service catalogue is a different source class. It is deliberately
+synthetic, is not evidence about a real insurer, and exists so the drafting
+experiment can make useful process commitments without pretending that a
+public regulator specifies an insurer's intake channels. The combined context
+keeps the public and internal headings separate and records every selected ID.
 
 ## Evidence boundary
 
@@ -38,6 +48,11 @@ can make no promise and still state the law or a policy term incorrectly.
 3. Paraphrase only the minimum claim needed by the rubric. Add a section or page
    locator so another reviewer can find it.
 4. Run `python3 -m pytest tests/test_reference_pack.py`.
+
+For a service-rule change, also update the catalogue version when compatibility
+changes and run both `tests/test_service_catalogue.py` and
+`tests/test_draft_evidence.py`. Validation-set rows freeze their selected IDs,
+so a routing change must be reviewed rather than silently accepted.
 
 The files are versioned rather than fetched during an evaluation. A live fetch
 would make two runs depend on different evidence and would make an unavailable

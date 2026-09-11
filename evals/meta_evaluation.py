@@ -45,13 +45,16 @@ METRICS: tuple[str, ...] = (
     "commitment groundedness", "tone match", "summary quality",
     "domain correctness",
 )
-KNOWN_METRICS: frozenset[str] = frozenset((*METRICS, "actionability"))
+KNOWN_METRICS: frozenset[str] = frozenset(
+    (*METRICS, "actionability", "commitment groundedness v2")
+)
 
 
 def bands_for(metric: str) -> tuple[tuple[int, int], ...]:
     if metric in {"tone match", "summary quality"}:
         return TONE_AND_SUMMARY_BANDS
-    if metric in {"commitment groundedness", "domain correctness", "actionability"}:
+    if metric in {"commitment groundedness", "commitment groundedness v2",
+                  "domain correctness", "actionability"}:
         return BANDS
     raise ValueError(f"unknown metric: {metric}")
 

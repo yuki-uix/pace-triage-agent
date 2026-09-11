@@ -174,6 +174,38 @@ Actionability passed shadow operation, but every model combination missed an
 existing safety bar; this is evidence against deploying the current drafting
 pipeline, not a reason to publish an ungated composite.
 
+### Evidence-backed drafting candidate
+
+Issue #32 adds an opt-in drafting path backed by two source classes: versioned
+public regulatory claims and a versioned synthetic internal service catalogue
+for this fictional case study. The selected IDs are stored with each pending
+draft, and the full evidence context is present in the encrypted trace. Existing
+pipeline behaviour remains the default:
+
+```bash
+# Opt-in candidate; this makes normal triage and drafting provider calls.
+.venv/bin/python -m src.pipeline \
+  --evidence-backed \
+  --traces results/evidence-backed-traces.jsonl
+```
+
+The matching commitment-groundedness v2 Judge is still experimental. Before
+any paid run, validate and prepare its local blind packet:
+
+```bash
+# Free.
+.venv/bin/python -m src.commitment_v2_validation
+.venv/bin/python -m evals.prepare_commitment_v2_blind_review
+
+# Paid only after all 24 blind scores are complete and frozen.
+.venv/bin/python -m evals.commitment_v2_judge_validation
+```
+
+The exact preregistered thresholds and local score format are in
+[`docs/commitment-v2-validation-plan.md`](docs/commitment-v2-validation-plan.md).
+Passing that check permits a new comparison profile; it does not silently alter
+the historical matrix or default pipeline.
+
 If a provider or quota failure interrupts the matrix, preserve the output file
 and resume it. Complete cells are verified and reused; partial cells are rerun,
 and prior usage accounting is retained:
@@ -229,6 +261,8 @@ one table in the write-up.
 | `.venv/bin/python -m evals.actionability_evaluation score` | Actionability judge/human agreement | 15 calls |
 | `.venv/bin/python -m evals.compare --shadow-actionability` | Full 2×2 matrix with validated actionability profile | ~928 calls, expected to exceed the recorded run time |
 | `.venv/bin/python -m evals.judge_validation` | Four-band challenge-set matrix for the source-backed domain judge | 24 calls |
+| `.venv/bin/python -m src.commitment_v2_validation` | Validate evidence IDs and the balanced commitment-v2 set | free |
+| `.venv/bin/python -m evals.commitment_v2_judge_validation` | Preregistered evidence-aware commitment Judge validation | 24 calls |
 | `.venv/bin/python -m src.pipeline --traces results/traces.jsonl` | Fills the pending queue | 80 calls |
 | `.venv/bin/python -m src.review` | Review the pending queue | free |
 
@@ -326,7 +360,7 @@ someone has to keep.
 |---|---|
 | `src/` | Pipeline, schema, contract, redaction, trace store, review CLI |
 | `data/` | Enquiries, frozen golden set, balanced judge-validation set, labeling guide, provenance, price template |
-| `knowledge/` | Versioned first-party regulatory sources and atomic reference claims for the judge |
+| `knowledge/` | Versioned public regulatory evidence plus a separately labelled synthetic internal service contract |
 | `evals/` | Metrics, comparison, calibration, latency, meta-evaluation |
 | `results/` | The numbers this README cites |
 | `docs/` | Architecture and ADRs, metrics, data spec, scope |

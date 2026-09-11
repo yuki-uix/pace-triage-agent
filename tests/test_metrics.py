@@ -24,6 +24,7 @@ from evals.metrics.flow import (
 from evals.metrics.groundedness import (
     CHECKED_ENTITIES,
     EntityGroundedness,
+    date_core,
     ungrounded_entities,
 )
 from evals.metrics.safety import (
@@ -330,6 +331,10 @@ def test_a_vague_invented_timeframe_is_the_judges_job_not_this_one(analyzer):
     assert findings == []
 
 
+def test_abbreviated_and_full_month_names_have_the_same_date_core():
+    assert date_core("3 Oct") == date_core("3 October") == {"3", "oct"}
+
+
 def test_a_concrete_invented_date_is_still_caught(analyzer):
     """The leniency must not reach the dates that can be checked."""
     findings = ungrounded_entities(REAL_ENQUIRY,
@@ -398,7 +403,8 @@ class StubJudge(DeepEvalBaseLLM):
 
 
 @pytest.mark.parametrize("build", [
-    "commitment_groundedness", "tone_match", "summary_quality", "actionability",
+    "commitment_groundedness", "commitment_groundedness_v2", "tone_match",
+    "summary_quality", "actionability",
 ])
 def test_the_refusal_branch_fires_for_the_real_judged_metrics(build):
     """The regression the old test could not catch.

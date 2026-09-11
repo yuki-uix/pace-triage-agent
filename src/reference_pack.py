@@ -14,11 +14,11 @@ TRUSTED_HOSTS = frozenset({"www.ia.org.hk", "www.pcpd.org.hk", "www.icb.org.hk"}
 
 TOPIC_TERMS: dict[str, tuple[str, ...]] = {
     "participating_policy": (
-        "dividend", "bonus", "cash value", "projected value", "illustration",
+        "dividend", "bonus", "projected value", "illustration",
         "红利", "紅利",
     ),
     "medical_claim": (
-        "hospital", "surgery", "medical claim", "doctor", "receipt",
+        "hospital bill", "hospital claim", "surgery", "medical claim", "doctor", "receipt",
         "住院", "手术", "手術", "索偿", "索償",
     ),
     "complaint": (
@@ -114,14 +114,17 @@ def topics_for(text: str) -> frozenset[str]:
     return frozenset(topics)
 
 
+def selected_claims(text: str, root: Path = PACK_ROOT) -> list[ReferenceClaim]:
+    selected_topics = topics_for(text)
+    return [claim for claim in load_claims(root)
+            if selected_topics.intersection(claim.topics)]
+
+
 def reference_context(text: str, root: Path = PACK_ROOT) -> list[str]:
     """Return relevant atomic claims plus an explicit boundary for missing data."""
     sources = load_sources(root)
-    selected_topics = topics_for(text)
     context = [EVIDENCE_LIMITS]
-    for claim in load_claims(root):
-        if not selected_topics.intersection(claim.topics):
-            continue
+    for claim in selected_claims(text, root):
         try:
             source = sources[claim.source_id]
         except KeyError as exc:

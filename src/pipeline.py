@@ -32,6 +32,7 @@ from openai import OpenAI
 
 from src.confidence import Confidence, ConfidenceMethod, by_self_consistency, from_logprobs
 from src.contract import FailureCounters, SchemaValidationError, call_with_contract
+from src.draft_evidence import draft_evidence
 from src.schema import DraftOutput, Priority, TriageDecision, TriageOutput
 from src.trace import TraceEntry, TraceStore
 
@@ -92,6 +93,24 @@ DRAFT_SYSTEM = (
     "routine ones get a warm, helpful one."
 )
 
+EVIDENCE_RULES = (
+    "The trusted evidence below is the complete authority available for this "
+    "draft. Public regulatory evidence and the fictional insurer's synthetic "
+    "service contract have different scope; do not turn a general rule into a "
+    "policy-specific fact. Use supported service steps to give a concrete path. "
+    "If the evidence does not establish a route, requirement, deadline, account "
+    "state or outcome, say that it must be verified. Never claim that an action "
+    "has already been completed merely because the service contract permits it. "
+    "Do not mention evidence IDs or this contract in the customer-facing reply."
+)
+
+
+def evidence_backed_draft_system(evidence_context: tuple[str, ...]) -> str:
+    if not evidence_context:
+        return DRAFT_SYSTEM
+    return (DRAFT_SYSTEM + "\n\n" + EVIDENCE_RULES + "\n\n<trusted_evidence>\n"
+            + "\n".join(evidence_context) + "\n</trusted_evidence>")
+
 
 @dataclass(frozen=True)
 class StageConfig:
@@ -113,6 +132,7 @@ class StageConfig:
 class PipelineConfig:
     triage: StageConfig
     draft: StageConfig
+    evidence_backed: bool = False
 
     @classmethod
     def from_env(cls, triage_model: str | None = None,
@@ -282,12 +302,14 @@ def _store(store: TraceStore | None, record_id: str, trace: StageTrace,
 
 
 def run_draft(client: OpenAI, config: StageConfig, subject: str, body: str,
-              triage: TriageOutput, counters: FailureCounters,
-              record_id: str = "",
-              store: TraceStore | None = None) -> tuple[DraftOutput, StageTrace]:
+               triage: TriageOutput, counters: FailureCounters,
+               record_id: str = "",
+               store: TraceStore | None = None,
+               evidence_context: tuple[str, ...] = ()) -> tuple[DraftOutput, StageTrace]:
     trace = StageTrace(stage="draft", model=config.model,
                        thinking=config.enable_thinking)
     enquiry = wrap_enquiry(subject, body)
+    system = evidence_backed_draft_system(evidence_context)
     context = (
         f"Triage classified this as {triage.case_type.value} at "
         f"{triage.priority.value} priority.\n\n"
@@ -298,7 +320,7 @@ def run_draft(client: OpenAI, config: StageConfig, subject: str, body: str,
         response = client.chat.completions.create(
             model=config.model,
             messages=[
-                {"role": "system", "content": DRAFT_SYSTEM},
+                {"role": "system", "content": system},
                 {"role": "user", "content": context + enquiry + _retry_note(previous)},
             ],
             max_tokens=4096,
@@ -318,7 +340,7 @@ def run_draft(client: OpenAI, config: StageConfig, subject: str, body: str,
         last_draft["content"] = content
         return content
 
-    prompt = DRAFT_SYSTEM + "\n" + context + enquiry
+    prompt = system + "\n" + context + enquiry
     try:
         output = call_with_contract(capture, DraftOutput, counters)
     except Exception:
@@ -341,6 +363,7 @@ class PendingItem:
     confidence: float
     summary: str
     draft_reply: str
+    evidence_ids: list[str] = field(default_factory=list)
     traces: list[dict] = field(default_factory=list)
     decision: str | None = None
     reviewer_text: str | None = None
@@ -355,8 +378,10 @@ def run(client: OpenAI, config: PipelineConfig, record_id: str, subject: str,
     """Both stages for one enquiry. Returns a queue item; sends nothing."""
     triage, triage_trace = run_triage(client, config.triage, subject, body,
                                       counters, record_id, store)
+    evidence = draft_evidence(f"{subject}\n{body}") if config.evidence_backed else None
     draft, draft_trace = run_draft(client, config.draft, subject, body, triage,
-                                   counters, record_id, store)
+                                   counters, record_id, store,
+                                   evidence.context if evidence else ())
 
     return PendingItem(
         record_id=record_id,
@@ -365,6 +390,7 @@ def run(client: OpenAI, config: PipelineConfig, record_id: str, subject: str,
         confidence=triage.confidence,
         summary=draft.summary,
         draft_reply=draft.draft_reply,
+        evidence_ids=list(evidence.ids) if evidence else [],
         traces=[asdict(triage_trace), asdict(draft_trace)],
     )
 
@@ -384,6 +410,8 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--draft-model", default=None)
     parser.add_argument("--thinking", action="store_true",
                         help="leave thinking on; off by default per ADR-008")
+    parser.add_argument("--evidence-backed", action="store_true",
+                        help="supply versioned public and synthetic service evidence")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--workers", type=int, default=6,
                         help="quality runs may be concurrent; latency runs may not")
@@ -401,6 +429,7 @@ def main(argv: list[str]) -> int:
     config = PipelineConfig(
         triage=StageConfig(base.triage.model, enable_thinking=args.thinking),
         draft=StageConfig(base.draft.model, enable_thinking=args.thinking),
+        evidence_backed=args.evidence_backed,
     )
 
     # Enquiries only. The labels live in data/golden.jsonl and this module has

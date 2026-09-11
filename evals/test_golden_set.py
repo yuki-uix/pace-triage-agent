@@ -244,7 +244,9 @@ def test_every_command_the_readme_lists_is_importable():
     import importlib
     import re as _re
 
-    modules = sorted(set(_re.findall(r"python -m ([a-z_]+\.[a-z_]+)", readme())))
+    modules = sorted(set(_re.findall(
+        r"python -m ([a-z0-9_]+\.[a-z0-9_]+)", readme()
+    )))
     assert modules, "the README lists no runnable commands"
     for module in modules:
         importlib.import_module(module)

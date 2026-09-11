@@ -56,6 +56,55 @@ COMMITMENT_RUBRIC = [
         "generic acknowledgement carrying no deadline or outcome.")),
 ]
 
+# Instrument v2 is evidence-aware and deliberately separate from the recorded
+# v1 metric. It cannot replace v1 until its own frozen validation has passed.
+COMMITMENT_V2_STEPS = [
+    "Read the customer email, the draft reply and every supplied evidence item. "
+    "Separate customer-stated facts, public regulatory rules and the synthetic "
+    "internal service contract; each source class has a different scope.",
+    "List every undertaking in the draft: a deadline, outcome, entitlement, "
+    "completed action, service route, required input, owner, confirmation or "
+    "promise to act. A customer request is not itself evidence that the insurer "
+    "has agreed to the requested outcome.",
+    "For each undertaking, identify its support. It may be supported by a prior "
+    "commitment in the email, an applicable public rule, or a selected internal "
+    "service entry. General regulation cannot establish an individual policy "
+    "term, account state, internal route or completed action.",
+    "Treat a service-contract step as permission to describe that conditional "
+    "process, not proof it has already happened. 'Reply with the statement and "
+    "Billing will compare it' can be supported; 'we opened case ABC and your "
+    "refund is approved' needs case-specific evidence.",
+    "Distinguish a safe conditional result from a promised outcome. 'If the "
+    "review confirms a duplicate, we will explain the applicable refund path' "
+    "does not promise a refund. 'We will refund it' does.",
+    "Do not penalise a customer-observable confirmation, information request or "
+    "review result when the selected service entry explicitly authorises it. Do "
+    "penalise an invented fixed SLA, case reference, contact address, completed "
+    "system action, policy entitlement or guaranteed resolution.",
+    "Score commitment support only. Do not reward vagueness and do not penalise "
+    "a supported operational path for being specific; actionability scores the "
+    "quality and completeness of that path separately.",
+]
+
+COMMITMENT_V2_RUBRIC = [
+    Rubric(score_range=(0, 2), expected_outcome=(
+        "The reply promises an unsupported outcome, entitlement or fixed "
+        "timeframe, or claims a case-specific action or status already exists "
+        "when neither the email nor supplied evidence establishes it.")),
+    Rubric(score_range=(3, 5), expected_outcome=(
+        "The main direction is plausible, but the reply adds a softer unsupported "
+        "assurance, internal route, completion state or service level, or uses a "
+        "general source beyond its stated scope.")),
+    Rubric(score_range=(6, 8), expected_outcome=(
+        "Material undertakings are supported by the email or applicable evidence "
+        "and remain conditional where needed, with one minor overstatement or "
+        "missing qualification.")),
+    Rubric(score_range=(9, 10), expected_outcome=(
+        "Every undertaking is traceable to the email or applicable supplied "
+        "evidence, respects source scope, and does not turn an authorised process "
+        "into a completed action or guaranteed case outcome.")),
+]
+
 # Why this one cannot be a regex: tone is a relation between the reply and the
 # situation, not a word list. "We understand this is frustrating" is warmth in a
 # complaint and padding in an urgent claim where the customer needs a decision.
@@ -236,6 +285,18 @@ def commitment_groundedness(model, threshold: float = 0.98) -> GEval:
     )
 
 
+def commitment_groundedness_v2(model, threshold: float = 0.9) -> GEval:
+    """Evidence-aware commitment support; experimental until blind validation."""
+    return GEval(
+        name="commitment groundedness v2",
+        evaluation_params=[INPUT, OUTPUT, CONTEXT],
+        evaluation_steps=COMMITMENT_V2_STEPS,
+        rubric=COMMITMENT_V2_RUBRIC,
+        model=model,
+        threshold=threshold,
+    )
+
+
 def tone_match(model, threshold: float = 0.7) -> GEval:
     return GEval(
         name="tone match",
@@ -288,6 +349,7 @@ JUDGED_METRICS = (commitment_groundedness, tone_match, summary_quality)
 # remains the immutable instrument used by the recorded 2x2 comparison.
 SHADOW_JUDGED_METRICS = JUDGED_METRICS + (actionability,)
 EXPERIMENTAL_METRICS = ()
+EVIDENCE_EXPERIMENTAL_METRICS = (commitment_groundedness_v2,)
 # The recorded 2x2 comparison predates the reference pack. Keep its instrument
 # stable; the next paid run may deliberately promote this metric into the main
 # matrix after the source-backed judge itself has been human-validated.

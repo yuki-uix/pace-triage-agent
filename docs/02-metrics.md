@@ -7,7 +7,7 @@
 | Case-type accuracy / per-class F1 | Custom `BaseMetric`, no LLM. Emits a confusion matrix. | Deterministic |
 | Priority accuracy | Same metric class. Reported separately for URGENT. | Deterministic |
 | Entity groundedness | Extract policy numbers, amounts, dates, names from draft; assert subset of enquiry entities. Detection reuses the recognizers in `src/redaction.py`, so one class of data has one detection path. | Deterministic |
-| Commitment groundedness | `GEval` — does the draft promise anything the enquiry does not support? | Judge |
+| Commitment groundedness | Recorded v1: does the enquiry support the promise? Experimental v2: does the enquiry or selected, scoped evidence support it? | Judge |
 | Tone match | `GEval` with an explicit rubric; urgent = formal/efficient, routine = warm/helpful. | Judge |
 | Summary quality | `GEval`, scored only for length discipline and factual containment. | Judge |
 | Actionability | Validated shadow metric: does the reply give the customer a concrete operational path? Support for deadlines and outcomes is scored separately by commitment groundedness. | Judge |
@@ -80,6 +80,14 @@ source enquiries, each paired with controlled replies in all four rubric bands.
 Combining them would make the judge look better or worse by construction and
 would no longer estimate agreement on actual system output.
 
+Commitment-groundedness v2 is a separate instrument, not a reinterpretation of
+the recorded scores. It receives the exact public claims and versioned synthetic
+service entries selected for the draft. This makes a supported process such as
+“reply with the redacted statement and Billing will compare it” eligible for a
+high score, while a fabricated refund, fixed SLA or already-opened case remains
+a failure. Its frozen validation and promotion boundary are in
+[`commitment-v2-validation-plan.md`](commitment-v2-validation-plan.md).
+
 ### Actionability and commitment support are separate axes
 
 `commitment groundedness` asks whether an undertaking is supported;
@@ -89,6 +97,11 @@ poorly on actionability. A specific three-day resolution can score highly on
 actionability because the operational path is clear, while scoring poorly on
 commitment groundedness when that timeframe has no support. The composite must
 not let the first score conceal the second.
+
+For the evidence-backed candidate, this separation is structural: actionability
+may reward a concrete path, but commitment v2 must be given the same evidence
+IDs and can still veto unsupported details. Neither score is allowed to infer
+support from the other.
 
 The validation workflow freezes the human column before making its fifteen
 judge calls. A separate 24-variant balanced diagnostic checks all four rubric

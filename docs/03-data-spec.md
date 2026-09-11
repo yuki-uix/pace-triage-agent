@@ -94,5 +94,14 @@ simply never being scored.
 Once tagged in git the golden half changes only via an explicit commit that says
 it is changing and why.
 
+## Evidence-aware validation data
+
+`data/commitment_v2_validation_set.jsonl` is not production or golden-set data.
+It is a controlled 24-reply instrument check: six source enquiries crossed with
+four commitment-support bands. Each row contains its expected band, seeded
+faults and the ordered evidence IDs produced by the deterministic selector.
+Loading the set recomputes those IDs from `data/enquiries.jsonl`; evidence drift
+is therefore an error requiring adjudication.
+
 Regenerating the golden set after seeing results is the one action that
 invalidates the entire submission. Everything else here is recoverable.

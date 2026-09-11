@@ -205,8 +205,10 @@ The exact preregistered thresholds and local score format are in
 [`docs/commitment-v2-validation-plan.md`](docs/commitment-v2-validation-plan.md).
 The revised set's independent blind review passed and is documented in
 [`docs/commitment-v2-blind-validation.md`](docs/commitment-v2-blind-validation.md).
-Passing that check permits a new comparison profile; it does not silently alter
-the historical matrix or default pipeline.
+The first automated run then missed its frozen exact-band criterion by one item;
+see [`docs/commitment-v2-validation-v1.md`](docs/commitment-v2-validation-v1.md).
+Commitment v2 therefore remains experimental pending a disjoint holdout. It does
+not alter the historical matrix or default pipeline.
 
 If a provider or quota failure interrupts the matrix, preserve the output file
 and resume it. Complete cells are verified and reused; partial cells are rerun,

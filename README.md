@@ -211,12 +211,17 @@ Commitment v2 therefore remains experimental pending a disjoint holdout. It does
 not alter the historical matrix or default pipeline.
 
 The disjoint boundary holdout and its blind review are now frozen. Its paid
-runner remains a separate, explicitly authorised step:
+runner is a separate, explicitly authorised step:
 
 ```bash
 .venv/bin/python -m src.commitment_v2_holdout
 .venv/bin/python -m evals.commitment_v2_holdout_validation
 ```
+
+The automated holdout missed the exact-band criterion despite passing every
+other gate. The result is recorded in
+[`docs/commitment-v2-holdout-v1.md`](docs/commitment-v2-holdout-v1.md). Do not
+promote the candidate or rerun edited versions of the same replies.
 
 If a provider or quota failure interrupts the matrix, preserve the output file
 and resume it. Complete cells are verified and reused; partial cells are rerun,

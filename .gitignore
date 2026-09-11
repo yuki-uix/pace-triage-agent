@@ -21,5 +21,6 @@ results/*.json
 !results/meta_eval_drafts.jsonl
 !results/judge_validation_pilot_v2.json
 !results/commitment_v2_validation_v1.json
+!results/commitment_v2_holdout_v1.json
 traces/
 .local/

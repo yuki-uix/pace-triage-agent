@@ -1,0 +1,395 @@
+{
+  "acceptance": {
+    "criteria": {
+      "all_24_calls_completed": true,
+      "blind_every_item_within_one_band": true,
+      "blind_exact_band_at_least_20_of_24": true,
+      "blind_kappa_at_least_0_85": true,
+      "continuous_scoring_24_of_24": true,
+      "judge_every_item_within_one_band": true,
+      "judge_exact_band_at_least_20_of_24": false,
+      "judge_kappa_at_least_0_85": true,
+      "no_thinking_disabled_retry": true
+    },
+    "passed": false
+  },
+  "agreement": {
+    "exact_band_rate": 0.7916666666666666,
+    "n": 24,
+    "quadratic_weighted_kappa": 0.9285714285714286,
+    "spearman": 0.9336797765144355,
+    "within_one_band_rate": 1.0
+  },
+  "blind_review_agreement": {
+    "exact_band_rate": 0.9166666666666666,
+    "n": 24,
+    "quadratic_weighted_kappa": 0.96875,
+    "spearman": 0.9693630921740698,
+    "within_one_band_rate": 1.0
+  },
+  "confusion_matrix_rows_expected_columns_judge": [
+    [
+      6,
+      0,
+      0,
+      0
+    ],
+    [
+      2,
+      4,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      3,
+      3
+    ],
+    [
+      0,
+      0,
+      0,
+      6
+    ]
+  ],
+  "failures": [],
+  "input_sha256": {
+    ".local/commitment_v2_validation/blind_agent_scores.jsonl": "d620ed2c8c83148588bf13d54a842d8222e65e0c57664f0427c1e449f0ba7a21",
+    ".local/commitment_v2_validation/blind_key.json": "820d64cf55c0dab87e8caee8882b635d9b4257157427a867dee27fb8a2a78c9e",
+    "data/commitment_v2_validation_set.jsonl": "2ae01a813105ced0a3d93951e228859614afaf9a15ce0747c379d796f099f7be",
+    "docs/commitment-v2-validation-plan.md": "70748a96d45a6be2091a9f5f6ad794babb12f7711d8621ad66614d936624d77f",
+    "evals/metrics/judged.py": "4b2941052f366e47d511bff847ec8230205d7de0477e75fab69e5dc46dd74fd1",
+    "knowledge/reference_claims.jsonl": "74368ece404b23c4337dbb9b2c2a5b5cffa1db9d912ecb393466569c5b3d474e",
+    "knowledge/service_catalogue.jsonl": "75173572db7888cbd0d767d051bbac220233d32df4fa26ecb0fc4679ed302d61",
+    "knowledge/service_catalogue_manifest.json": "a19ab8e1ca5e5c883c0970987d8b5b356231987afbccc8cd8c04920a284cc5ed",
+    "knowledge/source_manifest.json": "f8247796dcd4cc4b82de26cf5acd7fe836257b0dcdf7e07b666d2e3b286e801a"
+  },
+  "items": [
+    {
+      "evidence_ids": [
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The draft reply states that the address has already been updated on both policies, which directly violates the [SVC_ADDRESS_01] service contract rule explicitly stating to never claim the system record has already changed unless the enquiry establishes it. It also invents an unsupported 24-hour SLA for app visibility and falsely asserts that no proof of address is required, directly contradicting the service contract's mandate to ask for a proof-of-address document. These are unsupported case-specific actions, entitlements, and timeframes.",
+      "record_id": "ENQ-009",
+      "variant_id": "CV2-009-A"
+    },
+    {
+      "evidence_ids": [
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.29999999999999993,
+      "reason": "The reply correctly identifies the email thread as an intake channel and Policy Servicing as the owner per [SVC_ADDRESS_01], and asking for a proof-of-address document is supported. However, it invents the specific form name 'Address Amendment Form AC-01,' which appears nowhere in the supplied evidence\u2014the service contract only states the email thread is an accepted channel and does not reference any named form. Additionally, the claim that Policy Servicing 'should then be able to update both policies without asking you for anything else' contradicts the service contract, which explicitly allows Policy Servicing to either request a missing item or send completion confirmation, meaning further requests remain possible. This is an unsupported assurance that overrides the conditional process described in the evidence.",
+      "record_id": "ENQ-009",
+      "variant_id": "CV2-009-B"
+    },
+    {
+      "evidence_ids": [
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "Every undertaking in the reply is fully supported by the [SVC_ADDRESS_01] internal service contract. The response correctly identifies the current email thread as an accepted intake channel and asks for the required information: both affected policy numbers, old and new addresses, and a proof-of-address document (accepting the bank statement proposed by the customer). It accurately outlines the authorized conditional process, noting that Policy Servicing will confirm receipt and then either request missing items or confirm completion. It does not invent any fixed SLAs, case references, contact addresses, or claim a completed system action.",
+      "record_id": "ENQ-009",
+      "variant_id": "CV2-009-C"
+    },
+    {
+      "evidence_ids": [
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "reason": "All undertakings in the reply are directly traceable to SVC_ADDRESS_01. The intake channel ('this email thread'), required inputs (both policy numbers, old and new addresses, proof-of-address document), owner (Policy Servicing), and the conditional downstream process (receipt confirmation, then either request a missing item or send written completion confirmation) all map exactly to the service contract. No completed action, fixed SLA, case reference, or guaranteed outcome is claimed. The statement 'we will not invent a document-age requirement' mirrors the service contract's explicit boundary. The reply remains appropriately conditional throughout. While the customer's specific questions about the mobile app, bank-statement acceptability, and whether one submission covers both policies are not directly answered, that is an actionability/completeness concern scored separately per evaluation step 7, not a commitment-support deficiency.",
+      "record_id": "ENQ-009",
+      "variant_id": "CV2-009-D"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The reply promises an unsupported refund outcome, a fixed timeframe, and claims a case-specific action already exists, which violates the rubric for the 0-2 range. Specifically, it states the refund is 'approved' and will arrive 'by Friday', and guarantees next month's premium will be taken once. The synthetic service contract [SVC_BILLING_01] explicitly states not to promise a refund is due or give a completion date without case-specific system evidence, and requires Premium Billing to review a customer-provided statement image before any findings or conditional refund instructions are issued. The reply entirely ignores this authorised conditional process and fabricates completed system actions and guaranteed resolutions.",
+      "record_id": "ENQ-016",
+      "variant_id": "CV2-016-A"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "reason": "The reply correctly identifies that Premium Billing will investigate the disputed debits, which is supported by the internal service contract. However, it adds unsupported softer assurances by stating that a refund is likely and that the team should be able to prevent the same problem on the next collection. The service contract explicitly states not to promise a refund is due without case-specific system evidence and only authorizes conditional refund or correction instructions after review, placing this in the 3-5 band.",
+      "record_id": "ENQ-016",
+      "variant_id": "CV2-016-B"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "All undertakings in the draft are directly traceable to [SVC_BILLING_01]. The reply requests a redacted statement image with specific transaction details, states that Premium Billing will compare it with the billing record, and promises a case reference and conditional findings/refund instructions after review. It respects source scope by keeping the process conditional and avoiding unsupported guarantees, fixed SLAs, or claims of completed actions.",
+      "record_id": "ENQ-016",
+      "variant_id": "CV2-016-C"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "The reply requests a statement image with the exact transaction details and redaction rules specified in [SVC_BILLING_01]. It accurately describes the authorized conditional process: Premium Billing will compare the evidence, the customer will receive a case reference once logged, and will later receive findings alongside any conditional refund or correction instructions. It correctly avoids promising a guaranteed refund, inventing an SLA, or claiming any case-specific action has already occurred. Every undertaking is fully traceable to the selected internal service entry and respects source scope.",
+      "record_id": "ENQ-016",
+      "variant_id": "CV2-016-D"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The reply promises coverage and claims the claim is already approved, directly violating [SVC_CLAIM_01] which explicitly states not to promise coverage or claim outcomes without policy and case evidence. It also invents a fixed five-working-day payment timeframe and asserts that no doctor's report or originals are needed, contradicting the internal service entry which requires checking the policy and case to identify any missing medical section and whether originals are required. These are multiple unsupported entitlements, outcomes, and a fixed SLA.",
+      "record_id": "ENQ-023",
+      "variant_id": "CV2-023-A"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The draft directs the customer to an invented contact address (`claims@example.com`) instead of the supported route of replying to the current email, violating the explicit rule against inventing contact addresses. It also promises an unsupported outcome by stating the team \"should be able to continue without asking for the originals,\" whereas the service contract states that Claims must check the policy and case to determine whether originals are required. These undertakings are unsupported and guarantee a resolution.",
+      "record_id": "ENQ-023",
+      "variant_id": "CV2-023-B"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "The draft's undertakings are fully traceable to the internal service contract [SVC_CLAIM_01] and respect all source boundaries. Instructing the customer to reply with the policy number, treatment dates, itemised bill and discharge summary directly matches the permitted initial intake process. Promising that Claims will confirm receipt and identify the current form, medical report requirements, and final submission route accurately frames the authorised operational path as a conditional future step, rather than a completed action or guaranteed outcome. Stating that the provided copies are sufficient to 'begin assessment' is supported by the intake process rules and correctly avoids inventing a handling time, contact address, or policy entitlement.",
+      "record_id": "ENQ-023",
+      "variant_id": "CV2-023-C"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "Every undertaking in the reply is directly traceable to [SVC_CLAIM_01]. The instruction to reply with policy number, hospital and treatment dates, and copies of the itemised bill, receipt, discharge summary and any medical report already held matches the service-contract intake step verbatim. The promise that Claims will confirm receipt and then identify the current form, any missing medical section, whether originals are required and the accepted final-submission route is explicitly authorised by the same service entry and remains conditional on that review. The explicit statement that coverage or a handling time cannot be promised before review mirrors the service contract's prohibition on promising those outcomes without policy and case evidence. No invented SLA, case reference, contact address, completed action, policy entitlement or guaranteed resolution appears. Source scope is respected: general IA guidance is not used to establish insurer-specific facts. The reply does not address the app/hotline complaints, but that concerns actionability rather than commitment support, which the rubric scores separately.",
+      "record_id": "ENQ-023",
+      "variant_id": "CV2-023-D"
+    },
+    {
+      "evidence_ids": [
+        "PARTICIPATING_01",
+        "PARTICIPATING_02",
+        "PARTICIPATING_03",
+        "COMPLAINT_01",
+        "COMPLAINT_02",
+        "SVC_POLICY_INFO_01",
+        "SVC_COMPLAINT_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The draft makes multiple unsupported claims and promises. It asserts that complaint CMP-88421 has been registered and assigned to Mr Lee, directly contradicting [SVC_COMPLAINT_01] which warns against stating registration or assignment has already happened before the reviewer completes it. It admits mis-selling and promises to restore the HK$60,000 shortfall, an unsupported outcome and entitlement that [SVC_POLICY_INFO_01] explicitly prohibits before a policy-record lookup and identity verification. Finally, it promises a final response within three working days, violating the internal rule against inventing a fixed complaint SLA.",
+      "record_id": "ENQ-028",
+      "variant_id": "CV2-028-A"
+    },
+    {
+      "evidence_ids": [
+        "PARTICIPATING_01",
+        "PARTICIPATING_02",
+        "PARTICIPATING_03",
+        "COMPLAINT_01",
+        "COMPLAINT_02",
+        "SVC_POLICY_INFO_01",
+        "SVC_COMPLAINT_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.5,
+      "reason": "The reply accurately supports routing the complaint to Customer Relations based on the internal service contract. However, it adds a softer unsupported assurance that the team will resolve the customer's concerns, retrieve the signed benefit illustration, and explain surrender options. This skips the mandatory identity verification and policy-record lookup required for policy-specific documents and information, turning an authorized conditional process into an assumed outcome.",
+      "record_id": "ENQ-028",
+      "variant_id": "CV2-028-B"
+    },
+    {
+      "evidence_ids": [
+        "PARTICIPATING_01",
+        "PARTICIPATING_02",
+        "PARTICIPATING_03",
+        "COMPLAINT_01",
+        "COMPLAINT_02",
+        "SVC_POLICY_INFO_01",
+        "SVC_COMPLAINT_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.7,
+      "reason": "The draft's key undertakings are largely supported by the synthetic service contract: the email being sufficient for formal complaint intake (SVC_COMPLAINT_01), reviewer routing to Customer Relations, and Policy Servicing sending verification instructions before retrieving policy-specific records (SVC_POLICY_INFO_01) all align with the cited entries. The reply correctly avoids inventing a fixed SLA, case reference, contact address, or completed action, and uses future/conditional tense appropriately. However, the draft promises 'a named handler,' while SVC_COMPLAINT_01 actually states 'the responsible team or named handler where assigned' \u2014 making a named handler conditional rather than guaranteed, which is a minor overstatement. The reply also omits the target response date that the service entry says the customer will receive once registered.",
+      "record_id": "ENQ-028",
+      "variant_id": "CV2-028-C"
+    },
+    {
+      "evidence_ids": [
+        "PARTICIPATING_01",
+        "PARTICIPATING_02",
+        "PARTICIPATING_03",
+        "COMPLAINT_01",
+        "COMPLAINT_02",
+        "SVC_POLICY_INFO_01",
+        "SVC_COMPLAINT_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "reason": "Each undertaking in the draft is traceable to the supplied evidence and stays within source scope. 'Accepted formal-complaint intake' and 'reviewer will route to Customer Relations' mirror SVC_COMPLAINT_01, while the future complaint reference, responsible team/handler and target response date are correctly framed as conditional on registration ('Once registered'), with no invented fixed SLA. The Policy Servicing verification step before policy-specific values or records is supported by SVC_POLICY_INFO_01, and comparing the signed illustration against guaranteed versus non-guaranteed figures aligns with PARTICIPATING_03. The reply does not claim registration or verification has already happened, does not confirm any policy value or entitlement, and avoids inventing case references or contact addresses. Minor: the response is concise and does not itself walk through the surrender/stop-pay/continue options or the ICB escalation route, but actionability is scored separately and the operational undertakings made are all supported.",
+      "record_id": "ENQ-028",
+      "variant_id": "CV2-028-D"
+    },
+    {
+      "evidence_ids": [
+        "MARKETING_01",
+        "MARKETING_02",
+        "SVC_MARKETING_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "reason": "The draft explicitly claims that the customer's phone number and email 'have now been removed' and are 'effective immediately', inventing a completed system action and a fixed immediate timeframe. This directly violates the [SVC_MARKETING_01] service contract, which authorizes routing the details for suppression but explicitly prohibits claiming suppression has already occurred or promising an invented completion time. The public rules and service contract support the opt-out process, but they do not establish that the action is already completed.",
+      "record_id": "ENQ-035",
+      "variant_id": "CV2-035-A"
+    },
+    {
+      "evidence_ids": [
+        "MARKETING_01",
+        "MARKETING_02",
+        "SVC_MARKETING_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "reason": "The reply's core undertakings are well-supported: the reviewer routing the stated number and email for suppression is directly authorised by [SVC_MARKETING_01], and 'no form or fee is required' matches both [SVC_MARKETING_01] and [MARKETING_01]. However, two softer unsupported assurances push the score down. First, 'we expect this to stop the marketing calls and messages shortly' introduces an invented timeframe ('shortly'), which [SVC_MARKETING_01] explicitly forbids ('Do not promise an invented completion time'), even though 'expect' softens it. Second, 'you should not need to contact us again about them' is an assurance not established by any supplied evidence \u2014 the service contract only promises confirmation after suppression is recorded, not that no further contact will be needed. These are unsupported service-level and outcome assurances rather than case-specific fabrications, placing the reply in the plausible-but-softened category.",
+      "record_id": "ENQ-035",
+      "variant_id": "CV2-035-B"
+    },
+    {
+      "evidence_ids": [
+        "MARKETING_01",
+        "MARKETING_02",
+        "SVC_MARKETING_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.7,
+      "reason": "The reply's core undertakings are well-supported: 'no form or fee is required' traces to both [MARKETING_01] and [SVC_MARKETING_01]; the routing to Privacy Operations for suppression matches [SVC_MARKETING_01] and is stated in future tense, not as a completed action. The promise of confirmation after suppression is recorded is also directly authorized by [SVC_MARKETING_01]. However, the additional claim that 'the confirmation will state when your marketing preferences took effect' goes beyond what the service entry specifies\u2014it only confirms a confirmation will be sent after recording, not its exact content. This is a minor overstatement of the confirmation's scope, placing the reply in the 6-8 band.",
+      "record_id": "ENQ-035",
+      "variant_id": "CV2-035-C"
+    },
+    {
+      "evidence_ids": [
+        "MARKETING_01",
+        "MARKETING_02",
+        "SVC_MARKETING_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "Every undertaking in the reply is directly traceable to the supplied evidence and respects source scope. The statement that the email is an accepted opt-out channel and that no form or fee is required is supported by [SVC_MARKETING_01] and consistent with [MARKETING_01]. The routing of the stated phone number and email to Privacy Operations for suppression is explicitly authorized by [SVC_MARKETING_01]. The promise of confirmation after suppression is recorded also mirrors the service contract entry. The reply uses future tense throughout and does not claim suppression has already occurred, does not invent an SLA or case reference, and does not guarantee a resolution beyond the authorized conditional process. The customer's offer to fill in a form is appropriately addressed by stating none is required.",
+      "record_id": "ENQ-035",
+      "variant_id": "CV2-035-D"
+    },
+    {
+      "evidence_ids": [
+        "SVC_POLICY_INFO_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.04628423094081117,
+      "reason": "The draft reply makes multiple unsupported undertakings that directly contradict the supplied service contract. It states 'your policy remains fully in force and its cash value is safe,' but [SVC_POLICY_INFO_01] explicitly requires identity verification and a policy-record lookup before confirming any policy status or value, and [SVC_FRAUD_01] prohibits confirming policy status from an unverified fraud report. The claim 'the WhatsApp message was fraudulent' is a definitive conclusion about an unverified fraud report, again contrary to [SVC_FRAUD_01]. Most seriously, 'We have frozen the FPS transfer and will recover the HK$12,000 within three days' violates [SVC_FRAUD_01]'s explicit instruction: 'Do not claim funds can be stopped or recovered.' The three-day recovery timeframe is an invented SLA with no evidence. The reply also fails to follow the authorised operational path (advising immediate contact with the customer's bank and the Police, acknowledging evidence submission, and routing policy-status questions through verification). These are core, material violations rather than minor overstatements.",
+      "record_id": "ENQ-040",
+      "variant_id": "CV2-040-A"
+    },
+    {
+      "evidence_ids": [
+        "SVC_POLICY_INFO_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 0,
+      "judge_score": 0.19706877690366523,
+      "reason": "The draft correctly advises contacting the customer's bank and the Police, which [SVC_FRAUD_01] explicitly authorises when money or credentials were provided, and routes the payment reference to Security plus policy checks to Policy Servicing, both supported owners. However, the statement that Security 'should be able to help recover the funds' directly contradicts the service contract's explicit instruction: 'Do not claim funds can be stopped or recovered.' This is an unsupported outcome disguised as a soft assurance. Additionally, 'Security will try to trace the transfer' overstates the service entry, which only authorises Security to 'acknowledge the submitted evidence,' not to trace transfers. Per the rubric, promising an unsupported outcome falls in the 0-2 band.",
+      "record_id": "ENQ-040",
+      "variant_id": "CV2-040-B"
+    },
+    {
+      "evidence_ids": [
+        "SVC_POLICY_INFO_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.8,
+      "reason": "The draft correctly advises contacting the bank and Police, requests specific evidence without sensitive data, and routes the case to Security and Policy Servicing, aligning with [SVC_FRAUD_01]. It safely avoids unsupported promises like recovering funds or confirming policy status. However, stating 'Policy Servicing verifies policy status' without mentioning the prerequisite identity verification and record lookup from [SVC_POLICY_INFO_01] is a missing qualification. Additionally, saying Security will 'explain any further security information it needs' goes slightly beyond the explicit 'acknowledges the submitted evidence' in the service contract. These are minor overstatements and missing qualifications.",
+      "record_id": "ENQ-040",
+      "variant_id": "CV2-040-C"
+    },
+    {
+      "evidence_ids": [
+        "SVC_POLICY_INFO_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "reason": "Every undertaking in the reply is explicitly supported by the synthetic internal service contract. The advice to contact the bank and Police, the request to reply with screenshots and details without resending passwords, and the statement that Security will acknowledge the evidence directly match [SVC_FRAUD_01]. The commitment that Policy Servicing will provide policy-status information only after identity verification and a record lookup aligns with both [SVC_FRAUD_01] and [SVC_POLICY_INFO_01]. The reply correctly avoids confirming policy status or entitlements and explicitly states it cannot promise that the FPS payment can be stopped or recovered, adhering to the source scope without inventing SLAs, case references, or guaranteed outcomes.",
+      "record_id": "ENQ-040",
+      "variant_id": "CV2-040-D"
+    }
+  ],
+  "judge_model": "glm-5.2",
+  "metric": "commitment groundedness v2",
+  "status": "preregistered_evidence_validation",
+  "usage": {
+    "calls": 24,
+    "completion_tokens": 44836,
+    "continuous_scoring_rate": 1.0,
+    "failures": [],
+    "prompt_tokens": 36733,
+    "reasoning_tokens": 41129,
+    "thinking_disabled_retries": 0,
+    "with_logprobs": 24
+  }
+}

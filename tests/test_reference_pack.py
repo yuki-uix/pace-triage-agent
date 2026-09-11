@@ -61,6 +61,12 @@ def test_multi_topic_enquiry_receives_each_relevant_source():
     assert topics == frozenset({"complaint", "medical_claim", "premium_billing"})
 
 
+def test_generic_cash_value_in_fraud_report_does_not_imply_participating_policy():
+    assert "participating_policy" not in topics_for(
+        "A suspicious WhatsApp says my policy will lose all cash value."
+    )
+
+
 def test_explicit_non_complaint_does_not_load_complaint_routing():
     context = "\n".join(reference_context(
         "This isn't a complaint. Please stop promotional emails."

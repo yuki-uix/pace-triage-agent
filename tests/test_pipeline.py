@@ -207,7 +207,34 @@ def test_the_queue_item_serialises_and_carries_no_decision_yet():
     assert payload["decision"] is None
     assert payload["reviewer_text"] is None
     assert payload["record_id"] == "ENQ-001"
+    assert payload["evidence_ids"] == []
     assert len(payload["traces"]) == 2
+
+
+def test_evidence_backed_draft_receives_relevant_trusted_context():
+    client = FakeClient([TRIAGE_JSON, DRAFT_JSON], CLAIM_TOKENS)
+    config = PipelineConfig(StageConfig("a"), StageConfig("b"),
+                            evidence_backed=True)
+
+    item = run(client, config, "ENQ-001", "Duplicate premium complaint",
+               "My premium was deducted twice; this is a formal complaint.",
+               FailureCounters())
+
+    system = client.requests[1]["messages"][0]["content"]
+    assert "<trusted_evidence>" in system
+    assert "SYNTHETIC INTERNAL SERVICE CONTRACT" in system
+    assert "SVC_BILLING_01" in system
+    assert "SVC_COMPLAINT_01" in system
+    assert "Do not mention evidence IDs" in system
+    assert "SVC_BILLING_01" in item.evidence_ids
+
+
+def test_default_draft_prompt_remains_historically_stable():
+    client = FakeClient([DRAFT_JSON])
+    triage = TriageOutput(case_type=CaseType.COMPLAINT, priority=Priority.LOW,
+                          confidence=0.5)
+    run_draft(client, StageConfig("m"), "s", "b", triage, FailureCounters())
+    assert "<trusted_evidence>" not in client.requests[0]["messages"][0]["content"]
 
 
 SEND_PATTERNS = re.compile(

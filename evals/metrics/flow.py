@@ -33,6 +33,7 @@ SKIPPED_WHEN_REFUSING: frozenset[str] = frozenset({
     "tone match",
     "summary quality",
     "commitment groundedness",
+    "commitment groundedness v2",
     "actionability",
 })
 

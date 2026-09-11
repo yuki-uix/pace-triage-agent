@@ -11,6 +11,9 @@ inbound email (plain text)
   Stage 1: TRIAGE                  small / cheap model
     case_type, priority, confidence
         │
+        ├─ [opt-in: deterministic topic routing]
+        │      public claims + synthetic service contract
+        │      selected evidence IDs retained as provenance
         ▼
   Stage 2: DRAFT                   larger / careful model
     summary, draft_reply
@@ -87,6 +90,14 @@ audit. Splitting means the high-severity half of the metric is deterministic.
 **Rejected: Ragas faithfulness.** It models a `retrieval_context`, and there is no
 retrieval step here. Its claim-decomposition approach is worth borrowing by hand;
 the dependency is not.
+
+**Amended for Issue #32.** The original comparison remains retrieval-free. A new
+opt-in evidence-backed candidate uses deterministic topic selection rather than
+embedding search: public regulatory claims and synthetic internal service rules
+remain visibly separate, and their ordered IDs travel with the pending draft.
+Commitment-groundedness v2 receives the identical evidence context. The candidate
+cannot become the default until the preregistered v2 validation passes and a new
+full comparison clears the existing hard bars.
 
 ## ADR-004: PII redaction sits at the observability boundary
 

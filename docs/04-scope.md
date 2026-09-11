@@ -37,7 +37,7 @@ an unfinished directory.
 | Not building | Why | Where it goes instead |
 |---|---|---|
 | Web UI | The brief permits a CLI. A UI consumes hours and demonstrates nothing being assessed. | — |
-| RAG / policy knowledge base | No retrieval in the task. Adding it invents a requirement. | Next two weeks |
+| General RAG / real policy knowledge base | The original task has no real insurer corpus. Issue #32 adds only a small, versioned synthetic service contract with deterministic routing; broad retrieval and real policy terms remain out of scope. | Next two weeks |
 | Multi-turn conversation | The task is single-email triage. | Next two weeks |
 | Fine-tuning | Cannot be justified or evaluated at n=40. | Next two weeks |
 | Embedding-based second-opinion classifier | Genuinely good for calibration — disagreement between an independent classifier and the LLM is better-calibrated than self-reported confidence. Cannot be built and validated in the budget. | Next two weeks — as the primary proposal |

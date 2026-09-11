@@ -74,8 +74,11 @@ def date_core(text: str) -> set[str]:
     its numbers and month names - inventing wording around a real date is a
     commitment question, which ADR-003 gives to the judge.
     """
-    return {token.lower() for token in _WORD.findall(text)
-            if token.isdigit() or _MONTH.match(token)}
+    return {
+        token if token.isdigit() else token.lower()[:3]
+        for token in _WORD.findall(text)
+        if token.isdigit() or _MONTH.match(token)
+    }
 
 
 def _normalise(text: str) -> str:
@@ -124,6 +127,7 @@ def ungrounded_entities(enquiry: str, draft: str,
     """
     enquiry_normalised = _normalise(enquiry)
     enquiry_tokens = _tokens(enquiry)
+    enquiry_date_core = date_core(enquiry)
 
     findings = []
     for entity_type, surface in extract(draft, analyzer):
@@ -133,7 +137,7 @@ def ungrounded_entities(enquiry: str, draft: str,
         if entity_type == "DATE_TIME":
             if not is_checkable_date(surface):
                 continue
-            if date_core(surface) <= enquiry_tokens:
+            if date_core(surface) <= enquiry_date_core:
                 continue
         if normalised in enquiry_normalised:
             continue

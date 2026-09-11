@@ -1,0 +1,573 @@
+{
+  "acceptance": {
+    "criteria": {
+      "all_18_calls_completed": true,
+      "blind_exact_at_least_15_of_18": true,
+      "blind_kappa_at_least_0_85": true,
+      "blind_two_pairs_ordered_per_boundary": true,
+      "blind_within_one_18_of_18": true,
+      "continuous_scoring_18_of_18": true,
+      "judge_exact_at_least_15_of_18": false,
+      "judge_kappa_at_least_0_85": true,
+      "judge_two_pairs_ordered_per_boundary": true,
+      "judge_within_one_18_of_18": true,
+      "no_thinking_disabled_retry": true
+    },
+    "passed": false
+  },
+  "agreement": {
+    "exact_band_rate": 0.7222222222222222,
+    "n": 18,
+    "quadratic_weighted_kappa": 0.8648648648648649,
+    "spearman": 0.889159809433243,
+    "within_one_band_rate": 1.0
+  },
+  "blind_pair_ordering": {
+    "by_boundary": {
+      "2/3": {
+        "ordered": 3,
+        "total": 3
+      },
+      "5/6": {
+        "ordered": 3,
+        "total": 3
+      },
+      "8/9": {
+        "ordered": 3,
+        "total": 3
+      }
+    },
+    "pairs": [
+      {
+        "boundary": [
+          5,
+          6
+        ],
+        "lower": 3,
+        "pair_id": "CHP-010",
+        "strictly_ordered": true,
+        "upper": 8
+      },
+      {
+        "boundary": [
+          8,
+          9
+        ],
+        "lower": 4,
+        "pair_id": "CHP-011",
+        "strictly_ordered": true,
+        "upper": 10
+      },
+      {
+        "boundary": [
+          5,
+          6
+        ],
+        "lower": 4,
+        "pair_id": "CHP-014",
+        "strictly_ordered": true,
+        "upper": 7
+      },
+      {
+        "boundary": [
+          2,
+          3
+        ],
+        "lower": 0,
+        "pair_id": "CHP-018",
+        "strictly_ordered": true,
+        "upper": 3
+      },
+      {
+        "boundary": [
+          8,
+          9
+        ],
+        "lower": 7,
+        "pair_id": "CHP-021",
+        "strictly_ordered": true,
+        "upper": 10
+      },
+      {
+        "boundary": [
+          2,
+          3
+        ],
+        "lower": 0,
+        "pair_id": "CHP-024",
+        "strictly_ordered": true,
+        "upper": 2
+      },
+      {
+        "boundary": [
+          5,
+          6
+        ],
+        "lower": 3,
+        "pair_id": "CHP-029",
+        "strictly_ordered": true,
+        "upper": 8
+      },
+      {
+        "boundary": [
+          8,
+          9
+        ],
+        "lower": 5,
+        "pair_id": "CHP-036",
+        "strictly_ordered": true,
+        "upper": 10
+      },
+      {
+        "boundary": [
+          2,
+          3
+        ],
+        "lower": 0,
+        "pair_id": "CHP-039",
+        "strictly_ordered": true,
+        "upper": 4
+      }
+    ]
+  },
+  "blind_review_agreement": {
+    "exact_band_rate": 0.8333333333333334,
+    "n": 18,
+    "quadratic_weighted_kappa": 0.9142857142857143,
+    "spearman": 0.918539905655975,
+    "within_one_band_rate": 1.0
+  },
+  "confusion_matrix_rows_expected_columns_judge": [
+    [
+      3,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      5,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      3,
+      2
+    ],
+    [
+      0,
+      0,
+      1,
+      2
+    ]
+  ],
+  "failures": [],
+  "input_sha256": {
+    ".local/commitment_v2_holdout_v1/blind_agent_scores.jsonl": "1c837801e8a1d75082cda92afd1172338704512f5777c6c944d9cb9478831b7f",
+    ".local/commitment_v2_holdout_v1/blind_key.json": "aa0401f26474d8cca2ca778bc1afc3c133e1c8f7ea73731e2b7ca6f32de38f79",
+    "data/commitment_v2_holdout_v1.jsonl": "a0b738636c117f0267a487e59510e6fc50c2c17307d438b9eda984c2326d9345",
+    "docs/commitment-v2-holdout-plan.md": "dd0e346383f635a90320250a5be808211be7b6f41d6326c43b3e188c0bf3efca",
+    "evals/metrics/judged.py": "4b2941052f366e47d511bff847ec8230205d7de0477e75fab69e5dc46dd74fd1",
+    "knowledge/reference_claims.jsonl": "74368ece404b23c4337dbb9b2c2a5b5cffa1db9d912ecb393466569c5b3d474e",
+    "knowledge/service_catalogue.jsonl": "75173572db7888cbd0d767d051bbac220233d32df4fa26ecb0fc4679ed302d61",
+    "knowledge/service_catalogue_manifest.json": "a19ab8e1ca5e5c883c0970987d8b5b356231987afbccc8cd8c04920a284cc5ed",
+    "knowledge/source_manifest.json": "f8247796dcd4cc4b82de26cf5acd7fe836257b0dcdf7e07b666d2e3b286e801a"
+  },
+  "items": [
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "pair_id": "CHP-018",
+      "reason": "The reply invents multiple unsupported undertakings, including a completed system action ('restored the failed autopay'), a guaranteed outcome ('no lapse will occur'), a policy entitlement ('policy will remain active'), and a fixed SLA ('within three working days'). The supplied service contract explicitly prohibits inventing completed actions or SLAs and only authorises requesting evidence and conducting a review. Additionally, the response uses the wrong customer name and policy number, failing to address the customer's actual inquiries about payment methods or the lapse deadline.",
+      "record_id": "ENQ-018",
+      "target_score": 2,
+      "variant_id": "CH-018-2"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 0,
+      "judge_score": 0.1,
+      "pair_id": "CHP-018",
+      "reason": "The reply invents a contact address (payments@harbourview.example) and an internal route ('Lapse Prevention Desk') that are not present in either the public regulatory evidence or the synthetic service contract, which explicitly forbids inventing contact addresses or internal routes. Only the reference to 'Premium Billing' is supported by [SVC_BILLING_01], and that entry actually states the current email thread is the accepted evidence channel rather than directing customers to a separate email address. The draft also addresses the customer as 'Mr Chan' rather than 'Mr Wong', and fails to address any of the five specific questions (amount owed, payee details, continuity of cover, reinstatement forms, or autopay cause). Multiple unsupported commitments place this firmly in the lowest band.",
+      "record_id": "ENQ-018",
+      "target_score": 3,
+      "variant_id": "CH-018-3"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "pair_id": "CHP-024",
+      "reason": "The reply directly promises that claim CLM-86663045 'is covered and will be approved,' which is an unsupported guaranteed outcome. The internal service contract [SVC_CLAIM_01] explicitly states: 'Do not promise coverage, reimbursement, direct settlement, a letter of guarantee or a handling time without policy and case evidence.' The reply also invents a fixed five-working-day payment SLA, contradicting both the service entry and public guidance [CLAIMS_02] that no universal settlement deadline exists. Additionally, the customer (Chan Ho Yin) is addressed as 'Ms Lau,' and the request for a 'remaining receipt' conflicts with the customer's statement that all documents were already uploaded. None of these undertakings are traceable to the email or supplied evidence.",
+      "record_id": "ENQ-024",
+      "target_score": 2,
+      "variant_id": "CH-024-2"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "pair_id": "CHP-024",
+      "reason": "The reply correctly states that Claims will review the policy and documents, which is supported by the internal service contract [SVC_CLAIM_01]. However, it adds a softer unsupported assurance that the claim \"appears likely to be approved\" and assumes \"missing medical information\" needs to be supplied. The internal service contract explicitly prohibits promising coverage or settlement without policy and case evidence, and the customer's email states all documents were already uploaded and confirmed. These assurances fall outside the scope of the supplied evidence.",
+      "record_id": "ENQ-024",
+      "target_score": 3,
+      "variant_id": "CH-024-3"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 0,
+      "judge_band": 0,
+      "judge_score": 0.0,
+      "pair_id": "CHP-039",
+      "reason": "The response claims a case-specific account state and completed actions that are unsupported by the email or supplied evidence. By stating \"your policy remains fully active and there is no outstanding premium,\" it directly violates [SVC_FRAUD_01], which requires identity verification and record lookup before confirming policy or premium status. Additionally, the claim that \"we have blocked the link and secured your account\" invents completed system actions, which the synthetic internal service contract explicitly prohibits. These unsupported outcomes and fabricated completion states place the response in the lowest tier of the rubric.",
+      "record_id": "ENQ-039",
+      "target_score": 2,
+      "variant_id": "CH-039-2"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "pair_id": "CHP-039",
+      "reason": "The draft correctly supports telling the customer not to use the link, to send the screenshot in the current thread, and that Security will review it, all traceable to SVC_FRAUD_01's authorised process. However, the statement that 'Policy Servicing should be able to reassure you that the policy is fine' is an unsupported soft assurance: SVC_FRAUD_01 explicitly says policy/premium status must not be confirmed from an unverified fraud report and that Policy Servicing provides status information only after identity verification and record lookup. The reply also asserts the message is 'probably fraudulent' without an explicit basis in the evidence for characterising it that way. The main direction is plausible but the policy-status reassurance oversteps the service contract's stated scope.",
+      "record_id": "ENQ-039",
+      "target_score": 3,
+      "variant_id": "CH-039-3"
+    },
+    {
+      "evidence_ids": [
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.30000000000000004,
+      "pair_id": "CHP-010",
+      "reason": "The draft directs the customer to open 'Address Amendment Form AC-01' from the 'app's Profile menu', but the synthetic service contract [SVC_ADDRESS_01] makes no mention of this form or app location and instead states the current email thread is an accepted intake channel. The evidence boundary explicitly prohibits inventing a form location, so this is an unsupported internal route. Narrowing the proof-of-address requirement to a 'bank statement' also goes beyond the contract's generic 'proof-of-address document'. The reference to Policy Servicing as the owner is supported, but the invented form name/location and the omission of the contract's required asks (affected policy numbers, old and new addresses) and the customer's other questions (wife's policy, premium impact) mean the reply contains material unsupported detail rather than a fully traceable path.",
+      "record_id": "ENQ-010",
+      "target_score": 5,
+      "variant_id": "CH-010-5"
+    },
+    {
+      "evidence_ids": [
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 3,
+      "judge_score": 1.0,
+      "pair_id": "CHP-010",
+      "reason": "Every undertaking in the draft is fully supported by [SVC_ADDRESS_01] and the customer's email. Asking for both policy numbers, old and new correspondence addresses, and a bank statement as proof of address directly mirrors the service contract's required intake steps, appropriately prompted by the customer mentioning his wife's savings plan and suggesting a bank statement. The commitment that Policy Servicing will confirm receipt and then either request a missing item or confirm completion exactly follows the authorised conditional process, without claiming the system record has already changed or promising a guaranteed outcome. Source scope is respected throughout.",
+      "record_id": "ENQ-010",
+      "target_score": 6,
+      "variant_id": "CH-010-6"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.3,
+      "pair_id": "CHP-014",
+      "reason": "The draft invents an internal team ('Premium Review Desk') and a two-step handoff process (Premium Review Desk passes analysis to Premium Billing) that are not found in the supplied service contract [SVC_BILLING_01], which identifies Premium Billing as the sole owner responsible for comparing evidence with the billing record. This is an unsupported internal route under the rubric. Additionally, the draft fails to follow the authorized operational path\u2014skipping the required request for a statement image showing transaction date, amount, merchant reference and last four card digits\u2014and does not address the customer's levy rate question despite [LEVY_01] providing public regulatory evidence that could inform a conditional response. The general direction of comparing premium components and providing a breakdown is plausible, but the invented team name and unsupported process flow place this in the mid-low range.",
+      "record_id": "ENQ-014",
+      "target_score": 5,
+      "variant_id": "CH-014-5"
+    },
+    {
+      "evidence_ids": [
+        "LEVY_01",
+        "SVC_BILLING_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.7,
+      "pair_id": "CHP-014",
+      "reason": "The draft's core undertakings are well-supported by [SVC_BILLING_01]: requesting a redacted statement image with transaction date, amount, merchant reference and last four digits matches the service entry; Premium Billing comparing it with the record is an authorised conditional process description; and the promise of findings with conditional correction instructions stays appropriately conditional without promising a refund or fixed SLA. However, the claim that the case reference will name the assigned billing specialist goes beyond the evidence \u2014 the service contract states the owner is Premium Billing and a case reference will be issued, but does not establish that the reference will identify a specific specialist. This is one minor overstatement, keeping the reply in the 6\u20138 band.",
+      "record_id": "ENQ-014",
+      "target_score": 6,
+      "variant_id": "CH-014-6"
+    },
+    {
+      "evidence_ids": [
+        "COMPLAINT_01",
+        "COMPLAINT_02",
+        "SVC_COMPLAINT_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 1,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "pair_id": "CHP-029",
+      "reason": "The draft introduces an unsupported internal route and fabricated operational actions. While [SVC_COMPLAINT_01] supports a reviewer routing a formal complaint to Customer Relations, the reply invents a \"Service Quality Panel\" and claims it will obtain hotline recordings and pass coaching recommendations. These specific steps and internal routes are not in the supplied service contract, adding an unsupported internal route and assurance.",
+      "record_id": "ENQ-029",
+      "target_score": 5,
+      "variant_id": "CH-029-5"
+    },
+    {
+      "evidence_ids": [
+        "COMPLAINT_01",
+        "COMPLAINT_02",
+        "SVC_COMPLAINT_01",
+        "SVC_FRAUD_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.8,
+      "pair_id": "CHP-029",
+      "reason": "The draft's undertakings are largely well-supported by [SVC_COMPLAINT_01]. 'Accepted complaint intake' mirrors the service entry's rule that a formal-complaint email qualifies as an intake channel, and the future-tense 'a reviewer will route it to Customer Relations' properly avoids claiming a completed action. The conditional 'Once registered, you will receive a complaint reference...and a target response date set under the applicable procedure' is directly supported and does not invent a fixed SLA or case reference. However, the draft promises 'a named handler' without the service entry's 'where assigned' qualification or the alternative of a 'responsible team,' which is a minor overstatement of what the service entry actually authorises.",
+      "record_id": "ENQ-029",
+      "target_score": 6,
+      "variant_id": "CH-029-6"
+    },
+    {
+      "evidence_ids": [
+        "SVC_POLICY_INFO_01",
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 1,
+      "judge_score": 0.4,
+      "pair_id": "CHP-011",
+      "reason": "The main direction is plausible: the draft correctly identifies the current email thread as an accepted intake channel per SVC_ADDRESS_01, assigns Policy Servicing as owner, and describes the conditional process (receipt confirmation, then either requesting missing items or sending written completion confirmation) in a properly conditional manner. However, the statement 'Because the portal already showed confirmation, no proof-of-address document is needed' is an unsupported assurance that directly contradicts SVC_ADDRESS_01, which requires asking for a proof-of-address document. The customer's claim of portal confirmation is a customer-stated fact and does not override the service contract's documentation requirement. Additionally, instructing the customer to 'reply here with policy LFP-70417223 and the old and new correspondence addresses' is redundant since the customer already supplied all of this information in the original email.",
+      "record_id": "ENQ-011",
+      "target_score": 8,
+      "variant_id": "CH-011-8"
+    },
+    {
+      "evidence_ids": [
+        "SVC_POLICY_INFO_01",
+        "SVC_ADDRESS_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 2,
+      "judge_score": 0.8,
+      "pair_id": "CHP-011",
+      "reason": "The reply's three undertakings\u2014a request for every affected policy number, old/new addresses, and proof-of-address document; a receipt confirmation; and a conditional outcome (either requesting a missing item or sending written completion confirmation)\u2014are all directly supported by SVC_ADDRESS_01, and the outcome remains properly conditional rather than promising a guaranteed result. No invented SLA, case reference, or completed system action appears. However, the salutation 'Dear Ms Lee' is factually wrong: the customer's name is clearly stated as 'Cheung Hiu Tung' in the email, which is a minor overstatement/factual error showing the reply was not fully grounded in the customer's email. Additionally, the reply asks for the policy number and both addresses that the customer already supplied, without acknowledging that information was provided.",
+      "record_id": "ENQ-011",
+      "target_score": 9,
+      "variant_id": "CH-011-9"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "pair_id": "CHP-021",
+      "reason": "The draft undertakings are all supported by [SVC_CLAIM_01]: requesting policy/treatment dates and copies of the itemised bill, receipt, discharge summary and medical report mirrors the intake inputs the service entry authorises, and the statement that Claims will confirm receipt and identify the current form, missing medical section, originals requirement and final route directly tracks the conditional process described in that entry. The reply does not promise coverage, reimbursement, a letter of guarantee, a handling time, or any case-specific action/status, and it does not invent a case reference, contact address or SLA. 'These copies are enough to begin assessment' is consistent with the authorised intake path (customer may reply with copies already held; Claims confirms receipt). The only minor weakness is that the reply does not address the customer's specific questions about app vs post, pre-notification, or document sufficiency, instead routing all to Claims' post-receipt check, but this is an actionability gap rather than an unsupported commitment, which the rubric scores separately.",
+      "record_id": "ENQ-021",
+      "target_score": 8,
+      "variant_id": "CH-021-8"
+    },
+    {
+      "evidence_ids": [
+        "CLAIMS_01",
+        "CLAIMS_02",
+        "SVC_CLAIM_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "pair_id": "CHP-021",
+      "reason": "Every undertaking in the draft is traceable to [SVC_CLAIM_01]: the request for policy number, treatment dates, itemised bill, receipt, discharge summary and medical report already held; the confirmation that Claims will acknowledge receipt; and the conditional identification of the current form, missing medical section, originals requirement, and accepted final-submission route. The reply correctly frames these as future conditional steps rather than completed actions or guaranteed outcomes, and it does not invent SLAs, case references, contact addresses, or policy entitlements. It also avoids using the general IA guidance to establish policy-specific document requirements. A minor shortcoming is that 'already hold' only qualifies 'medical report' whereas the service contract applies the qualifier to all documents, slightly overstating what the pre-surgery customer currently possesses.",
+      "record_id": "ENQ-021",
+      "target_score": 9,
+      "variant_id": "CH-021-9"
+    },
+    {
+      "evidence_ids": [
+        "MARKETING_01",
+        "MARKETING_02",
+        "DAR_01",
+        "DAR_02",
+        "DAR_03",
+        "DAR_04",
+        "SVC_MARKETING_01",
+        "SVC_DATA_ACCESS_01"
+      ],
+      "expected_band": 2,
+      "judge_band": 2,
+      "judge_score": 0.7,
+      "pair_id": "CHP-036",
+      "reason": "Most undertakings are well-supported: directing the customer to reply for Form OPS003 and secure submission instructions traces to [SVC_DATA_ACCESS_01]; the fee explanation matches [DAR_03] and [SVC_DATA_ACCESS_01]; intake confirmation after a valid request aligns with [SVC_DATA_ACCESS_01]; and the 40-day timeline with written reasons for partial non-compliance is directly supported by [DAR_01]. However, the statement 'Privacy Operations will require a copy of your HKID' is an overstatement\u2014[DAR_02] explicitly notes that an HKID copy is not necessary in every case, and [SVC_DATA_ACCESS_01] only commits Privacy Operations to stating 'the information reasonably needed for identity verification,' which is conditional and broader than a fixed HKID-copy requirement. This single unsupported qualification keeps the reply in the upper-middle band rather than the top.",
+      "record_id": "ENQ-036",
+      "target_score": 8,
+      "variant_id": "CH-036-8"
+    },
+    {
+      "evidence_ids": [
+        "MARKETING_01",
+        "MARKETING_02",
+        "DAR_01",
+        "DAR_02",
+        "DAR_03",
+        "DAR_04",
+        "SVC_MARKETING_01",
+        "SVC_DATA_ACCESS_01"
+      ],
+      "expected_band": 3,
+      "judge_band": 3,
+      "judge_score": 0.9,
+      "pair_id": "CHP-036",
+      "reason": "Every undertaking in the reply is traceable to supplied evidence and respects source scope. The instruction to reply for Form OPS003 and secure submission instructions is supported by [SVC_DATA_ACCESS_01]. The promises that Privacy Operations will state verification information, explain any proposed fee, and confirm intake are all authorized by the same service entry, and the reply correctly conditions intake confirmation on receipt of a valid request. The 40-day response timeframe and the written-reasons fallback are drawn from [DAR_01], not presented as internal SLAs. The reply does not invent a case reference, contact address, or completed action, nor does it promise a guaranteed case outcome. The customer's third-party disclosure question and the HKID-copy point from [DAR_02] and [DAR_04] are not addressed, but these are actionability omissions rather than unsupported commitments.",
+      "record_id": "ENQ-036",
+      "target_score": 9,
+      "variant_id": "CH-036-9"
+    }
+  ],
+  "judge_model": "glm-5.2",
+  "metric": "commitment groundedness v2",
+  "pair_ordering": {
+    "by_boundary": {
+      "2/3": {
+        "ordered": 3,
+        "total": 3
+      },
+      "5/6": {
+        "ordered": 3,
+        "total": 3
+      },
+      "8/9": {
+        "ordered": 2,
+        "total": 3
+      }
+    },
+    "pairs": [
+      {
+        "boundary": [
+          5,
+          6
+        ],
+        "lower": 0.30000000000000004,
+        "pair_id": "CHP-010",
+        "strictly_ordered": true,
+        "upper": 1.0
+      },
+      {
+        "boundary": [
+          8,
+          9
+        ],
+        "lower": 0.4,
+        "pair_id": "CHP-011",
+        "strictly_ordered": true,
+        "upper": 0.8
+      },
+      {
+        "boundary": [
+          5,
+          6
+        ],
+        "lower": 0.3,
+        "pair_id": "CHP-014",
+        "strictly_ordered": true,
+        "upper": 0.7
+      },
+      {
+        "boundary": [
+          2,
+          3
+        ],
+        "lower": 0.0,
+        "pair_id": "CHP-018",
+        "strictly_ordered": true,
+        "upper": 0.1
+      },
+      {
+        "boundary": [
+          8,
+          9
+        ],
+        "lower": 0.9,
+        "pair_id": "CHP-021",
+        "strictly_ordered": false,
+        "upper": 0.9
+      },
+      {
+        "boundary": [
+          2,
+          3
+        ],
+        "lower": 0.0,
+        "pair_id": "CHP-024",
+        "strictly_ordered": true,
+        "upper": 0.4
+      },
+      {
+        "boundary": [
+          5,
+          6
+        ],
+        "lower": 0.4,
+        "pair_id": "CHP-029",
+        "strictly_ordered": true,
+        "upper": 0.8
+      },
+      {
+        "boundary": [
+          8,
+          9
+        ],
+        "lower": 0.7,
+        "pair_id": "CHP-036",
+        "strictly_ordered": true,
+        "upper": 0.9
+      },
+      {
+        "boundary": [
+          2,
+          3
+        ],
+        "lower": 0.0,
+        "pair_id": "CHP-039",
+        "strictly_ordered": true,
+        "upper": 0.4
+      }
+    ]
+  },
+  "status": "heldout_validation",
+  "usage": {
+    "calls": 18,
+    "completion_tokens": 48397,
+    "continuous_scoring_rate": 1.0,
+    "failures": [],
+    "prompt_tokens": 26366,
+    "reasoning_tokens": 45387,
+    "thinking_disabled_retries": 0,
+    "with_logprobs": 18
+  }
+}

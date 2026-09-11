@@ -1,0 +1,8 @@
+{
+  "catalogue_id": "HARBOURVIEW_CASE_STUDY_SERVICES_V1",
+  "version": "1.0.0",
+  "authority_type": "synthetic_internal_contract",
+  "effective_from": "2026-09-11",
+  "scope": "Fictional operational contract for this repository's Harbourview Life case study only. It is not evidence about any real insurer.",
+  "owner": "pace-triage-agent maintainers"
+}

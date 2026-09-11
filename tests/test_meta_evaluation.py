@@ -24,6 +24,8 @@ from evals.metrics.judged import (
     ACTIONABILITY_STEPS,
     COMMITMENT_RUBRIC,
     COMMITMENT_STEPS,
+    COMMITMENT_V2_RUBRIC,
+    COMMITMENT_V2_STEPS,
     DOMAIN_RUBRIC,
     DOMAIN_STEPS,
     SUMMARY_RUBRIC,
@@ -232,8 +234,8 @@ def test_score_refuses_missing_judge_rows(tmp_path, capsys):
 # ------------------------------------------------------- rubrics and judging
 
 @pytest.mark.parametrize(
-    "steps", [COMMITMENT_STEPS, TONE_STEPS, SUMMARY_STEPS, DOMAIN_STEPS,
-              ACTIONABILITY_STEPS]
+    "steps", [COMMITMENT_STEPS, COMMITMENT_V2_STEPS, TONE_STEPS,
+              SUMMARY_STEPS, DOMAIN_STEPS, ACTIONABILITY_STEPS]
 )
 def test_evaluation_steps_are_specific_not_boilerplate(steps):
     """Auto-generated from a criteria string means an unexamined rubric.
@@ -251,8 +253,8 @@ def test_evaluation_steps_are_specific_not_boilerplate(steps):
 
 
 @pytest.mark.parametrize(
-    "rubric", [COMMITMENT_RUBRIC, TONE_RUBRIC, SUMMARY_RUBRIC, DOMAIN_RUBRIC,
-               ACTIONABILITY_RUBRIC]
+    "rubric", [COMMITMENT_RUBRIC, COMMITMENT_V2_RUBRIC, TONE_RUBRIC,
+               SUMMARY_RUBRIC, DOMAIN_RUBRIC, ACTIONABILITY_RUBRIC]
 )
 def test_rubric_bands_cover_the_whole_scale_without_gaps(rubric):
     covered = sorted(band.score_range for band in rubric)
@@ -266,6 +268,7 @@ def test_rubric_bands_match_the_metric_specific_banding_used_for_agreement():
     """The worksheet, the rubric and the kappa must all use one scale."""
     for metric, rubric in (
         ("commitment groundedness", COMMITMENT_RUBRIC),
+        ("commitment groundedness v2", COMMITMENT_V2_RUBRIC),
         ("tone match", TONE_RUBRIC),
         ("summary quality", SUMMARY_RUBRIC),
         ("domain correctness", DOMAIN_RUBRIC),
@@ -295,6 +298,16 @@ def test_actionability_bands_define_operational_control_point_boundaries():
     assert "maximum is 5" in steps
     assert "maximum is 8" in steps
     assert "receive or see" in steps
+
+
+def test_commitment_v2_distinguishes_authorised_process_from_completed_action():
+    text = " ".join(COMMITMENT_V2_STEPS + [
+        band.expected_outcome for band in COMMITMENT_V2_RUBRIC
+    ]).lower()
+    assert "service contract" in text
+    assert "not proof it has already happened" in text
+    assert "customer request is not itself evidence" in text
+    assert "actionability" in text
 
 
 # ------------------------------------------------------------- judge wrapper

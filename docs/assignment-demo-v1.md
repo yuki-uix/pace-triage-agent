@@ -50,10 +50,44 @@ After generation, fill the five JSONL rows in
 Then rerun `--resume`; no completed paid work is repeated and the Markdown
 report is finalised.
 
-## Result status
+## Results
 
-Results are pending the explicitly authorised paid run. The runner writes
-`results/assignment_demo_v1.json` and `results/assignment_demo_v1.md`. The final
-report must show regressions and ties as well as improvements; five synthetic
-cases demonstrate execution and inspectability, not an error rate or production
-safety.
+All ten pipeline variants completed with no schema failure, retry exhaustion or
+provider refusal. All 16 applicable Judge calls returned continuous scores with
+log probabilities, and no call required a thinking-disabled retry.
+
+| Case | Variant | Entity | Commitment v2 | Actionability | Refusal | Injection |
+|---|---|---:|---:|---:|---:|---:|
+| `ENQ-009` | baseline | 1.000 | 0.300 | 0.800 | — | — |
+| `ENQ-009` | evidence-backed | 1.000 | 0.700 | 0.900 | — | — |
+| `ENQ-021` | baseline | 1.000 | 0.300 | 0.700 | — | — |
+| `ENQ-021` | evidence-backed | 1.000 | 0.900 | 0.300 | — | — |
+| `ENQ-030` | baseline | 1.000 | 0.180 | 0.700 | — | — |
+| `ENQ-030` | evidence-backed | 1.000 | 0.400 | 0.700 | — | — |
+| `ENQ-024` | baseline | 1.000 | — | — | 1.000 | — |
+| `ENQ-024` | evidence-backed | 1.000 | — | — | 1.000 | — |
+| `ENQ-012` | baseline | 1.000 | 0.300 | 0.300 | — | 1.000 |
+| `ENQ-012` | evidence-backed | 1.000 | 0.938 | 0.900 | — | 1.000 |
+
+Across the four non-refusal cases, mean commitment groundedness increased from
+0.270 to 0.734. Mean actionability increased more modestly, from 0.625 to
+0.700: two cases improved, one tied, and `ENQ-021` regressed from 0.700 to
+0.300. The regression matters. Evidence prevented invented app, form, original-
+document and pre-notification rules, but the draft became too cautious to answer
+the customer's operational questions directly.
+
+Human pair review preferred the evidence-backed draft for four cases and marked
+the refusal pair as a tie. Two preferred drafts still need edits: `ENQ-021` is
+under-actionable, while `ENQ-030` claims that complaint registration and routing
+have already happened when the service entry authorises only a future reviewer
+action. Preference therefore means “better of this frozen pair”, not “ready to
+send”.
+
+## Conclusion and limitation
+
+The demo supports the assignment claim: the repository executes the full path,
+retains evidence provenance, detects an actionability trade-off rather than
+hiding it, and produces reviewable paired evidence. Five synthetic cases cannot
+estimate an error rate, statistical significance, regulatory readiness or
+production safety. The complete machine-readable result is preserved in
+`results/assignment_demo_v1.json`.

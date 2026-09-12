@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PACE · Customer Operations AI</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="PACE home">
+        <span class="brand-mark">P</span>
+        <span><strong>PACE</strong><small>Customer Operations AI</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-page="overview"><span>⌂</span><b>Overview</b></button>
+        <button class="nav-item" data-page="playground"><span>✦</span><b>Live playground</b><i>Live</i></button>
+        <button class="nav-item" data-page="cases"><span>▤</span><b>Case comparison</b><i>5</i></button>
+        <button class="nav-item" data-page="evidence"><span>◈</span><b>Evidence library</b></button>
+        <button class="nav-item" data-page="method"><span>◎</span><b>Method & scope</b></button>
+      </nav>
+      <div class="sidebar-note"><span class="status-dot"></span><div><strong>Local demo environment</strong><small>No customer reply is sent</small></div></div>
+      <div class="sidebar-footer">Assignment PoC · v1</div>
+    </aside>
+
+    <main class="app-main">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobile-menu" aria-label="Open navigation">☰</button>
+        <div><span class="crumb">PACE / </span><strong id="page-title">Overview</strong></div>
+        <div class="topbar-status"><span></span>Agent ready</div>
+      </header>
+
+      <div class="page-container">
+        <section class="page active" id="page-overview" data-title="Overview">
+          <div class="welcome-grid">
+            <div class="welcome-copy">
+              <p class="overline">EVIDENCE-GROUNDED CUSTOMER SERVICE</p>
+              <h1>Customer-service drafts<br>that stand up to scrutiny</h1>
+              <p>PACE turns inbound email into reviewable classification, summaries and reply drafts—while keeping every service commitment inside the available evidence.</p>
+              <div class="hero-actions">
+                <button class="primary-button" data-go="playground">Try the live Agent <span>→</span></button>
+                <button class="secondary-button" data-go="cases">Explore validation cases</button>
+              </div>
+            </div>
+            <div class="pipeline-visual" aria-label="Agent workflow">
+              <div class="pipeline-node input"><span>01</span><b>Customer email</b><small>Unstructured inbound message</small></div>
+              <div class="pipeline-line"></div>
+              <div class="pipeline-node"><span>02</span><b>Triage & evidence</b><small>Type, priority and trusted context</small></div>
+              <div class="pipeline-line"></div>
+              <div class="pipeline-node output"><span>03</span><b>Review-ready draft</b><small>Summary, reply and provenance</small></div>
+            </div>
+          </div>
+          <div class="section-heading"><div><p class="overline">PROOF OF CONCEPT</p><h2>Validation at a glance</h2></div><span id="result-version">Frozen result</span></div>
+          <div class="metric-grid" id="summary-metrics"></div>
+          <div class="overview-grid">
+            <article class="insight-card"><span class="card-icon">↗</span><p class="overline">CORE FINDING</p><h3>Evidence materially improves commitment reliability</h3><p>Across four non-refusal cases, mean commitment-groundedness rose from <b>0.27</b> to <b>0.73</b>.</p><button data-go="cases">See the case evidence →</button></article>
+            <article class="insight-card warning"><span class="card-icon">!</span><p class="overline">HONEST LIMITATION</p><h3>More reliable does not mean ready to send</h3><p>ENQ-021 became too cautious and less actionable. Human review remains part of the workflow.</p><button data-case="1">Inspect the failure case →</button></article>
+            <article class="insight-card dark"><span class="card-icon">✓</span><p class="overline">SAFETY BOUNDARY</p><h3>Generation is separated from sending</h3><p>The system produces review-ready drafts only. There is no SMTP, webhook or customer-delivery path.</p><button data-go="method">Understand the boundary →</button></article>
+          </div>
+        </section>
+
+        <section class="page" id="page-playground" data-title="Live playground">
+          <div class="page-heading"><div><p class="overline">LIVE PLAYGROUND</p><h1>Enter a customer email</h1><p>Run classification, evidence selection and drafting in real time. Use synthetic data only.</p></div><div class="cost-note"><b>Usually 2 model calls</b><span>No paid Judge in live mode</span></div></div>
+          <div class="playground-layout">
+            <section class="composer-card">
+              <div class="card-header"><div><span class="step-number">1</span><strong>Customer email</strong></div><span class="muted">Synthetic input</span></div>
+              <div class="sample-row" aria-label="Sample emails"><button type="button" class="sample" data-sample="address">Address change</button><button type="button" class="sample" data-sample="complaint">Formal complaint</button><button type="button" class="sample" data-sample="injection">Prompt injection</button></div>
+              <form id="live-form">
+                <label for="live-subject">Email subject</label><input id="live-subject" name="subject" maxlength="300" placeholder="Enter an email subject" required>
+                <label for="live-body">Email body</label><textarea id="live-body" name="body" maxlength="20000" rows="13" placeholder="Paste or enter the customer email…" required></textarea>
+                <label class="consent"><input id="live-consent" type="checkbox" required><span>I understand that this input is sent to the configured DashScope model service. I will use synthetic data.</span></label>
+                <button class="primary-button run-button" id="run-button" type="submit">Run Agent <span>→</span></button>
+              </form>
+            </section>
+            <section class="result-card" id="live-output" aria-live="polite">
+              <div class="card-header"><div><span class="step-number">2</span><strong>Agent output</strong></div><span class="muted">Human review required</span></div>
+              <div class="empty-state"><div class="empty-orbit"><span>✦</span></div><strong>Waiting for an email</strong><p>Choose a sample or enter your own synthetic case.</p></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page" id="page-cases" data-title="Case comparison">
+          <div class="page-heading compact"><div><p class="overline">FROZEN EVALUATION SET</p><h1>Case comparison</h1><p>Compare baseline and evidence-backed replies to the same email under the same metrics.</p></div><span class="readonly-pill">Read-only · No cost</span></div>
+          <div class="case-layout"><nav class="case-list" id="case-nav" aria-label="Select a case"></nav><article class="case-detail" id="case-detail" aria-live="polite"></article></div>
+        </section>
+
+        <section class="page" id="page-evidence" data-title="Evidence library">
+          <div class="page-heading compact"><div><p class="overline">SOURCE LIBRARY</p><h1>Evidence library</h1><p>Public regulatory sources and synthetic internal procedures stay explicitly separated, so general guidance does not become a policy-specific fact.</p></div></div>
+          <div class="evidence-summary"><div><strong id="public-count">—</strong><span>Public regulatory claims</span></div><div><strong id="service-count">—</strong><span>Synthetic service procedures</span></div><div><strong>100%</strong><span>Evidence IDs retained</span></div></div>
+          <div class="filter-row"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="public">Public sources</button><button class="filter" data-filter="synthetic">Internal procedures</button></div>
+          <div class="evidence-library" id="evidence-library"></div>
+        </section>
+
+        <section class="page" id="page-method" data-title="Method & scope">
+          <div class="page-heading compact"><div><p class="overline">HOW IT WORKS</p><h1>Method and scope</h1><p>This project demonstrates a working end-to-end path. It does not claim production or regulatory readiness.</p></div></div>
+          <div class="method-grid">
+            <article><span>01</span><h3>Structured triage</h3><p>Stage one returns only Pydantic-constrained type and priority. Confidence comes from token probabilities, not self-report.</p></article>
+            <article><span>02</span><h3>Deterministic evidence selection</h3><p>Relevant regulatory sources and internal procedures are selected from the email while retaining evidence IDs.</p></article>
+            <article><span>03</span><h3>Constrained drafting</h3><p>Stage two must not invent timing, refunds, outcomes, channels, forms or actions that have already happened.</p></article>
+            <article><span>04</span><h3>Human final decision</h3><p>The output is always a draft. A reviewer may accept, edit or discard it; the system itself cannot send.</p></article>
+          </div>
+          <section class="scope-panel"><div><p class="overline">ASSIGNMENT CLAIM</p><h2>Suitable to demonstrate feasibility</h2><p>Five frozen cases complete generation, scoring and human review. Tests cover the schema contract, injection and refusal boundaries.</p></div><div class="scope-divider"></div><div><p class="overline">NOT CLAIMED</p><h2>Not production-ready</h2><p>The sample cannot estimate a real error rate, internal procedures are synthetic, and deployment, access control, monitoring and regulatory approval are out of scope.</p></div></section>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

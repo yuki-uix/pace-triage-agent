@@ -5,9 +5,13 @@ repository, and that ratio is the submission's argument: what is scarce is not
 the ability to make a model draft a reply, it is knowing whether the reply is
 safe to put in front of a customer.
 
-**The finding is that it is not, yet.** All four model combinations fail the
-pass/fail bars. That result is worth more than a table of passes on 40 records
-would have been, and the rest of this document is about why it can be believed.
+**The finding has two levels.** The historical baseline is not production-ready:
+all four model combinations fail its production-oriented bars. The later
+evidence-backed candidate is workable as an assignment proof of concept: a
+frozen five-case run completed generation, scoring and human review without a
+runtime failure and improved commitment support materially. The second result
+does not erase the first; it demonstrates the direction while retaining the
+limits that prevent a deployment claim.
 
 ---
 
@@ -66,8 +70,12 @@ supported by the enquiry. Regex and NER extraction plus a set comparison. No
 LLM. *Commitment-level* — fabricated SLAs, promises and entitlements. This is
 the more dangerous failure for a regulated insurer and it needs a judge.
 
-*Rejected: Ragas faithfulness.* It models a `retrieval_context`, and there is no
-retrieval step here.
+*Rejected: general embedding RAG and Ragas faithfulness.* The historical
+comparison had no retrieval context. The later candidate instead uses a small,
+versioned public reference pack and synthetic internal service contract with
+deterministic topic selection. Evidence IDs travel with the draft and the
+evidence-aware Judge receives the same context; broad semantic retrieval remains
+outside the assignment scope.
 
 ### The enquiry is data, structurally
 
@@ -92,8 +100,8 @@ fails without anyone remembering to extend a list. Mutation-checked.
 
 Every LLM judge call in this project has to be defensible as *no cheaper check
 exists*. Classification accuracy, entity groundedness, refusal and injection are
-set comparisons and regexes. Only three metrics take a judge, and each carries
-its argument:
+set comparisons and regexes. The historical comparison used three Judge
+metrics, and each carries its argument:
 
 - **Commitment groundedness** — a fabricated commitment need contain no
   fabricated entity. "We will get back to you shortly" invents nothing an
@@ -104,6 +112,13 @@ its argument:
 - **Summary quality** — length is checkable and is not the failure. The failure
   is a summary that reads plausibly while adding something the email did not
   say, which is exactly what makes a reviewer skim.
+
+The later evidence-backed profile adds two deliberately separate questions.
+**Commitment groundedness v2** asks whether every undertaking is supported by
+the enquiry or selected evidence. **Actionability** asks whether the customer
+has a usable next step, required inputs, a route or owner, and an observable next
+status. Keeping them separate exposed a real trade-off in the demo: one safer
+claim reply became substantially less actionable.
 
 The rubric bands and evaluation steps are hand-written. A rubric generated from
 a criteria string is an unexamined rubric, and the bands are where the judgement
@@ -146,22 +161,26 @@ A disagreement is not a verdict. Some records exist specifically to be got wrong
 by a labeller that escalates on tone or on seriousness, and consistent
 disagreement there is evidence the record works.
 
-### Judge meta-evaluation — **incomplete**
+### Judge validation — separated by instrument
 
-> **This section is unfinished, and it is the one that matters most.**
->
-> Fifteen drafts are prepared with judge scores recorded and a worksheet built
-> for a human to label blind (`results/meta_eval_worksheet.md`). The agreement
-> figure requires those labels and they do not exist yet.
->
-> The harness refuses to compute agreement without them and exits non-zero.
-> Scoring the drafts with a second model and reporting that as judge/human
-> agreement would fabricate the one number that certifies every other quality
-> number in this document.
->
-> **This is not a formality.** Commitment groundedness is the worst-looking
-> number in the results, and it is a judge score no human has checked. Until the
-> labels exist, that row says *the judge objects*, not *the drafts are wrong*.
+The original natural-output packet still has 0/45 human labels in the
+repository. Its judge/human agreement therefore remains uncomputed, and the
+historical tone, summary and commitment scores retain that limitation.
+
+Later instruments were tested separately rather than using one validation claim
+to certify every metric. The source-backed domain Judge matched 21/24 expected
+bands, with quadratic-weighted kappa 0.953 and every result within one band.
+Actionability v3 passed its disjoint holdout at 17/18 exact bands, kappa 0.970
+and 18/18 within one band.
+Commitment v2 matched 19/24 development bands (kappa 0.929) and 13/18 disjoint
+holdout bands (kappa 0.865); every miss on both sets was within one adjacent
+band. Independent blind reviews reached 22/24 and 15/18 exact bands
+respectively. The frozen production-oriented exact-band gates remained failed.
+
+For coursework, `assignment-poc-v1` asks the narrower, declared question of
+whether the Judge preserves useful ordering without large band errors. The
+holdout passes that interpretation. This supports a feasibility demonstration,
+not a claim that the Judge can replace a trained reviewer.
 
 ---
 
@@ -202,20 +221,42 @@ There were none.
 
 ### The recommendation
 
-**Cheap model for triage, careful model for drafting — and not in production
-yet.**
+**Cheap model for triage, careful model for drafting; use evidence-backed
+drafting for the assignment demonstration, with human review.**
 
 The evidence for the first half: the models are indistinguishable at triage on
 both metrics that matter there, and triage is nine times faster (median 0.64s
 against 5.90s) and emits 17 output tokens against 313. Drafting with `flash`
 answers one of the two refusal cases it should decline.
 
-The second half is not a hedge. Nothing here clears the bars.
+The production qualification is not a hedge. Nothing in the historical matrix
+clears those bars, and the later PoC uses a different instrument and scope.
+
+### Evidence-backed assignment demo
+
+Five cases were frozen before generation: a noisy address request, a medical-
+claim process question, an angry complaint, a refusal boundary and prompt
+injection. Each used the same model settings for a baseline and evidence-backed
+draft. All ten variants completed with zero schema failure, retry exhaustion or
+provider refusal; all 16 applicable Judge calls returned continuous scores.
+
+Across the four non-refusal pairs, mean commitment groundedness rose from 0.270
+to 0.734. Mean actionability rose from 0.625 to 0.700, but that average hides the
+important counterexample: `ENQ-021` fell from 0.700 to 0.300 because the safer
+reply deferred so much that the customer could not act. Human pair review
+preferred evidence-backed for four cases and called the refusal pair a tie, but
+also marked two preferred drafts as requiring edits. “Preferred” therefore means
+better within a frozen pair, not ready to send.
+
+The demo establishes the assignment claim: the path from enquiry through
+evidence selection, drafting, provenance, scoring and review is executable and
+diagnoses its own trade-off. It does not estimate a production error rate.
 
 ### What would change the recommendation
 
-- **Judge/human agreement below about 0.6.** Commitment groundedness would stop
-  being evidence, and three of the four failing rows would need re-deriving.
+- **A completed natural-output human packet.** The balanced and holdout
+  validations test rubric boundaries; they do not estimate agreement on the
+  system's naturally uneven output distribution.
 - **A COMPLAINT-aware prompt closing the gap at triage.** `COMPLAINT` is the
   only weak class — recall 0.571, three of seven misrouted into the topic being
   complained about. If a prompt change fixes that in `flash` but not `plus`, the
@@ -338,8 +379,9 @@ built — it costs draft quality and the trade-off belongs to the insurer.
 
 ### What would be added before production
 
-1. **The judge meta-evaluation completed.** Nothing else on this list matters
-   until the quality metrics are known to measure what they claim.
+1. **Real, approved insurer evidence and a distribution check.** The current
+   internal catalogue is synthetic and the enquiries were generated; neither
+   can support a claim about live customer traffic.
 2. **A confidence gate that does something.** At current saturation it routes
    four cases in forty; it needs either a better-separated signal or a different
    routing rule.
@@ -357,15 +399,13 @@ built — it costs draft quality and the trade-off belongs to the insurer.
 
 Ordered by value, and the first item is not optional.
 
-1. **Get the fifteen drafts labelled and compute judge/human agreement.** It
-   decides whether the headline failure is real. Everything below is less
-   valuable than this.
-2. **Diagnose commitment groundedness.** The judge's objections are specific —
-   one reply asserted a policy term the enquiry did not establish, another stated
-   as fact that an address change does not affect premiums when the customer had
-   asked exactly that. Whether those are drafting failures or a judge stricter
-   than a reviewer is question 1; if they are real, the drafting prompt needs an
-   explicit "do not confirm policy consequences" rule and a re-measurement.
+1. **Fix the two observed evidence-backed draft regressions, then freeze a new
+   holdout.** `ENQ-021` became safe but under-actionable; `ENQ-030` still claimed
+   registration and routing had already happened. These are concrete prompt or
+   service-contract boundary failures, not reasons to edit the frozen demo.
+2. **Complete the natural-output human packet.** The boundary validations show
+   that the Judge orders constructed examples; the 45-row packet answers how it
+   behaves on ordinary system output.
 3. **An embedding-based second-opinion classifier.** Disagreement between an
    independent classifier and the LLM is better calibrated than self-reported
    confidence, and the calibration table above shows why something is needed: the
@@ -408,7 +448,11 @@ separated from noise. The repeat was cut deliberately: all four combinations wer
 disqualified by the same bars, and three runs would have measured the same
 disqualification three times.
 
-**Judge validation coverage.** Zero. The meta-evaluation is built and unlabelled.
+**Judge validation coverage is narrow.** Balanced challenge sets and a disjoint
+commitment holdout cover rubric boundaries, and the assignment PoC exercises
+real generated outputs. The original natural-output human packet remains
+unlabelled, so none of these results estimates Judge agreement on the full live
+output distribution.
 
 **Metric artifacts are a live risk, and two were caught.** Entity groundedness
 initially flagged six of forty-eight entities on real drafts; three were

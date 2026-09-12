@@ -4,9 +4,14 @@ A triage and reply-drafting assistant for inbound life-insurance customer
 enquiries, with the evaluation harness that determines whether it is fit to go
 near a real CS team.
 
-**It is not.** All four model combinations fail the bars in
-[`docs/02-metrics.md`](docs/02-metrics.md). That result, and the evidence behind
-it, is the deliverable — the agent is about 300 lines and was never the point.
+**The recorded baseline is not production-ready; the assignment proof of
+concept works.** All four historical model combinations fail the production-
+oriented bars in [`docs/02-metrics.md`](docs/02-metrics.md). A later five-case,
+evidence-backed candidate completed the full generate-score-review path with no
+runtime failure, improved mean commitment groundedness from 0.270 to 0.734 and
+passed the separate `assignment-poc-v1` interpretation. The distinction is the
+deliverable: feasibility is demonstrated without relabelling it as deployment
+approval.
 
 ## Design in one paragraph
 
@@ -41,6 +46,26 @@ Then fill in `.env`:
 | `JUDGE_MODEL` | Quality judge. Must support `logprobs`, or GEval silently degrades to an integer score. |
 | `TRACE_ENCRYPTION_KEY` | 16, 24 or 32 characters. Traces are refused without it rather than written in the clear. |
 | `DEEPEVAL_PER_TASK_TIMEOUT_SECONDS` | The judge reasons before answering and exceeds the default. |
+
+## Run the agent locally
+
+The assignment candidate uses the cheaper configured model for triage, the
+careful model for drafting, and the evidence-backed prompt. It writes drafts to
+a queue and never sends them:
+
+```bash
+.venv/bin/python -m src.pipeline \
+  --dataset data/assignment_demo_v1.jsonl \
+  --evidence-backed \
+  --out results/pending_queue.jsonl
+
+.venv/bin/python -m src.review \
+  --queue results/pending_queue.jsonl
+```
+
+Review decisions are persisted after every item. `accept` keeps the model draft,
+`edit` stores the corrected reply separately as `reviewer_text`, and `discard`
+retains the rejected output for audit. None of these actions transmits a reply.
 
 ## Reproducing every number
 
@@ -419,12 +444,14 @@ someone has to keep.
 run-to-run noise of the same order as the differences of interest on a judged
 quantity, so differences on the judged rows cannot yet be separated from noise.
 
-**The judge is not validated.** Commitment groundedness — the worst-looking
-number here — is a judge score no human has checked. Spot-checking its reasons
-shows they are specific and real in kind, but whether the judge is stricter than
-a reviewer is exactly what judge/human agreement answers, and those labels do
-not exist yet. Until they do, that row says the judge objects, not that the
-drafts are wrong.
+**Judge validation is instrument-specific.** The original 45-row natural-draft
+judge/human worksheet remains unlabelled in the repository, so the historical
+tone, summary and commitment rows must not be presented as human-validated.
+Later source-backed and evidence-aware instruments do have balanced challenge
+sets, disjoint holdout checks and blind reviews. Commitment v2 missed its
+production-oriented exact-band gate but passed the explicitly narrower
+assignment PoC interpretation; those results do not retroactively validate the
+historical metrics.
 
 **n=40.** The dataset is synthetic, generated from a label specification rather
 than drawn from a real inbox, and no distribution check against real enquiries

@@ -8,15 +8,16 @@
   },
   "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1",
   "endpoint_region_note": "Beijing region; residency discussion in ADR-007.",
-  "family_separation": "Qwen under test, Kimi generating, DeepSeek judging - three distinct families, and generator and judge differ so the generator's priors do not leak into scoring (ADR-007).",
+  "family_separation": "Qwen under test, Kimi generating, DeepSeek blind relabelling and GLM quality judging - four distinct families. The generator, independent relabeller and quality Judge have separate roles (ADR-007).",
   "frozen": {
     "enquiries_sha256": "9b76249ff3b7e62421ec50238887c119ad71a0215c9fbcd7ac93bf9831d3c69f",
     "golden_sha256": "d03284a88dc61dbaf299b2589a64398c688fc3d122aedef54dc27c04ae93eb31",
     "note": "Asserted by tests/test_freeze.py. Changing the golden set fails the suite until this hash is updated, which forces the explicit commit the freeze rule asks for instead of trusting anyone to remember it.",
     "tag": "golden-v1"
   },
+  "blind_relabeller_model": "deepseek-v4-pro",
   "generator_model": "kimi-k3",
-  "judge_model": "deepseek-v4-pro",
+  "quality_judge_model": "glm-5.2",
   "layout": {
     "data/enquiries.jsonl": "id, subject, body - what the pipeline reads",
     "data/golden.jsonl": "expected labels, tags, reference notes - what the metrics read",

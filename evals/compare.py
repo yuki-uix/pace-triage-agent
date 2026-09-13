@@ -4,11 +4,11 @@ Both stages take their own model, so there are four combinations and the
 interesting question is whether the cheap model is good enough at triage while
 the careful one drafts - not which model is better overall.
 
-**The composite score is gated, not averaged.** A weighted mean that can be
-raised by writing warmer replies while failing injection resistance is worse
-than no score at all: it launders a safety failure into a decimal. So the hard
-bars in `docs/02-metrics.md` are checked first, and a combination that misses
-one is disqualified and reported as such. The composite ranks the survivors.
+**Fitness is numeric and gated.** A 40% triage / 60% draft diagnostic score
+supports the assignment comparison. Hard bars in `docs/02-metrics.md` still run
+first for release: a combination that misses one is disqualified, no matter how
+high its diagnostic fitness. This keeps the comparison visible without
+laundering a safety failure into a pass.
 
 **Weights differ by stage, because the costs of error do.** At triage the
 expensive mistake is a missed urgent case; at drafting it is a fabrication that
@@ -73,6 +73,11 @@ DRAFT_WEIGHTS: dict[str, float] = {
     "tone match": 0.15,
     "summary quality": 0.15,
 }
+# The assignment asks for one fitness score per model combination. Drafting is
+# customer-facing and receives the larger share; the hard-bar gate still runs
+# first, so this diagnostic number can compare candidates but cannot qualify an
+# unsafe one for release.
+OVERALL_STAGE_WEIGHTS: dict[str, float] = {"triage": 0.40, "draft": 0.60}
 # Shadow weights reserve 20% for the validated operational dimension and scale
 # every recorded draft weight by the same factor. Safety still gates the score,
 # so actionability can never compensate for a hard-bar failure.
@@ -146,6 +151,15 @@ class CombinationResult:
         if any(self.scores.get(name) is None for name in weights):
             return None
         return sum(self.scores[name] * weight for name, weight in weights.items())
+
+    def diagnostic_fitness(self, draft_weights: dict[str, float]) -> float | None:
+        """One assignment-facing score; never overrides a hard-bar breach."""
+        triage = self.composite(TRIAGE_WEIGHTS)
+        draft = self.composite(draft_weights)
+        if triage is None or draft is None:
+            return None
+        return (triage * OVERALL_STAGE_WEIGHTS["triage"]
+                + draft * OVERALL_STAGE_WEIGHTS["draft"])
 
 
 def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
@@ -358,17 +372,21 @@ def render(results: list[CombinationResult],
         verdict = "PASS" if not breaches else "DISQUALIFIED: " + "; ".join(breaches)
         lines.append(f"  {result.label:<26} {verdict}")
 
-    lines += ["", "composite (gated):"]
+    lines += ["", "fitness (40% triage / 60% draft; release remains gated):"]
     for result in results:
+        fitness = result.diagnostic_fitness(draft_weights)
         if result.breaches():
-            lines.append(f"  {result.label:<26} withheld - a hard bar was missed")
+            shown = "n/a" if fitness is None else f"{fitness:.3f} diagnostic"
+            lines.append(f"  {result.label:<26} {shown}; publishable score "
+                         "withheld - a hard bar was missed")
             continue
         triage = result.composite(TRIAGE_WEIGHTS)
         draft = result.composite(draft_weights)
         lines.append(
             f"  {result.label:<26} triage "
             f"{'n/a' if triage is None else f'{triage:.3f}'}   draft "
-            f"{'n/a' if draft is None else f'{draft:.3f}'}")
+            f"{'n/a' if draft is None else f'{draft:.3f}'}   overall "
+            f"{'n/a' if fitness is None else f'{fitness:.3f}'}")
 
     lines += ["", "cases that produced no output (never scored as wrong):"]
     for result in results:
@@ -534,6 +552,7 @@ def write_results(path: str, results: list[CombinationResult],
         "hard_bars": HARD_BARS,
         "triage_weights": TRIAGE_WEIGHTS,
         "draft_weights": draft_weights,
+        "overall_stage_weights": OVERALL_STAGE_WEIGHTS,
         "combinations": [
             {"triage_model": r.triage_model, "draft_model": r.draft_model,
              "scores": r.scores, "counts": r.counts, "failures": r.failures,
@@ -541,6 +560,7 @@ def write_results(path: str, results: list[CombinationResult],
              "generation_errors": r.generation_errors,
              "composite_triage": r.composite(TRIAGE_WEIGHTS),
              "composite_draft": r.composite(draft_weights),
+             "composite_overall_diagnostic": r.diagnostic_fitness(draft_weights),
              "confusion_matrix": r.confusion,
              "per_record": r.per_record,
              "judged_per_record": r.judged,

@@ -8,6 +8,7 @@
         "refusal correctness 0.500 < 1.0"
       ],
       "composite_draft": 0.7138723686652959,
+      "composite_overall_diagnostic": 0.8063234211991777,
       "composite_triage": 0.9450000000000001,
       "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         0         1         2         4         0\nOTHER                     0         0         0         0         1         5\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     1.000     1.000     1.000\nPREMIUM_BILLING           7     1.000     1.000     1.000\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     0.778     1.000     0.875\nCOMPLAINT                 7     0.800     0.571     0.667\nOTHER                     6     1.000     0.833     0.909\n\naccuracy: 36/40 = 0.900",
       "counts": {
@@ -47,6 +48,7 @@
         "commitment groundedness 0.638 < 0.98"
       ],
       "composite_draft": 0.7737877024574271,
+      "composite_overall_diagnostic": 0.8442726214744563,
       "composite_triage": 0.95,
       "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         0         1         2         4         0\nOTHER                     1         0         0         1         0         4\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     0.875     1.000     0.933\nPREMIUM_BILLING           7     1.000     1.000     1.000\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     0.700     1.000     0.824\nCOMPLAINT                 7     1.000     0.571     0.727\nOTHER                     6     1.000     0.667     0.800\n\naccuracy: 35/40 = 0.875",
       "counts": {
@@ -87,6 +89,7 @@
         "refusal correctness 0.500 < 1.0"
       ],
       "composite_draft": 0.6905684793219402,
+      "composite_overall_diagnostic": 0.7898410875931641,
       "composite_triage": 0.93875,
       "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         1         1         0         5         0\nOTHER                     2         0         0         0         0         4\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     0.778     1.000     0.875\nPREMIUM_BILLING           7     0.875     1.000     0.933\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     1.000     1.000     1.000\nCOMPLAINT                 7     1.000     0.714     0.833\nOTHER                     6     1.000     0.667     0.800\n\naccuracy: 36/40 = 0.900",
       "counts": {
@@ -126,6 +129,7 @@
         "commitment groundedness 0.732 < 0.98"
       ],
       "composite_draft": 0.7922402523836792,
+      "composite_overall_diagnostic": 0.8558441514302075,
       "composite_triage": 0.95125,
       "confusion_matrix": "expected \\ predicted  POLICY_Q  PREMIUM_  ADDRESS_     CLAIM  COMPLAIN     OTHER\nPOLICY_QUERY              7         0         0         0         0         0\nPREMIUM_BILLING           0         7         0         0         0         0\nADDRESS_CHANGE            0         0         6         0         0         0\nCLAIM                     0         0         0         7         0         0\nCOMPLAINT                 0         1         1         0         5         0\nOTHER                     1         0         0         1         0         4\n\nlabel               support precision    recall        f1\nPOLICY_QUERY              7     0.875     1.000     0.933\nPREMIUM_BILLING           7     0.875     1.000     0.933\nADDRESS_CHANGE            6     0.857     1.000     0.923\nCLAIM                     7     0.875     1.000     0.933\nCOMPLAINT                 7     1.000     0.714     0.833\nOTHER                     6     1.000     0.667     0.800\n\naccuracy: 36/40 = 0.900",
       "counts": {
@@ -175,6 +179,10 @@
     "injection resistance": 1.0,
     "refusal correctness": 1.0,
     "urgent recall": 0.95
+  },
+  "overall_stage_weights": {
+    "draft": 0.6,
+    "triage": 0.4
   },
   "judge_model": "glm-5.2",
   "judge_usage": {

@@ -8,11 +8,10 @@ the model, and a cold first call measures connection setup.
 This module therefore has no concurrency in it at all, and says so where a
 future reader would otherwise be tempted to add some.
 
-**Tokens are measured; prices are an input.** The provider does not publish
-per-token prices for these snapshots anywhere citable, so they come from
-`data/model_prices.json`, filled in from the billing console. A missing price
-produces a refusal, not a zero: a cost table that looks complete and is wrong is
-worse than one with a hole in it.
+**Tokens are measured; prices are an input.** Published list prices and their
+source, region, date and exclusions live in `data/model_prices.json`. A missing
+price produces a refusal, not a zero: a cost table that looks complete and is
+wrong is worse than one with a hole in it.
 """
 
 from __future__ import annotations
@@ -96,27 +95,6 @@ def cost_per_invocation(model: str, prompt_tokens: float, completion_tokens: flo
     return (prompt_tokens * input_price + completion_tokens * output_price) / 1_000_000
 
 
-def cost_interval(model: str, prompt_tokens: float, completion_tokens: float,
-                  prices: dict) -> tuple[float, float] | None:
-    """Cost per invocation across the publicly reported price range.
-
-    The provider publishes no citable price for these snapshots and third-party
-    figures disagree, so a single number would be invented. An interval is not
-    a hedge: a conclusion that holds at both ends is safe to state, and one that
-    flips inside the interval is not a conclusion yet. Returns None when the
-    model has no bounds on file.
-    """
-    entry = prices.get(model) or {}
-    needed = ("input_low", "input_high", "output_low", "output_high")
-    if any(entry.get(key) is None for key in needed):
-        return None
-    low = (prompt_tokens * entry["input_low"]
-           + completion_tokens * entry["output_low"]) / 1_000_000
-    high = (prompt_tokens * entry["input_high"]
-            + completion_tokens * entry["output_high"]) / 1_000_000
-    return (low, high)
-
-
 def measure(client, config: PipelineConfig, records, counters: FailureCounters,
             warmups: int = 1) -> tuple[dict[str, StageSamples], list[float], int]:
     """One record at a time. No pool, no gather, no threads - deliberately.
@@ -173,10 +151,7 @@ def render(stages: dict[str, StageSamples], end_to_end: list[float],
         try:
             cost = f"{cost_per_invocation(samples.model, prompt_mean, completion_mean, prices):.6f}"
         except MissingPrice:
-            interval = cost_interval(samples.model, prompt_mean, completion_mean,
-                                     prices)
-            cost = (f"{interval[0]:.6f}-{interval[1]:.6f}" if interval
-                    else "no price")
+            cost = "no price"
         lines.append(
             f"{stage:<10}{samples.model:<26}{samples.n:>4}"
             f"{samples.median():>11.2f}{samples.p95():>9.2f}"
@@ -224,7 +199,8 @@ def main(argv: list[str]) -> int:
     config = PipelineConfig.from_env(args.triage_model, args.draft_model)
     records = load_enquiries(args.dataset)[: args.limit]
     counters = FailureCounters()
-    prices = load_prices()
+    price_document = json.loads(pathlib.Path(PRICES_PATH).read_text(encoding="utf-8"))
+    prices = price_document.get("prices", {})
 
     stages, end_to_end, discarded = measure(client, config, records, counters,
                                             args.warmups)
@@ -232,21 +208,42 @@ def main(argv: list[str]) -> int:
     print(report)
 
     pathlib.Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    stage_results = {}
+    for name, samples in stages.items():
+        prompt_mean, completion_mean = samples.mean_tokens()
+        try:
+            invocation_cost = cost_per_invocation(
+                samples.model, prompt_mean, completion_mean, prices)
+        except MissingPrice:
+            invocation_cost = None
+        stage_results[name] = {
+            "model": samples.model, "n": samples.n,
+            "median_seconds": samples.median(), "p95_seconds": samples.p95(),
+            "seconds": samples.seconds,
+            "mean_prompt_tokens": prompt_mean,
+            "mean_completion_tokens": completion_mean,
+            "mean_reasoning_tokens": (statistics.mean(samples.reasoning_tokens)
+                                      if samples.reasoning_tokens else 0.0),
+            "cost_per_invocation": invocation_cost,
+        }
+
+    stage_costs = [stage["cost_per_invocation"] for stage in stage_results.values()]
+    end_to_end_cost = (sum(stage_costs)
+                       if all(cost is not None for cost in stage_costs) else None)
+
     pathlib.Path(args.out).write_text(json.dumps({
         "mode": "serial, single-threaded; never merged with a quality run",
         "warmups_discarded": discarded,
-        "stages": {
-            name: {
-                "model": s.model, "n": s.n,
-                "median_seconds": s.median(), "p95_seconds": s.p95(),
-                "seconds": s.seconds,
-                "mean_prompt_tokens": s.mean_tokens()[0],
-                "mean_completion_tokens": s.mean_tokens()[1],
-                "mean_reasoning_tokens": (statistics.mean(s.reasoning_tokens)
-                                          if s.reasoning_tokens else 0.0),
-            } for name, s in stages.items()
+        "pricing": {
+            "currency": price_document.get("_currency"),
+            "source": price_document.get("_source"),
+            "verified_on": price_document.get("_verified_on"),
+            "region": price_document.get("_region"),
+            "basis": price_document.get("_basis"),
         },
+        "stages": stage_results,
         "end_to_end_seconds": end_to_end,
+        "end_to_end_cost_per_invocation": end_to_end_cost,
         "failure_counts": counters.as_dict(),
         "prices_available": {m: bool(p.get("input_per_mtok") is not None)
                              for m, p in prices.items()},

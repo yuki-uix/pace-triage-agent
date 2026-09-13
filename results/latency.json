@@ -40,6 +40,7 @@
     7.639855041023111,
     10.505592708999757
   ],
+  "end_to_end_cost_per_invocation": 0.004216215384615385,
   "failure_counts": {
     "provider_refusals": 0,
     "retry_exhaustions": 0,
@@ -47,11 +48,19 @@
   },
   "mode": "serial, single-threaded; never merged with a quality run",
   "prices_available": {
-    "qwen3.7-flash-2026-07-15": false,
-    "qwen3.7-plus-2026-05-26": false
+    "qwen3.7-flash-2026-07-15": true,
+    "qwen3.7-plus-2026-05-26": true
+  },
+  "pricing": {
+    "basis": "Published list price; real-time, uncached requests in the first input-token tier; excludes discounts and free quota",
+    "currency": "CNY",
+    "region": "China (Beijing)",
+    "source": "https://help.aliyun.com/zh/model-studio/model-pricing",
+    "verified_on": "2026-09-13"
   },
   "stages": {
     "draft": {
+      "cost_per_invocation": 0.004058205128205128,
       "mean_completion_tokens": 313.20512820512823,
       "mean_prompt_tokens": 776.2820512820513,
       "mean_reasoning_tokens": 0,
@@ -102,6 +111,7 @@
       ]
     },
     "triage": {
+      "cost_per_invocation": 0.00015801025641025643,
       "mean_completion_tokens": 17.128205128205128,
       "mean_prompt_tokens": 721.5384615384615,
       "mean_reasoning_tokens": 0,

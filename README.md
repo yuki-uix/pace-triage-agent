@@ -506,13 +506,15 @@ run-to-run noise of the same order as the differences of interest on a judged
 quantity, so differences on the judged rows cannot yet be separated from noise.
 
 **Judge validation is instrument-specific.** The original 45-row natural-draft
-judge/human worksheet remains unlabelled in the repository, so the historical
-tone, summary and commitment rows must not be presented as human-validated.
-Later source-backed and evidence-aware instruments do have balanced challenge
-sets, disjoint holdout checks and blind reviews. Commitment v2 missed its
-production-oriented exact-band gate but passed the explicitly narrower
-assignment PoC interpretation; those results do not retroactively validate the
-historical metrics.
+worksheet was fully labelled (45/45); the filled rows remain private by reviewer
+choice, while aggregate agreement and input hashes are published in
+`results/meta_eval_human_agreement.json`. That review found poor agreement, so
+the historical tone, summary and commitment rows must not be presented as
+human-validated. Later source-backed and evidence-aware instruments do have
+balanced challenge sets, disjoint holdout checks and blind reviews. Commitment
+v2 missed its production-oriented exact-band gate but passed the explicitly
+narrower assignment PoC interpretation; those results do not retroactively
+validate the historical metrics.
 
 **n=40.** The dataset is synthetic, generated from a label specification rather
 than drawn from a real inbox, and no distribution check against real enquiries

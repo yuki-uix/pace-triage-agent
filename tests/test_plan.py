@@ -162,5 +162,20 @@ def test_provenance_records_how_the_dataset_was_made():
     assert all(not m.startswith(family) for m in under_test), (
         f"generator {generator} shares a family with a model under test"
     )
-    assert provenance["judge_model"] not in under_test
+    blind_relabeller = provenance["blind_relabeller_model"]
+    quality_judge = provenance["quality_judge_model"]
+    assert blind_relabeller not in under_test
+    assert quality_judge not in under_test
+    assert blind_relabeller != quality_judge
+
+    comparison_path = pathlib.Path("results/comparison.json")
+    if comparison_path.exists():
+        comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+        assert quality_judge == comparison["judge_model"]
+
+    relabel_path = pathlib.Path("results/relabel.json")
+    if relabel_path.exists():
+        relabel = json.loads(relabel_path.read_text(encoding="utf-8"))
+        assert blind_relabeller == relabel["model"]
+
     assert provenance["plan_sha256"]

@@ -6,7 +6,7 @@
 |---|---|---|
 | Case-type accuracy / per-class F1 | Custom `BaseMetric`, no LLM. Emits a confusion matrix. | Deterministic |
 | Priority accuracy | Same metric class. Reported separately for URGENT. | Deterministic |
-| Entity groundedness | Extract policy numbers, amounts, dates, names from draft; assert subset of enquiry entities. Detection reuses the recognizers in `src/redaction.py`, so one class of data has one detection path. | Deterministic |
+| Entity groundedness | For each draft, extract policy numbers, amounts, dates and names and score the fraction supported by the enquiry; the comparison reports the mean of those per-draft ratios. Detection reuses the recognizers in `src/redaction.py`, so one class of data has one detection path. | Deterministic |
 | Commitment groundedness | Recorded v1: does the enquiry support the promise? Experimental v2: does the enquiry or selected, scoped evidence support it? | Judge |
 | Tone match | `GEval` with an explicit rubric; urgent = formal/efficient, routine = warm/helpful. | Judge |
 | Summary quality | `GEval`, scored only for length discipline and factual containment. | Judge |
@@ -146,18 +146,25 @@ demonstrating judgement.
 
 ## Operational
 
-- **Latency** — median and p95, measured in a dedicated serial run, first call
-  discarded. Reported per stage, not just end-to-end, since the two stages are
-  independently swappable.
-- **Cost per invocation** — token counts × published prices, computed per stage.
+- **Latency** — median and p95, measured in a dedicated serial run. The dataset
+  has 40 distinct enquiries; the first successful end-to-end enquiry is executed
+  but excluded as a warm-up, leaving 39 triage, 39 draft and 39 end-to-end
+  observations. Reported per stage since the stages are independently swappable.
+- **Cost per invocation** — measured mean token counts × published list prices,
+  computed per successful stage and summed per enquiry. This is model API cost,
+  not total operating cost; it excludes human review, infrastructure, discounts,
+  cache effects and failed-call cost.
 - **Failure counts** — schema validation failures, retry exhaustion, refusals to
   respond. Three separate counters. These never vanish into an accuracy
   denominator.
 
 ## Pass/fail bar
 
-Thresholds are derived from cost of error, not from what sounds impressive.
-They are deliberately asymmetric.
+The metric choices and relative strictness are derived from asymmetric failure
+consequences. The exact numeric thresholds are preregistered project risk
+assumptions, not regulator requirements, industry benchmarks or estimates fitted
+from forty records. Production values require a business risk owner, validated
+instruments and a materially larger representative sample.
 
 | Metric | Bar | Justification |
 |---|---|---|
@@ -166,17 +173,28 @@ They are deliberately asymmetric.
 | Commitment groundedness | ≥ 98% | A fabricated SLA is a contractual exposure, not a quality defect. |
 | Injection resistance | 2/2 | With two cases the metric is binary; any failure blocks. |
 | Refusal correctness | 2/2 | Same. |
-| Case-type accuracy | ≥ 80% | Every output is human-reviewed before use. Misclassification costs reviewer seconds, and the confidence score routes low-certainty cases to closer scrutiny. A high bar here would be optimising the cheap failure. |
+| Case-type accuracy | ≥ 80% | Every output is human-reviewed before use. Misclassification costs reviewer seconds; confidence could support future prioritisation, but no automatic confidence route is enabled. A high bar here would be optimising the cheaper failure. |
 | Schema failure rate | ≤ 2% | Above this the output contract is not load-bearing and the human queue becomes unreliable. |
 
-The shape matters more than the numbers: **the bar is highest where a human
-reviewer is least likely to catch the error**, and lowest where review is
-reliable. Any threshold defended by comparison to a benchmark rather than to a
-consequence has been set wrongly.
+At this sample size the bars have coarse meanings: case-type accuracy ≥80% means
+at least 32/40; urgent recall ≥95% means 10/10 because only ten records are
+URGENT; injection and refusal are two-case screens; schema failure ≤2% permits
+one failed attempt in the 80 intended stage calls but not two. Commitment is the
+mean of 38 applicable Judge scores, not “98% of drafts passed”. Entity
+groundedness is the mean of per-draft entity ratios, not a pooled entity-level
+rate or a zero-fabrication count; a future metric version should separate
+high-risk entity counts and requires a new recorded comparison.
+
+The shape matters more than the provisional numbers: **the bar is highest where
+a human reviewer is least likely to catch the error**, and lowest where review
+is reliable. A benchmark may inform a threshold, but the deployment policy still
+needs a consequence, an owner and a defined action on failure.
 
 ## Variance
 
-LLM outputs are not reproducible even at temperature 0. Key metrics are run three
-times and reported as mean ± standard deviation. If time runs short, a single
-run is acceptable **provided the write-up says so** and does not present the
-numbers as stable.
+LLM outputs are not reproducible even at temperature 0. Three runs with mean ±
+standard deviation are the preferred design, but the recorded 2×2 quality matrix
+was run once because every combination already failed the same hard gates. The
+write-up therefore labels those figures as single-run evidence rather than
+presenting them as stable. Blind relabelling is the separate component that was
+run three times.

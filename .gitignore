@@ -16,12 +16,14 @@ results/*.json
 !results/comparison.json
 !results/calibration.json
 !results/meta_eval_judge.json
-!results/meta_eval_labels.jsonl
+!results/meta_eval_labels_template.jsonl
 !results/meta_eval_worksheet.md
 !results/meta_eval_drafts.jsonl
 !results/judge_validation_pilot_v2.json
 !results/commitment_v2_validation_v1.json
 !results/commitment_v2_holdout_v1.json
+!results/judge_validation.json
+!results/meta_eval_human_agreement.json
 traces/
 .local/
 .vercel

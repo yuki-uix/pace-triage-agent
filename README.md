@@ -93,7 +93,9 @@ human labels for commitment groundedness, tone match and summary quality. These
 dimensions do not require insurance expertise: they are scored against the
 customer email and the situation it describes. Read
 [`docs/05-human-labeling.md`](docs/05-human-labeling.md), complete
-`results/meta_eval_labels.jsonl` without opening the judge output, and check
+`results/meta_eval_labels_template.jsonl` — the blank worksheet; the filled
+copy stays in `.local` at the reviewer's choice and its SHA-256 is recorded in
+`results/meta_eval_human_agreement.json` — without opening the judge output, and check
 progress without revealing agreement:
 
 ```bash
@@ -268,13 +270,15 @@ in [`docs/assignment-demo-v1.md`](docs/assignment-demo-v1.md). This demonstrates
 that the complete path operates; it does not replace the original production-
 oriented hard bars or claim regulatory readiness.
 
-For a non-technical audience, open the local web interface. Its live panel runs
+**The demo lives in [`extras/`](extras/) and is not part of the assessed
+deliverable** — see [`extras/README.md`](extras/README.md) for why. For a
+non-technical audience, open the local web interface. Its live panel runs
 one new enquiry through evidence-backed triage and drafting (normally two paid
 model calls; more if confidence falls back to self-consistency). The frozen
 case browser below it is read-only. Neither path sends a customer reply.
 
 ```bash
-.venv/bin/python -m src.web_demo
+.venv/bin/python extras/web-demo/web_demo.py
 ```
 
 The browser opens automatically at `http://127.0.0.1:8765`. Press `Ctrl+C` in
@@ -400,10 +404,20 @@ Serial, single-threaded, first call discarded, n=39.
 | end to end | | 6.72s | 10.04s | | |
 
 p95 is nearest-rank; at n=39 it is the second-slowest observation, not a fitted
-quantile. Cost per call is **not** reported: the provider publishes no price for
-these snapshots on any citable page, so `data/model_prices.json` is a template
-and the harness prints `no price` rather than a zero that would read as an
-answer.
+quantile.
+
+Cost is reported as an interval, because token counts are measured exactly while
+the price is not published for these snapshots on any citable page:
+
+| | cost per invocation (USD) |
+|---|---|
+| triage (flash) | 0.0000239 – 0.000158 |
+| drafting (plus) | 0.000649 – 0.000812 |
+| **end to end** | **0.000673 – 0.000970** |
+
+USD 0.67 – 0.97 per thousand enquiries. Bounds and their sources are in
+[`data/model_prices.json`](data/model_prices.json); filling in the account's real
+rates collapses the interval to a point.
 
 ### Calibration
 

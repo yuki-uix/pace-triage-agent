@@ -96,6 +96,27 @@ def cost_per_invocation(model: str, prompt_tokens: float, completion_tokens: flo
     return (prompt_tokens * input_price + completion_tokens * output_price) / 1_000_000
 
 
+def cost_interval(model: str, prompt_tokens: float, completion_tokens: float,
+                  prices: dict) -> tuple[float, float] | None:
+    """Cost per invocation across the publicly reported price range.
+
+    The provider publishes no citable price for these snapshots and third-party
+    figures disagree, so a single number would be invented. An interval is not
+    a hedge: a conclusion that holds at both ends is safe to state, and one that
+    flips inside the interval is not a conclusion yet. Returns None when the
+    model has no bounds on file.
+    """
+    entry = prices.get(model) or {}
+    needed = ("input_low", "input_high", "output_low", "output_high")
+    if any(entry.get(key) is None for key in needed):
+        return None
+    low = (prompt_tokens * entry["input_low"]
+           + completion_tokens * entry["output_low"]) / 1_000_000
+    high = (prompt_tokens * entry["input_high"]
+            + completion_tokens * entry["output_high"]) / 1_000_000
+    return (low, high)
+
+
 def measure(client, config: PipelineConfig, records, counters: FailureCounters,
             warmups: int = 1) -> tuple[dict[str, StageSamples], list[float], int]:
     """One record at a time. No pool, no gather, no threads - deliberately.
@@ -152,7 +173,10 @@ def render(stages: dict[str, StageSamples], end_to_end: list[float],
         try:
             cost = f"{cost_per_invocation(samples.model, prompt_mean, completion_mean, prices):.6f}"
         except MissingPrice:
-            cost = "no price"
+            interval = cost_interval(samples.model, prompt_mean, completion_mean,
+                                     prices)
+            cost = (f"{interval[0]:.6f}-{interval[1]:.6f}" if interval
+                    else "no price")
         lines.append(
             f"{stage:<10}{samples.model:<26}{samples.n:>4}"
             f"{samples.median():>11.2f}{samples.p95():>9.2f}"

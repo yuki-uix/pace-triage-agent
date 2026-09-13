@@ -8,10 +8,25 @@
     }
   },
   "rewrites": [
-    { "source": "/api/demo", "destination": "/api/index?route=demo" },
-    { "source": "/api/run", "destination": "/api/index?route=run" },
-    { "source": "/styles.css", "destination": "/web_demo/styles.css" },
-    { "source": "/app.js", "destination": "/web_demo/app.js" },
-    { "source": "/(.*)", "destination": "/web_demo/index.html" }
+    {
+      "source": "/api/demo",
+      "destination": "/api/index?route=demo"
+    },
+    {
+      "source": "/api/run",
+      "destination": "/api/index?route=run"
+    },
+    {
+      "source": "/styles.css",
+      "destination": "/extras/web-demo/static/styles.css"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/extras/web-demo/static/app.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/extras/web-demo/static/index.html"
+    }
   ]
 }

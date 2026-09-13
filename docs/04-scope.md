@@ -36,7 +36,7 @@ an unfinished directory.
 
 | Not building | Why | Where it goes instead |
 |---|---|---|
-| Web UI | The brief permits a CLI. A UI consumes hours and demonstrates nothing being assessed. | — |
+| Web UI | The brief permits a CLI. A UI consumes hours and demonstrates nothing being assessed. **Still true for the assessment.** One was nevertheless built afterwards for communication and now lives in `extras/web-demo/`, outside the deliverable, so this document and the repository do not contradict each other. | `extras/` |
 | General RAG / real policy knowledge base | The original task has no real insurer corpus. Issue #32 adds only a small, versioned synthetic service contract with deterministic routing; broad retrieval and real policy terms remain out of scope. | Next two weeks |
 | Multi-turn conversation | The task is single-email triage. | Next two weeks |
 | Fine-tuning | Cannot be justified or evaluated at n=40. | Next two weeks |
@@ -75,3 +75,13 @@ The review CLI is twenty minutes: a JSONL pending queue plus accept/edit/discard
 writing back a decision field. Do keep the reviewer's edited text — "reviewer
 corrections flow back as new golden samples" is the most natural first item in
 the next-two-weeks section, and it costs one extra field.
+
+## Reversed decisions
+
+Kept visible rather than edited away, because a scope document that silently
+tracks whatever was built is not a scope document.
+
+| Date | Decision | What changed |
+|---|---|---|
+| 2026-09-13 | Web UI moved to `extras/` | It was built after the evaluation work, for communication rather than assessment. The original reasoning is unchanged; the code was moved out of the main line instead of the rejection being quietly dropped. Its `api/index.mjs` re-implements the system prompts in JavaScript, which the injection-resistance probes do not cover — recorded in `extras/README.md`. |
+| 2026-09-13 | Reference pack adopted, general RAG still rejected | `knowledge/` is 23 rows with a source manifest and deterministic lookup, not a retrieval corpus. It became load-bearing: `src/pipeline.py` uses it in evidence-backed mode and `evals/metrics/judged.py` reads it, so the evidence-backed drafting result cannot be reproduced without it. The original rejection of *broad retrieval over real policy terms* stands. |

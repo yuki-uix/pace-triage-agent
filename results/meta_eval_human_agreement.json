@@ -1,0 +1,37 @@
+{
+  "version": "natural-output-human-agreement-v1",
+  "status": "completed_failed_validation",
+  "judge_model": "glm-5.2",
+  "human_labels": {
+    "completed": 45,
+    "total": 45,
+    "raw_file_policy": "Kept in .local by reviewer choice; only aggregate agreement and SHA-256 provenance are versioned.",
+    "sha256": "befd56e6f3fe369e394239fffb3c9c10939d7a595a1f3c7630bb70c1b61ad2fc"
+  },
+  "judge_scores_sha256": "d56a535800d55a5c23cb1cd37da35b6292d8fe3dd4601736a442f0c0255b1e89",
+  "metrics": {
+    "commitment groundedness": {
+      "n": 15,
+      "quadratic_weighted_kappa": -0.055776892430278835,
+      "spearman": -0.15525777884500405,
+      "exact_band_rate": 0.2,
+      "within_one_band_rate": 0.5333333333333333
+    },
+    "tone match": {
+      "n": 15,
+      "quadratic_weighted_kappa": 0.17266187050359705,
+      "spearman": 0.2434629202740884,
+      "exact_band_rate": 0.26666666666666666,
+      "within_one_band_rate": 0.7333333333333333
+    },
+    "summary quality": {
+      "n": 15,
+      "quadratic_weighted_kappa": 0.0,
+      "spearman": null,
+      "exact_band_rate": 0.06666666666666667,
+      "within_one_band_rate": 0.2,
+      "diagnostic": "The historical Judge output collapsed all 15 summaries into the bottom band, while human labels covered all four bands; rank correlation is undefined."
+    }
+  },
+  "conclusion": "The historical natural-output commitment, tone and summary Judge scores are not validated for human replacement. They remain diagnostic only. Later source-backed and boundary/holdout validations apply only to their named instruments and do not retroactively validate these three metrics."
+}

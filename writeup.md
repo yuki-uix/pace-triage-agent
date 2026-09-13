@@ -83,16 +83,37 @@ calls scored continuously.**
 priority κ = 0.857 ± 0.045. Three rather than one, because a single run cannot
 separate label drift from relabeller noise.
 
-**Judge validation, separated by instrument.** The natural-output packet has
-0/45 human labels, so its **judge/human agreement remains uncomputed** and the
-tone, summary and commitment scores carry that limitation. Later instruments
-were tested separately rather than letting one claim certify every metric: the
-source-backed domain judge matched 21/24 expected bands (κ 0.953), actionability
-v3 passed a disjoint holdout at 17/18 (κ 0.970), commitment v2 matched 19/24
-development and 13/18 holdout bands (κ 0.929 / 0.865) with every miss one band
-out. These test rubric boundaries on constructed examples; **they do not
-estimate agreement on naturally uneven output**, which the unlabelled packet
-would answer.
+**Judge validation — the first judge failed it.** All 45 human labels were
+collected blind on natural system output, and judge/human agreement was computed
+against them:
+
+| metric | QWK | Spearman | exact band | within one |
+|---|---|---|---|---|
+| commitment groundedness | −0.056 | −0.155 | 20% | 53% |
+| tone match | 0.173 | 0.243 | 27% | 73% |
+| summary quality | 0.000 | undefined | 7% | 20% |
+
+**That is a failed validation, not a missing one.** On commitment groundedness
+the first judge is uncorrelated with the human — slightly negative. On summary
+quality it collapsed all fifteen summaries into the bottom band while the human
+used all four, which is why rank correlation is undefined. The historical tone,
+summary and commitment scores are therefore **diagnostic only; they are not
+evidence about draft quality.** This is the measure the metrics document called
+the one most submissions skip, and skipping it here would have left three
+plausible-looking numbers standing.
+
+Later instruments were rebuilt and validated separately rather than letting one
+claim certify every metric: the source-backed domain judge matched 21/24
+expected bands (κ 0.953), actionability v3 passed a disjoint holdout at 17/18
+(κ 0.970), commitment v2 matched 19/24 development and 13/18 holdout bands
+(κ 0.929 / 0.865) with every miss one band out. Those test rubric boundaries on
+constructed examples, so they establish that the rebuilt judges order examples
+correctly — not that they agree with a human on naturally uneven output, which
+is the check the first judge failed.
+
+Raw labels are kept in `.local` at the reviewer's choice; the aggregate and a
+SHA-256 of both label and score files are versioned in
+[`results/meta_eval_human_agreement.json`](results/meta_eval_human_agreement.json).
 
 ---
 

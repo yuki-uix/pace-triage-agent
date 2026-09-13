@@ -263,13 +263,14 @@ def test_the_writeup_reports_the_injection_resistance_it_measured(comparison):
     assert "1.000 across all four combinations" in text
 
 
-def test_the_writeup_does_not_claim_a_judge_agreement_figure():
-    """Until a person labels the worksheet there is no such number.
+def test_the_writeup_reports_judge_human_agreement_as_recorded():
+    """Neither invent the figure nor keep claiming it is missing.
 
-    The first version of this test asserted that the word "incomplete" appeared,
-    which a heading satisfied while the body claimed a fabricated figure. It was
-    checking for a word rather than for the absence of a claim - the same weak
-    assertion this repository has caught elsewhere. It now looks for the claim.
+    The first version of this test watched results/meta_eval_labels.jsonl, a
+    template that was never updated, while the labelled copy lived in .local and
+    the computed agreement in results/meta_eval_human_agreement.json. A guard
+    written to prevent a fabricated number ended up enforcing a stale claim that
+    the number did not exist. It now watches the file that records the outcome.
     """
     import re as _re
 
@@ -277,21 +278,43 @@ def test_the_writeup_does_not_claim_a_judge_agreement_figure():
     if text is None:  # pragma: no cover
         pytest.skip("writeup not present")
 
-    labels = RESULTS / "meta_eval_labels.jsonl"
-    if labels.exists():
-        filled = [line for line in labels.read_text(encoding="utf-8").splitlines()
-                  if line.strip() and json.loads(line).get("human") is not None]
-        if filled:
-            pytest.skip("labels exist; the section should now carry a figure")
+    recorded = RESULTS / "meta_eval_human_agreement.json"
+    if not recorded.exists():
+        # Fail closed. A guard that no-ops when its evidence is missing is the
+        # failure mode this repository found in its own redaction boundary: the
+        # first version of this test passed a mutation precisely because the
+        # file it watched was gitignored and therefore absent.
+        assert "quadratic-weighted" not in text.lower() and "QWK" not in text, (
+            "the write-up reports agreement figures but "
+            "results/meta_eval_human_agreement.json is not in the repository, "
+            "so a reader cannot check them")
+        claims = _re.findall(
+            r"(?:judge\s*/\s*human agreement|agreement with (?:a )?human)"
+            r"[^.\n]{0,40}?(?:is|of|was|=|:)\s*(\d?\.\d+)", text, _re.IGNORECASE)
+        assert not claims, (
+            f"the write-up states a judge/human agreement figure {claims} while "
+            "no human labels exist. That number certifies every other quality "
+            "number in the document and cannot be produced by a model.")
+        assert "judge/human agreement" in text, "the gap must still be named"
+        return
 
-    claims = _re.findall(
-        r"(?:judge\s*/\s*human agreement|agreement with (?:a )?human)"
-        r"[^.\n]{0,40}?(?:is|of|was|=|:)\s*(\d?\.\d+)", text, _re.IGNORECASE)
-    assert not claims, (
-        f"the write-up states a judge/human agreement figure {claims} while no "
-        "human labels exist. That number certifies every other quality number "
-        "in the document and cannot be produced by a model.")
-    assert "judge/human agreement" in text, "the gap must still be named"
+    data = json.loads(recorded.read_text(encoding="utf-8"))
+    labels = data["human_labels"]
+    assert labels["completed"] == labels["total"], "partial labelling"
+
+    assert "remains uncomputed" not in text, (
+        "the agreement has been computed; the write-up still says it has not")
+
+    for metric, scores in data["metrics"].items():
+        kappa = scores["quadratic_weighted_kappa"]
+        rendered = f"{kappa:.3f}".replace("-", "\u2212")
+        assert rendered in text, (
+            f"the write-up does not report {metric} QWK {rendered} as recorded")
+
+    if data["status"] == "completed_failed_validation":
+        assert "failed validation" in text.lower(), (
+            "the recorded outcome is a failed validation and the write-up must "
+            "say so rather than presenting the scores as evidence")
 
 
 def test_the_confidence_examples_in_the_writeup_come_from_the_recorded_run(calibration):

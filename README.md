@@ -93,7 +93,9 @@ human labels for commitment groundedness, tone match and summary quality. These
 dimensions do not require insurance expertise: they are scored against the
 customer email and the situation it describes. Read
 [`docs/05-human-labeling.md`](docs/05-human-labeling.md), complete
-`results/meta_eval_labels.jsonl` without opening the judge output, and check
+`results/meta_eval_labels_template.jsonl` — the blank worksheet; the filled
+copy stays in `.local` at the reviewer's choice and its SHA-256 is recorded in
+`results/meta_eval_human_agreement.json` — without opening the judge output, and check
 progress without revealing agreement:
 
 ```bash

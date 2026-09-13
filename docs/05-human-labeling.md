@@ -120,7 +120,8 @@ Examples:
 2. Label one record at a time across all three dimensions. Treat the dimensions
    independently; a factually dubious reply can still have excellent tone.
 3. Write the representative integer into the matching `human` field in
-   `results/meta_eval_labels.jsonl`.
+   `results/meta_eval_labels_template.jsonl` (the versioned copy is the blank
+   template; the filled one is kept locally).
 4. Check progress at any time without exposing judge output:
 
    ```bash

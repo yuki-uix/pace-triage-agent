@@ -16,7 +16,7 @@ results/*.json
 !results/comparison.json
 !results/calibration.json
 !results/meta_eval_judge.json
-!results/meta_eval_labels.jsonl
+!results/meta_eval_labels_template.jsonl
 !results/meta_eval_worksheet.md
 !results/meta_eval_drafts.jsonl
 !results/judge_validation_pilot_v2.json

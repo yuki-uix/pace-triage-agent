@@ -76,8 +76,8 @@ priority κ = 0.857 ± 0.045. Three rather than one, because a single run cannot
 separate label drift from relabeller noise.
 
 **Judge validation — the first judge failed it.** All 45 human labels were
-collected blind on natural system output, and judge/human agreement was computed
-against them:
+collected blind on natural system output — fifteen drafts scored on three
+metrics — and judge/human agreement computed against them (n = 15 per metric):
 
 | metric | QWK | Spearman | exact band | within one |
 |---|---|---|---|---|

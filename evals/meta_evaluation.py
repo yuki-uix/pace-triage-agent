@@ -266,7 +266,7 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv[1:])
 
     out = pathlib.Path(args.out_dir)
-    labels_path = out / "meta_eval_labels.jsonl"
+    labels_path = out / "meta_eval_labels_template.jsonl"
     judge_path = out / "meta_eval_judge.json"
 
     if args.phase == "status":

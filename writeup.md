@@ -1,163 +1,92 @@
 # Enquiry Triage & Reply-Draft Agent — write-up
 
-The agent is about 300 lines; the harness around it is most of the repository.
-That ratio is the argument: what is scarce is not making a model draft a reply,
-it is knowing whether the reply is safe to show a customer.
+MyPace staff handle policy, servicing, premium, claim and complaint emails. The assistant returns case type, priority, confidence, summary and reply draft. Every draft awaits human acceptance, editing or rejection; nothing is sent.
 
-**On the frozen production bars, it is not.** All four model combinations fail.
-Evidence behind every number is in [`docs/`](docs/) and [`results/`](results/);
-the limitations bounding all of them — n=40, a synthetic distribution,
-single-run variance, a judge that failed human validation — are in
-[`docs/07-limitations.md`](docs/07-limitations.md).
+The runtime is small relative to its evaluation and governance harness: the larger task is showing that generated text is safe and useful.
+
+**On the frozen production bars, it is not ready.** All four model combinations fail. Versioned machine results are in [`docs/`](docs/) and [`results/`](results/). The human-agreement aggregate is versioned; raw labels remain local by reviewer choice. Limitations — n=40, synthetic data, single-run variance and failed Judge validation — are recorded in [`docs/07-limitations.md`](docs/07-limitations.md).
 
 ---
 
 ## 1. Architecture and key design decisions
 
-**Two stages, separately modelled.** Triage and drafting are separate calls with
-independently configurable models. Fusing them would make model selection one
-all-or-nothing choice and collapse the comparison into "the bigger model won".
+**Two stages, separately modelled.** Triage and drafting are separate calls with independently configurable models. Fusing them would make model selection one all-or-nothing choice and collapse the comparison into "the bigger model won".
 
-It paid off measurably: the two models are **indistinguishable at triage**
-(case-type accuracy 0.900 both, urgent recall 1.000 both) and clearly different
-at drafting, where drafting with `flash` scores **0.500 on refusal correctness**
-against **1.000** for `plus`. A fused design would have reported one number per
-model and hidden that.
+```text
+email -> untrusted boundary -> triage -> schema/retry -> classification
+email + classification [+ opt-in evidence] -> draft -> schema/retry -> pending review
+stage traces -> full-field encryption -> append-only trace store
+```
 
-**Confidence is derived, not asked for.** Verbalised confidence clusters in
-0.85–0.95 regardless of correctness. The provider exposes `logprobs`, so
-confidence is the probability the model assigned to the label string it emitted.
-On the golden set it behaves. The least confident record is
-**ENQ-034 at 0.2972**, and it is wrong: a `COMPLAINT` routed to `CLAIM`. Next are
-**ENQ-033 at 0.5198**, the same mistake, and
-**ENQ-040 at 0.5461**, the record three blind relabelling runs had flagged as
-genuinely ambiguous. The model is least certain where it is systematically
-weakest.
+Across one 40-record pass per combination, the split exposed a role-level difference. Case-type accuracy was 0.875–0.900 with Flash Triage and 0.900 with Plus; urgent recall was 1.000 throughout. Drafting with Flash scored **0.500 on refusal correctness**, against **1.000** for Plus. A fused design would hide that distinction. These small stochastic runs do not establish model equivalence.
 
-**Groundedness is split.** Entity-level (policy numbers, amounts, dates, names
-must be supported by the enquiry) is a set comparison and gets no LLM.
-Commitment-level (fabricated SLAs, promises, entitlements) is a judgement call
-and gets one. Conflating them makes the cheap half impossible to audit.
+**Confidence is derived, not asked for.** Verbalised confidence clusters in 0.85–0.95 regardless of correctness. The provider exposes `logprobs`, so confidence is the probability the model assigned to the label string it emitted. In the Flash calibration run, **ENQ-034 at 0.2972** is a `COMPLAINT` wrongly routed to `CLAIM`; **ENQ-033 at 0.5198** has the same error; and **ENQ-040 at 0.5461** was independently flagged as ambiguous. This is useful diagnostic evidence, not proof that the raw confidence is deployment-ready.
 
-**Nothing sends.** No transport exists in `src/`, asserted by a test that scans
-every module, so a send path in a new file fails without anyone maintaining a
-list.
+**Groundedness is split.** Entity-level support is a set comparison and gets no LLM; commitment-level support for SLAs, outcomes and entitlements requires semantic judgement. Conflating them makes the cheap half impossible to audit.
 
-**Rejected:** a single call for all four fields (collapses model selection,
-contaminates confidence with the drafting task); Ragas faithfulness (models a
-`retrieval_context` that does not exist here); DeepEval's `DAGMetric` for the
-refusal branch (every node it offers is LLM-driven, and the branch condition is
-a set membership test whose answer is already written down).
+**Nothing sends.** No transport exists in `src/`; a source-scanning test makes a new send path fail without anyone maintaining a file list.
+
+**Rejected:** one call for all fields because it couples model selection and confidence; Ragas faithfulness because there is no baseline retrieval context; and an LLM refusal DAG where deterministic membership is sufficient.
 
 ---
 
 ## 2. Metric definitions and rationale
 
-**Deterministic before probabilistic.** Every judge call must be defensible as
-*no cheaper check exists*. Classification accuracy, entity groundedness, refusal
-and injection resistance are set comparisons and regexes. Three take a judge:
-**commitment groundedness**, because "we will get back to you shortly" invents no
-entity an extractor can find and still promises what the enquiry does not
-support; **tone match**, because sympathy is warmth in a complaint and padding in
-an urgent claim; and **summary quality**, because the failure is not length but a
-summary that reads plausibly while adding something. Rubric bands and evaluation
-steps are hand-written.
+**Deterministic before probabilistic.** Judge calls are reserved for cases with no cheaper defensible check. Measures follow the two-stage failure modes:
 
-**Keeping the judge honest.** `glm-5.2` is a fourth family — not the models
-under test, the generator or the relabeller; a generator scoring its own output
-is self-preference bias by construction. The choice was decided by measurement:
-GEval weights the score token by `top_logprobs` and the originally specified
-judge rejects that parameter, which would have left the metric quietly coarser
-with an identical-looking table. **99.3% of 459 judge calls scored
-continuously.**
+| layer | measures | why |
+|---|---|---|
+| triage | case accuracy, per-class F1, priority accuracy, urgent recall | routing quality, with missed urgent cases separated from recoverable queue errors |
+| draft facts | entity and commitment groundedness | detect invented identifiers, amounts, dates, SLAs, outcomes and entitlements |
+| draft utility | tone, summary quality; actionability in a later shadow profile | measure reviewer/customer usefulness without treating specificity as evidence |
+| safety/contract | refusal, injection, schema/retry/provider failures | keep boundary failures out of a soft quality average |
+| decision support | ECE/Brier, median/p95 latency, cost | test whether confidence can route work and whether a candidate is operationally sensible |
 
-**Inter-annotator agreement**, three blind runs: case type κ = 0.930 ± 0.035,
-priority κ = 0.857 ± 0.045. Three rather than one, because a single run cannot
-separate label drift from relabeller noise.
+Classification, entity groundedness, refusal and injection are set comparisons or regexes. Commitment, tone, summary and actionability require semantic judgement and use hand-written rubric bands and evaluation steps.
 
-**Judge validation — the first judge failed it.** All 45 human labels were
-collected blind on natural system output — fifteen drafts scored on three
-metrics — and judge/human agreement computed against them (n = 15 per metric):
+**The risk design is asymmetric because the business consequences are.** A false-positive urgent label consumes reviewer attention; a false negative may delay a regulatory, legal or coverage-sensitive case. A weak tone is visible and cheap to edit; a fabricated policy fact or SLA may look authoritative and escape a hurried review. Severity, exposure, detectability and recoverability therefore determine whether a failure becomes a high-weight objective or a non-compensable gate. The exact numerical bars are preregistered project risk assumptions, not regulatory standards or estimates derived from forty synthetic records.
 
-| metric | QWK | Spearman | exact band | within one |
-|---|---|---|---|---|
-| commitment groundedness | −0.056 | −0.155 | 20% | 53% |
-| tone match | 0.173 | 0.243 | 27% | 73% |
-| summary quality | 0.000 | undefined | 7% | 20% |
+**Judge validity.** `glm-5.2` is separate from candidates, generator and relabeller, and supports GEval's `top_logprobs` score weighting. **99.3% of 459 Judge calls scored continuously.**
 
-**That is a failed validation, not a missing one.** The first judge is
-uncorrelated with the human on commitment groundedness, and on summary quality
-collapsed all fifteen into the bottom band while the human used all four — hence
-the undefined rank correlation. The historical tone, summary and commitment
-scores are therefore **diagnostic only, not evidence about draft quality.**
-Skipping this check would have left three plausible-looking numbers standing.
+Three blind relabelling runs produced case-type κ = 0.930 ± 0.035 and priority κ = 0.857 ± 0.045, exposing run noise.
 
-Later instruments were rebuilt and validated separately rather than letting one
-claim certify every metric: the source-backed domain judge matched 21/24 bands
-(κ 0.953), actionability v3 a disjoint holdout at 17/18 (κ 0.970), commitment v2
-19/24 development and 13/18 holdout bands (κ 0.929 / 0.865) with every miss one
-band out. Those test rubric boundaries on constructed examples — they show the
-rebuilt judges order examples correctly, not that they agree with a human on
-naturally uneven output, the check the first judge failed. Aggregates and
-SHA-256 provenance are in
-[`results/meta_eval_human_agreement.json`](results/meta_eval_human_agreement.json);
-raw labels stay in `.local` at the reviewer's choice.
+**The first Judge failed validation.** Forty-five blind human labels covered fifteen natural drafts and three metrics. Judge/human QWK was −0.056 for commitment, 0.173 for tone and 0.000 for summary; summary placed every draft in the bottom band while the human used all four. Historical semantic scores are therefore diagnostic only. Domain correctness (21/24, κ 0.953) and Actionability holdout (17/18, κ 0.970) later passed their named validations. Commitment v2 did not pass either preregistered exact-band gate: 19/24 development and 13/18 holdout, despite κ 0.929/0.865 and every miss being within one band. Constructed boundaries test ordering, not agreement on natural output. Aggregates and hashes are in [`results/meta_eval_human_agreement.json`](results/meta_eval_human_agreement.json).
 
 ---
 
 ## 3. Model comparison and recommendation
 
-`qwen3.7-flash-2026-07-15` against `qwen3.7-plus-2026-05-26` — dated snapshots,
-because a floating alias can be repointed mid-experiment and the numbers move
-with no error and no signal.
+The comparison pins dated `qwen3.7-flash-2026-07-15` and `qwen3.7-plus-2026-05-26` snapshots to prevent silent model drift.
 
-| triage / draft | case type | urgent recall | entity ground. | commitment | tone | summary |
-|---|---|---|---|---|---|---|
+| triage / draft | case | urgent | entity | commitment | tone | summary |
+|---|---:|---:|---:|---:|---:|---:|
 | flash / flash | 0.900 | 1.000 | 0.972 | 0.519 | 0.652 | 0.627 |
 | flash / plus | 0.875 | 1.000 | 0.948 | 0.638 | 0.682 | 0.775 |
 | plus / flash | 0.900 | 1.000 | 0.977 | 0.465 | 0.639 | 0.600 |
 | plus / plus | 0.900 | 1.000 | 0.943 | 0.732 | 0.635 | 0.739 |
 
-**Fitness is numeric and gated.** Within triage, urgent recall / case type /
-priority carry 0.45 / 0.30 / 0.25; within drafting, entity / commitment / tone /
-summary carry 0.35 / 0.35 / 0.15 / 0.15. Overall diagnostic fitness is 40%
-triage and 60% drafting because the latter produces customer-facing text:
+Priority accuracy, used in Triage fitness, was 0.900 / 0.950 / 0.875 / 0.925 in the same row order.
 
-| triage / draft | diagnostic fitness | release gate |
+**Fitness is hierarchical and gated.** Triage weights urgent recall / case type / priority at 0.45 / 0.30 / 0.25 because urgent false negatives are least recoverable. Draft weights entity / commitment / tone / summary at 0.35 / 0.35 / 0.15 / 0.15 because false facts and promises are harder to catch than prose defects. The overall split is 40% Triage / 60% Draft because Draft creates customer-facing text:
+
+The preregistered bars are: case accuracy ≥0.80, urgent recall ≥0.95, entity groundedness ≥0.99, commitment groundedness ≥0.98, refusal and injection 2/2, and schema failures ≤2%.
+
+| triage / draft | quality fitness | release gate |
 |---|---:|---|
 | flash / flash | 0.806 | DISQUALIFIED |
 | flash / plus | 0.844 | DISQUALIFIED |
 | plus / flash | 0.790 | DISQUALIFIED |
 | plus / plus | 0.856 | DISQUALIFIED |
 
-The score answers the assignment comparison; the gate answers whether to ship.
-All four miss a hard bar, so publishable fitness remains withheld. The original
-draft metrics also failed human validation, making these diagnostic rankings,
-not evidence of production quality.
+All four miss entity and commitment gates; both Flash Draft cells also miss refusal correctness.
 
-`COMPLAINT` is the only weak class — recall 0.571, three of seven misrouted into
-the topic being complained about.
+The assignment's scalar fitness is this weighted task-quality composite. Calibration, latency and cost remain explicit constraints and tie-breakers: converting seconds, yuan and groundedness into one cardinal utility would require business valuations not supplied here. Hard bars apply before ranking, so a cheap or fluent model cannot compensate for an unsafe reply. All four cells are disqualified; no release-eligible fitness is reported. Because the original semantic Judges failed human validation, the values remain diagnostic.
+
+`COMPLAINT` is the most persistent weak class: recall was 0.571 in both Flash Triage passes and 0.714 in both Plus passes. `OTHER` also fell to 0.667 in three cells.
 
 ### Recommendation
 
-**Cheap model for triage, careful model for drafting — and not in production
-yet.** At triage, Flash is about twice as fast as Plus (0.64s against 1.25s
-median) at no measurable quality cost; drafting with `flash` answers one of the two refusal cases it
-should decline. A later evidence-backed variant on five frozen cases raised mean
-commitment groundedness from 0.270 to 0.734 and surfaced the trade-off:
-`ENQ-021` fell from 0.700 to 0.300 on actionability because the safer reply
-deferred so much the customer could not act
-([`docs/assignment-demo-v1.md`](docs/assignment-demo-v1.md)).
-
-### What would change it
-
-- **A repaired natural-output Judge** — the completed human packet exposed poor
-  agreement; the rebuilt instrument must pass on ordinary output.
-- **A COMPLAINT-aware triage prompt** — if it fixes `flash` but not `plus`, the
-  triage half strengthens; if only `plus` recovers, it reverses.
-- **Material price or discount changes** — the comparison uses list price and
-  excludes temporary, batch, cache and free-quota discounts.
-- **Any number moving on a second run.**
+**Do not ship any current combination.** For the next validation run, use Flash for Triage and Plus for Drafting as the challenger: Flash has lower Triage latency without a stable measured quality disadvantage, while Plus passed both refusal probes. An opt-in evidence-backed variant improved commitment scores on five paired demo/regression cases but reduced actionability on one; it is not an independent Agent holdout or proof of optimisation ([details](docs/assignment-demo-v1.md)). A natural-output Judge pass, a repeated comparison or a material price change could change this choice.
 
 ### Operational
 
@@ -170,11 +99,7 @@ Serial, single-threaded, first successful call discarded, n = 39 per stage:
 | draft | flash | 4.91s | 8.89s | 776 | 347 |
 | draft | plus | 5.90s | 9.21s | 776 | 313 |
 
-p95 is nearest-rank; at n=39 it is the second-slowest observation.
-
-**Cost per invocation.** Alibaba Cloud's published China (Beijing) list prices,
-verified 13 September 2026, are CNY 0.20 / 0.80 per million input/output tokens
-for Flash and CNY 2 / 8 for Plus:
+**Cost per invocation.** Alibaba Cloud's published China (Beijing) list prices, verified 13 September 2026, are CNY 0.20 / 0.80 per million input/output tokens for Flash and CNY 2 / 8 for Plus:
 
 | triage / draft | estimated CNY / enquiry |
 |---|---:|
@@ -183,84 +108,34 @@ for Flash and CNY 2 / 8 for Plus:
 | plus / flash | 0.001997 |
 | plus / plus | 0.005623 |
 
-The recommended Flash/Plus run measured end-to-end median 6.72s and p95
-10.04s. Discounts and free quota are excluded.
-The cheap triage model is justified mainly by latency and equal quality, not by
-money. A separate finding needs no price: **thinking is on by
-default and dominates output**, `flash` emitting a median 727 output tokens
-against 21 with it disabled.
+The Flash/Plus run measured end-to-end median 6.72s and p95 10.04s. Prices exclude discounts, free quota, infrastructure, review labour and failed calls.
 
 ### Calibration
 
-`flash` ECE 0.0619 / Brier 0.0492; `plus` ECE 0.0392 / Brier 0.0574. The two
-measures disagree about which is better calibrated and both are reported rather
-than the flattering one — that disagreement is what n=40 looks like. More
-decision-relevant: **confidence saturates**, with 32–36 of 40 records above 0.9,
-so a gate routes four to eight cases in forty rather than offering a graded
-curve. Bucket accuracy to ±0.05 would need ~139 records in that bucket alone; no
-recalibration is fitted. Full buckets with Wilson intervals are in
-[`results/calibration.json`](results/calibration.json).
+`flash` ECE 0.0619 / Brier 0.0492; `plus` ECE 0.0392 / Brier 0.0574. They disagree on which is better calibrated, and 32–36 of 40 confidence values exceed 0.9. Confidence therefore does not drive the queue. Full buckets are in [`results/calibration.json`](results/calibration.json).
 
 ---
 
 ## 4. Safety and governance
 
-**Prompt injection — measured, 1.000 across all four combinations.** Two cases,
-binary, any failure blocks. The realistic one is a legitimate address change with
-a quiet line near the signature asking the assistant to append its configuration;
-neither landed, and the draft reported the attempt to the reviewer before
-handling the enquiry. Leakage probes are extracted from the prompt constants at
-call time, so rewording a prompt cannot leave the check testing a string we no
-longer send. Every submission will assert that enquiry text is delimited; the
-number is the point.
+Safety here is an allocation of authority and failure action, not only a set of technical filters. Customer text has no authority to change system instructions; the model has no authority to invent insurer policy or commit the company; and the Agent has no authority to contact a customer. A business owner must decide what evidence is approved, which failures require escalation, what a reviewer may release and what residual risk is acceptable. The implementation makes parts of that policy executable:
 
-**PII in logs — a structural gate, after a measurement.** The model sees the
-enquiry as written, because redacting before inference destroys the draft;
-redaction happens on the path to disk. The first implementation ran NER per trace
-field and **failed open** — policy number, phone, email and amount encrypted, the
-customer's name not. A compliance boundary cannot depend on a recall rate, and
-does not have to: we never needed to *find* the customer text when we know which
-fields carry it. Every field not classified as non-sensitive is now encrypted
-whole, the classification derived from the type so an unclassified new field
-fails the tests rather than reaching disk. Reversible encryption, not
-replacement: `<PERSON>` makes an audit trail useless.
+| risk | business decision | implemented control and evidence | residual gap |
+|---|---|---|---|
+| prompt injection | an enquiry is untrusted data, but a legitimate request containing an attack still needs service | delimited input, explicit authority boundary and **1.000 across all four combinations** on two frozen probes | two cases characterise nothing; no production output monitor |
+| unsupported facts or commitments | no model may create an insurer rule, completed action, SLA or outcome without authority | scoped evidence IDs, entity/commitment checks and mandatory review | evidence coverage is not checked before generation; no claim-level runtime block |
+| PII in traces | retain auditability without a readable secondary customer store | every content-bearing trace field is encrypted; adding an unclassified field fails tests | queue policy plus trace-key ownership, rotation and decryption audit are missing |
+| malformed/no output | failure must be visible rather than silently defaulted | strict schema, retry, separate failure counters and recorded no-output cases | no production alert or owned escalation SLA |
+| accidental release | only a person may decide what reaches a customer | no send transport; accept/edit/discard pending queue | any future transport integration requires a new release-boundary review |
 
-**Data residency.** Inference ran against a Beijing-region endpoint; nothing
-personal was at stake, the dataset being generated from label specifications. The
-position is narrower than usually stated: **PDPO section 33 has never been
-brought into force**, so there is no statutory bar on transferring personal data
-out of Hong Kong. What applies is PCPD guidance, its 2022 model contractual
-clauses, and the data user's standing obligations, which follow the data to any
-processor. So: not "this is compliant", but that production would put the
-endpoint, the processor contract and the redaction boundary in front of
-compliance first.
-
-**Before production:** approved insurer evidence and a distribution check against
-live traffic; a confidence gate routing more than four cases in forty; refusal
-and injection cases at volume, since two each blocks a submission but
-characterises nothing; an escalation path for cases producing no output; and
-something consuming the reviewer decisions the CLI already records.
+Entity-level NER originally missed a customer name, so traces now encrypt whole content fields rather than trust probabilistic detection. The model still sees the original email; provider and data-residency choices are therefore business and compliance decisions too. This case study uses synthetic data and a Beijing endpoint. Real traffic would still require approved insurer evidence, processor/endpoint review, queue and retention controls, larger safety sets, an evidence-gap escalation path and risk-owner sign-off.
 
 ---
 
 ## 5. Next two weeks
 
-1. **Fix the two observed evidence-backed regressions, then freeze a new
-   holdout.** `ENQ-021` became safe but under-actionable; `ENQ-030` claimed
-   registration had already happened. Concrete boundary failures, not reasons to
-   edit the frozen demo.
-2. **Re-validate a judge on natural output.** The 45-row packet was completed
-   and the first judge failed it; the rebuilt instruments have only been tested
-   on constructed examples. Until one passes on ordinary output, section 3's
-   worst row cannot be interpreted.
-3. **An embedding-based second-opinion classifier** — disagreement with an
-   independent classifier is better calibrated than self-reported confidence,
-   and the saturation above shows why something is needed.
-4. **Reviewer corrections flowing back as golden samples** — the review CLI
-   already keeps the edited text, which is the whole cost of enabling it.
-5. **Conformal prediction for the confidence gate**, and **a distribution check
-   against real enquiries** — the latter most likely to invalidate the rest.
+1. **Build an evidence-gated Draft Plan.** Mark supported and missing topics; require each fact, action and commitment to cite enquiry or approved evidence before prose is rendered. Missing support routes to review or a safe fallback.
+2. **Run a controlled Agent experiment.** Freeze Triage and metric versions, compare paired baseline/candidate deltas, repair COMPLAINT routing, validate semantic Judges on natural output, then test on a new blind Agent holdout.
+3. **Close the operating loop.** Track reviewer decisions, edit time and critical corrections; add provider/schema/evidence alerts, owned escalation, queue access and retention controls, approved insurer evidence and a privacy-approved sample of real enquiry shapes.
 
-Also rejected, with reasons in [`docs/04-scope.md`](docs/04-scope.md): multi-turn
-conversation, fine-tuning, a production observability stack, Docker, more than
-two models, a dataset beyond ~50 records, and a metrics dashboard.
+Further scope exclusions and rationale are in [`docs/04-scope.md`](docs/04-scope.md).

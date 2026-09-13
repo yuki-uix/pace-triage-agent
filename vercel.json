@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "functions": {
+    "api/index.mjs": {
+      "maxDuration": 60,
+      "includeFiles": "{data/assignment_demo_v1.jsonl,knowledge/**,results/assignment_demo_v1.json}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/demo",
+      "destination": "/api/index?route=demo"
+    },
+    {
+      "source": "/api/run",
+      "destination": "/api/index?route=run"
+    },
+    {
+      "source": "/styles.css",
+      "destination": "/extras/web-demo/static/styles.css"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/extras/web-demo/static/app.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/extras/web-demo/static/index.html"
+    }
+  ]
+}

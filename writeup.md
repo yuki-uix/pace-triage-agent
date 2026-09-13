@@ -178,13 +178,28 @@ Serial, single-threaded, first call discarded, n = 39:
 
 p95 is nearest-rank; at n=39 it is the second-slowest observation.
 
-**Cost per invocation is not reported.** The provider publishes no price for
-these snapshots on any citable page, so `data/model_prices.json` is a template
-and the harness prints `no price` rather than a zero that would read as an
-answer — the conversion needs a number I would have to invent. One finding
-survives the gap: **thinking is on by default and dominates output**, `flash`
-emitting a median 727 output tokens against 21 with it disabled. A small model
-is cheap at triage only with thinking off.
+**Cost per invocation, as an interval.** The provider publishes no price for
+these snapshots on any citable page and third-party figures disagree and tier by
+context length, so a single number would be invented. Token counts are measured
+exactly; the price is bounded by the publicly reported range, and only
+conclusions that hold at both ends are stated.
+
+| | cost per invocation (USD) |
+|---|---|
+| triage (flash) | 0.0000239 – 0.000158 |
+| drafting (plus) | 0.000649 – 0.000812 |
+| **end to end** | **0.000673 – 0.000970** |
+
+That is **USD 0.67 – 0.97 per thousand enquiries**. Two conclusions survive the
+whole interval. **Triage is input-bound**: 91% of its cost is input tokens at
+both bounds, so a cheap triage model saves far less than its headline price
+implies. And **drafting is 84–96% of the total**, which means moving triage from
+`plus` to `flash` saves only **14–25%** of the per-enquiry cost — the case for
+the cheap triage model rests on latency and equal quality, not on money.
+
+A third finding needs no price at all: **thinking is on by default and dominates
+output**, `flash` emitting a median 727 output tokens against 21 with it
+disabled. A small model is cheap at triage only with thinking off.
 
 ### Calibration
 

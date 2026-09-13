@@ -340,3 +340,51 @@ def test_the_confidence_examples_in_the_writeup_come_from_the_recorded_run(calib
     assert lowest[0]["correct"] is False, (
         "the write-up argues the least confident record is also wrong; "
         "the recorded run no longer supports that")
+
+
+def test_the_cost_interval_cited_is_derived_from_measured_tokens():
+    """Cost is the one figure with an unverified input, so it must be derivable.
+
+    Token counts are measured; the price is bounded rather than known. The
+    document's numbers have to fall out of results/latency.json and
+    data/model_prices.json, or a reader is taking them on trust twice over.
+    """
+    from evals.latency import cost_interval, load_prices
+
+    latency = RESULTS / "latency.json"
+    if not latency.exists():
+        pytest.skip("latency results not present")
+
+    stages = json.loads(latency.read_text(encoding="utf-8"))["stages"]
+    prices = load_prices()
+    text = dict(documents()).get("writeup.md")
+    if text is None:  # pragma: no cover
+        pytest.skip("writeup not present")
+
+    total_low = total_high = 0.0
+    for data in stages.values():
+        interval = cost_interval(data["model"], data["mean_prompt_tokens"],
+                                 data["mean_completion_tokens"], prices)
+        assert interval is not None, f"no price bounds for {data['model']}"
+        total_low += interval[0]
+        total_high += interval[1]
+
+    assert f"{total_low:.6f} – {total_high:.6f}" in text, (
+        f"the write-up's end-to-end cost does not match "
+        f"{total_low:.6f}-{total_high:.6f} derived from the recorded tokens")
+
+    per_thousand = f"USD {total_low * 1000:.2f} – {total_high * 1000:.2f} per thousand"
+    assert per_thousand.replace("USD ", "").split(" per")[0] in text
+
+
+def test_the_price_file_is_marked_unverified_while_it_holds_third_party_bounds():
+    """A bounded estimate must not be mistaken for the account's real rates."""
+    prices = json.loads(pathlib.Path("data/model_prices.json").read_text(
+        encoding="utf-8"))
+    exact = [name for name, entry in prices["prices"].items()
+             if entry.get("input_per_mtok") is not None]
+    if exact:
+        pytest.skip("real prices filled in; the interval no longer applies")
+
+    assert prices["_status"].startswith("UNVERIFIED_RANGE")
+    assert prices["_sources"], "bounds without a source are a guess"

@@ -1,19 +1,39 @@
 {
   "_note": [
-    "Per-million-token prices, filled in from the billing console.",
-    "These are an input, not a measurement. Token counts in the latency report",
-    "are measured from the API responses; converting them to money needs a",
-    "price, and the provider does not publish one for these snapshots on a page",
-    "that could be cited. Leaving a model out is not the same as it being free:",
-    "evals/latency.py refuses to report a cost it cannot compute rather than",
-    "printing a zero that looks like an answer.",
-    "Reasoning tokens are billed as output and are already included in",
-    "completion_tokens, so no separate line is needed for them."
+    "Per-million-token prices. These are an INPUT, not a measurement.",
+    "Token counts in results/latency.json are measured from API responses.",
+    "Turning them into money needs a price, and the provider does not publish",
+    "one for these dated snapshots on any page that could be fetched and cited:",
+    "the official Model Studio docs list the models and send you to the console.",
+    "Third-party aggregators disagree with each other and tier by context",
+    "length, so no single figure can be presented as the price.",
+    "Rather than invent one, each model carries a LOW and HIGH bound spanning",
+    "the publicly reported range, and evals/latency.py reports cost per",
+    "invocation as an interval. A conclusion that holds across the whole",
+    "interval is safe to state; one that flips inside it is not.",
+    "Replace with the account's actual rates from the billing console and the",
+    "interval collapses to a point. Reasoning tokens bill as output and are",
+    "already inside completion_tokens."
   ],
-  "_source": "TODO: record where these figures came from and the date",
+  "_status": "UNVERIFIED_RANGE - bounds from third-party aggregators, not the provider",
+  "_sources": [
+    "https://openrouter.ai/qwen/qwen3.7-plus (qwen3.7-plus 0.32 / 1.28)",
+    "https://www.eesel.ai/blog/qwen-pricing (qwen-plus tier ~0.40 / 1.60)",
+    "https://www.orcarouter.ai/blog/what-is-qwen-3-7-flash (flash 0.03 / 0.13 under 32K, 0.20 / 0.80 above 256K)"
+  ],
+  "_retrieved": "2026-09-13",
   "_currency": "USD",
+  "_context_note": "Prompts here are ~800 tokens, so the lowest context tier applies.",
   "prices": {
-    "qwen3.7-flash-2026-07-15": {"input_per_mtok": null, "output_per_mtok": null},
-    "qwen3.7-plus-2026-05-26": {"input_per_mtok": null, "output_per_mtok": null}
+    "qwen3.7-flash-2026-07-15": {
+      "input_per_mtok": null, "output_per_mtok": null,
+      "input_low": 0.03, "input_high": 0.20,
+      "output_low": 0.13, "output_high": 0.80
+    },
+    "qwen3.7-plus-2026-05-26": {
+      "input_per_mtok": null, "output_per_mtok": null,
+      "input_low": 0.32, "input_high": 0.40,
+      "output_low": 1.28, "output_high": 1.60
+    }
   }
 }

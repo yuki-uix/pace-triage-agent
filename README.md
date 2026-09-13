@@ -400,10 +400,20 @@ Serial, single-threaded, first call discarded, n=39.
 | end to end | | 6.72s | 10.04s | | |
 
 p95 is nearest-rank; at n=39 it is the second-slowest observation, not a fitted
-quantile. Cost per call is **not** reported: the provider publishes no price for
-these snapshots on any citable page, so `data/model_prices.json` is a template
-and the harness prints `no price` rather than a zero that would read as an
-answer.
+quantile.
+
+Cost is reported as an interval, because token counts are measured exactly while
+the price is not published for these snapshots on any citable page:
+
+| | cost per invocation (USD) |
+|---|---|
+| triage (flash) | 0.0000239 – 0.000158 |
+| drafting (plus) | 0.000649 – 0.000812 |
+| **end to end** | **0.000673 – 0.000970** |
+
+USD 0.67 – 0.97 per thousand enquiries. Bounds and their sources are in
+[`data/model_prices.json`](data/model_prices.json); filling in the account's real
+rates collapses the interval to a point.
 
 ### Calibration
 

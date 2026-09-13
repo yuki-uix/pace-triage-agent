@@ -280,6 +280,24 @@ case browser below it is read-only. Neither path sends a customer reply.
 The browser opens automatically at `http://127.0.0.1:8765`. Press `Ctrl+C` in
 the terminal to stop the local server.
 
+### Vercel deployment
+
+The repository also contains a zero-dependency Node.js Vercel Function so the
+interactive demo can be hosted without packaging the much larger evaluation
+environment. Configure `DASHSCOPE_API_KEY`, `DASHSCOPE_BASE_URL`,
+`TRIAGE_MODEL_A`, `TRIAGE_MODEL_B` and `DEMO_ACCESS_CODE` in both Preview and
+Production. The access code is mandatory online: it prevents an anonymous
+visitor from spending the presenter's model balance.
+
+```bash
+vercel deploy          # Preview first
+vercel deploy --prod   # only after the Preview is verified
+```
+
+The Vercel function mirrors the two model prompts, strict response contracts,
+confidence derivation and deterministic evidence routing used by the Python
+pipeline. `node --test api/index.test.mjs` checks its deployment boundary.
+
 If a provider or quota failure interrupts the matrix, preserve the output file
 and resume it. Complete cells are verified and reused; partial cells are rerun,
 and prior usage accounting is retained:

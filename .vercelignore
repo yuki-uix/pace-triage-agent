@@ -1,0 +1,17 @@
+.venv/
+.local/
+.deepeval/
+.pytest_cache/
+__pycache__/
+tests/
+evals/
+docs/
+traces/
+*.pyc
+.env
+.DS_Store
+results/*
+!results/assignment_demo_v1.json
+data/*
+!data/assignment_demo_v1.jsonl
+knowledge/*.md

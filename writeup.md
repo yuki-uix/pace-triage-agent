@@ -15,11 +15,9 @@ validation — are in [`docs/07-limitations.md`](docs/07-limitations.md).
 
 ## 1. Architecture and key design decisions
 
-**Two stages, separately modelled.** Triage (case type, priority, confidence)
-and drafting (summary, reply) are separate calls with independently configurable
-models. Triage is short-output and high-frequency; drafting is long-output and
-hallucination-costly. Fusing them would make model selection one all-or-nothing
-choice and the comparison would collapse into "the bigger model won".
+**Two stages, separately modelled.** Triage and drafting are separate calls with
+independently configurable models. Fusing them would make model selection one
+all-or-nothing choice and collapse the comparison into "the bigger model won".
 
 It paid off measurably: the two models are **indistinguishable at triage**
 (case-type accuracy 0.900 both, urgent recall 1.000 both) and clearly different
@@ -103,16 +101,14 @@ the one most submissions skip, and skipping it here would have left three
 plausible-looking numbers standing.
 
 Later instruments were rebuilt and validated separately rather than letting one
-claim certify every metric: the source-backed domain judge matched 21/24
-expected bands (κ 0.953), actionability v3 passed a disjoint holdout at 17/18
-(κ 0.970), commitment v2 matched 19/24 development and 13/18 holdout bands
-(κ 0.929 / 0.865) with every miss one band out. Those test rubric boundaries on
-constructed examples, so they establish that the rebuilt judges order examples
-correctly — not that they agree with a human on naturally uneven output, which
-is the check the first judge failed.
-
-Raw labels are kept in `.local` at the reviewer's choice; the aggregate and a
-SHA-256 of both label and score files are versioned in
+claim certify every metric: the source-backed domain judge matched 21/24 bands
+(κ 0.953), actionability v3 passed a disjoint holdout at 17/18 (κ 0.970), and
+commitment v2 matched 19/24 development and 13/18 holdout bands (κ 0.929 /
+0.865), every miss one band out. Those test rubric boundaries on constructed
+examples: they show the rebuilt judges order examples correctly, not that they
+agree with a human on naturally uneven output — the check the first judge
+failed. Raw labels stay in `.local` at the reviewer's choice; the aggregate and
+SHA-256 provenance are versioned in
 [`results/meta_eval_human_agreement.json`](results/meta_eval_human_agreement.json).
 
 ---
@@ -147,9 +143,9 @@ the topic being complained about.
 ### Recommendation
 
 **Cheap model for triage, careful model for drafting — and not in production
-yet.** Triage is nine times faster (0.64s against 5.90s median) and emits 17
-output tokens against 313, with no measurable quality cost. Drafting with
-`flash` answers one of the two refusal cases it should decline.
+yet.** Triage is nine times faster (0.64s against 5.90s median) with no
+measurable quality cost; drafting with `flash` answers one of the two refusal
+cases it should decline.
 
 A later evidence-backed variant on five frozen cases raised mean commitment
 groundedness from 0.270 to 0.734, and surfaced the trade-off: `ENQ-021` fell
@@ -203,16 +199,14 @@ disabled. A small model is cheap at triage only with thinking off.
 
 ### Calibration
 
-| model | ECE | Brier | records above 0.9 |
-|---|---|---|---|
-| flash | 0.0619 | 0.0492 | 32 of 40 |
-| plus | 0.0392 | 0.0574 | 36 of 40 |
-
-The two measures disagree about which model is better calibrated; both are
-reported rather than the flattering one. More decision-relevant: **confidence
-saturates** — with 32–36 of 40 above 0.9, a gate routes four to eight cases in
-forty rather than offering a graded curve. Bucket accuracy to ±0.05 would need
-~139 records in that bucket alone; no recalibration is fitted.
+`flash` ECE 0.0619 / Brier 0.0492; `plus` ECE 0.0392 / Brier 0.0574. The two
+measures disagree about which model is better calibrated, and both are reported
+rather than the flattering one — that disagreement is what n=40 looks like. More
+decision-relevant: **confidence saturates.** With 32–36 of 40 records above 0.9,
+a gate routes four to eight cases in forty rather than offering a graded curve.
+Bucket accuracy to ±0.05 would need ~139 records in that bucket alone; no
+recalibration is fitted. Full buckets with Wilson intervals are in
+[`results/calibration.json`](results/calibration.json) and the README.
 
 ---
 
@@ -249,12 +243,11 @@ processor wherever it sits. The honest statement is not "this is compliant" but
 that production would put the endpoint, the processor contract and the redaction
 boundary in front of compliance first.
 
-**Before production:** approved insurer evidence and a distribution check
-against live traffic; a confidence gate that routes more than four cases in
-forty; refusal and injection cases at volume, since two each blocks a submission
-but characterises nothing; an escalation path for cases producing no output,
-untested because none occurred; and something consuming the reviewer decisions
-the CLI already records.
+**Before production:** approved insurer evidence and a distribution check against
+live traffic; a confidence gate routing more than four cases in forty; refusal
+and injection cases at volume, since two each blocks a submission but
+characterises nothing; an escalation path for cases producing no output; and
+something consuming the reviewer decisions the CLI already records.
 
 ---
 

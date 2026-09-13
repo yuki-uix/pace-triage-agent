@@ -25,4 +25,4 @@ production budget.
 
 Process failures — including losing four hours to extrapolating wall-clock from
 token volume, against a rule this repository states — are in
-[`docs/06-process-notes.md`](docs/06-process-notes.md).
+[`docs/06-process-notes.md`](06-process-notes.md).

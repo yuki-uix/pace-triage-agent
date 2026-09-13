@@ -147,13 +147,15 @@ All four miss entity groundedness (bar 0.99) and commitment groundedness (bar
 0.98), so their publishable scores remain withheld. Diagnostic fitness supports
 comparison for the assignment; it cannot launder a safety failure into a pass.
 
-**The models are indistinguishable at triage** (0.900 both, urgent recall 1.000
-both) **and are not at drafting** — drafting with flash scores 0.500 on refusal
-correctness against 1.000 for plus. That is the recommendation the two-stage
-split was built to make available, and the first evidence for it.
+Across one 40-record pass per combination, Plus showed no decision-relevant
+Triage advantage: Flash cells scored 0.875–0.900 on case type, Plus cells 0.900,
+and urgent recall was 1.000 throughout. These small stochastic runs do not prove
+the models equivalent. Drafting did expose a role-level difference: Flash scored
+0.500 on refusal correctness, against 1.000 for Plus.
 
-`COMPLAINT` is the only weak class: recall 0.571, three of seven misrouted into
-the topic being complained about.
+`COMPLAINT` is the most persistent weak class: recall was 0.571 in both Flash
+Triage passes and 0.714 in both Plus passes. `OTHER` also fell to 0.667 in three
+cells.
 
 ### Latency and cost
 

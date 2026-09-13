@@ -342,49 +342,62 @@ def test_the_confidence_examples_in_the_writeup_come_from_the_recorded_run(calib
         "the recorded run no longer supports that")
 
 
-def test_the_cost_interval_cited_is_derived_from_measured_tokens():
-    """Cost is the one figure with an unverified input, so it must be derivable.
+def test_per_model_latency_and_official_costs_are_reproducible():
+    """Both models must be measured in both roles for Deliverable B."""
+    from evals.latency import cost_per_invocation, load_prices
 
-    Token counts are measured; the price is bounded rather than known. The
-    document's numbers have to fall out of results/latency.json and
-    data/model_prices.json, or a reader is taking them on trust twice over.
-    """
-    from evals.latency import cost_interval, load_prices
+    paths = (RESULTS / "latency.json", RESULTS / "latency-plus-flash.json")
+    assert all(path.exists() for path in paths), "both serial runs must be versioned"
+    runs = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
+    stages = {(stage, data["model"]): data
+              for run in runs for stage, data in run["stages"].items()}
+    assert len(stages) == 4, "each model must have triage and draft measurements"
 
-    latency = RESULTS / "latency.json"
-    if not latency.exists():
-        pytest.skip("latency results not present")
-
-    stages = json.loads(latency.read_text(encoding="utf-8"))["stages"]
     prices = load_prices()
-    text = dict(documents()).get("writeup.md")
-    if text is None:  # pragma: no cover
-        pytest.skip("writeup not present")
-
-    total_low = total_high = 0.0
+    documents_by_name = dict(documents())
     for data in stages.values():
-        interval = cost_interval(data["model"], data["mean_prompt_tokens"],
-                                 data["mean_completion_tokens"], prices)
-        assert interval is not None, f"no price bounds for {data['model']}"
-        total_low += interval[0]
-        total_high += interval[1]
+        expected = cost_per_invocation(
+            data["model"], data["mean_prompt_tokens"],
+            data["mean_completion_tokens"], prices)
+        assert data["cost_per_invocation"] == pytest.approx(expected)
 
-    assert f"{total_low:.6f} – {total_high:.6f}" in text, (
-        f"the write-up's end-to-end cost does not match "
-        f"{total_low:.6f}-{total_high:.6f} derived from the recorded tokens")
+    comparison = json.loads((RESULTS / "comparison.json").read_text(encoding="utf-8"))
+    for cell in comparison["combinations"]:
+        triage = stages[("triage", cell["triage_model"])]["cost_per_invocation"]
+        draft = stages[("draft", cell["draft_model"])]["cost_per_invocation"]
+        row = (f"| {short(cell['triage_model'])} / {short(cell['draft_model'])} "
+               f"| {triage + draft:.6f} |")
+        for name, text in documents_by_name.items():
+            assert row in text, f"{name} does not report reproducible cost row {row}"
 
-    per_thousand = f"USD {total_low * 1000:.2f} – {total_high * 1000:.2f} per thousand"
-    assert per_thousand.replace("USD ", "").split(" per")[0] in text
 
-
-def test_the_price_file_is_marked_unverified_while_it_holds_third_party_bounds():
-    """A bounded estimate must not be mistaken for the account's real rates."""
-    prices = json.loads(pathlib.Path("data/model_prices.json").read_text(
+def test_price_provenance_is_official_and_explicit():
+    document = json.loads(pathlib.Path("data/model_prices.json").read_text(
         encoding="utf-8"))
-    exact = [name for name, entry in prices["prices"].items()
-             if entry.get("input_per_mtok") is not None]
-    if exact:
-        pytest.skip("real prices filled in; the interval no longer applies")
+    assert document["_source"].startswith("https://help.aliyun.com/")
+    assert document["_verified_on"]
+    assert document["_region"] == "China (Beijing)"
+    assert document["_currency"] == "CNY"
+    assert all(entry["input_per_mtok"] > 0 and entry["output_per_mtok"] > 0
+               for entry in document["prices"].values())
 
-    assert prices["_status"].startswith("UNVERIFIED_RANGE")
-    assert prices["_sources"], "bounds without a source are a guess"
+
+def test_completed_human_review_is_not_described_as_empty():
+    agreement = json.loads((RESULTS / "meta_eval_human_agreement.json").read_text(
+        encoding="utf-8"))
+    assert agreement["human_labels"]["completed"] == 45
+    assert agreement["human_labels"]["total"] == 45
+    for name, text in documents():
+        assert "45 empty human labels" not in text, f"{name} has stale label status"
+
+
+def test_overall_diagnostic_fitness_is_recorded_and_cited():
+    comparison = json.loads((RESULTS / "comparison.json").read_text(encoding="utf-8"))
+    assert comparison["overall_stage_weights"] == {"triage": 0.4, "draft": 0.6}
+    for cell in comparison["combinations"]:
+        expected = 0.4 * cell["composite_triage"] + 0.6 * cell["composite_draft"]
+        assert cell["composite_overall_diagnostic"] == pytest.approx(expected)
+        row = (f"| {short(cell['triage_model'])} / {short(cell['draft_model'])} "
+               f"| {expected:.3f} | DISQUALIFIED |")
+        for name, text in documents():
+            assert row in text, f"{name} does not cite fitness row {row}"

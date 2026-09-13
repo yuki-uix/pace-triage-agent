@@ -121,6 +121,15 @@ not a hard bar: operational clarity is valuable, but it is not itself evidence
 that a promise or factual statement is safe. Existing safety bars still gate
 the entire composite before weights are applied.
 
+### Overall model-selection fitness
+
+Deliverable B also reports one diagnostic fitness value per model combination:
+40% triage composite and 60% draft composite. Drafting receives the larger
+share because it creates customer-facing text; triage errors remain recoverable
+in the mandatory review queue. This number ranks candidates for the assignment
+but never overrides a hard-bar breach. A disqualified combination retains its
+diagnostic value and has its publishable score withheld.
+
 ## Calibration
 
 Bucket predictions by stated confidence (0.5–0.6, 0.6–0.7, …) and compare bucket

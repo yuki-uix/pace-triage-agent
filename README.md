@@ -86,29 +86,30 @@ The unit tests, also free:
 .venv/bin/python -m pytest tests/
 ```
 
-### Completing the human judge labels
+### Natural-output human judge labels
 
-The existing meta-evaluation packet contains 15 natural drafts and 45 empty
-human labels for commitment groundedness, tone match and summary quality. These
-dimensions do not require insurance expertise: they are scored against the
-customer email and the situation it describes. Read
-[`docs/05-human-labeling.md`](docs/05-human-labeling.md), complete
-`results/meta_eval_labels_template.jsonl` — the blank worksheet; the filled
-copy stays in `.local` at the reviewer's choice and its SHA-256 is recorded in
-`results/meta_eval_human_agreement.json` — without opening the judge output, and check
-progress without revealing agreement:
+The 15-draft, 45-row human review is complete. The filled labels remain in
+`.local/meta_eval/` by reviewer choice; the repository keeps the empty template
+so it does not publish them accidentally. Aggregate agreement and SHA-256
+provenance are recorded in
+[`results/meta_eval_human_agreement.json`](results/meta_eval_human_agreement.json).
+The private packet can be verified locally without opening the Judge output:
 
 ```bash
-.venv/bin/python -m evals.meta_evaluation status
+.venv/bin/python -m evals.meta_evaluation status --out-dir .local/meta_eval
 ```
 
-The status command exits non-zero while rows remain empty. The score phase also
-refuses partial input, so an interim agreement result cannot anchor the remaining
-labels. Once status reports 45/45, compute agreement for free:
+The score phase refuses partial input, so an interim agreement result cannot
+anchor the remaining labels. Once status reports 45/45, recompute agreement:
 
 ```bash
-.venv/bin/python -m evals.meta_evaluation score
+.venv/bin/python -m evals.meta_evaluation score --out-dir .local/meta_eval
 ```
+
+The completed validation failed: commitment kappa is -0.056, tone kappa 0.173
+and summary kappa 0.000. The historical Summary Judge put all 15 drafts in its
+lowest band while the human used all four. These historical Judge metrics are
+diagnostic, not validated human substitutes.
 
 Domain correctness is a separate, source-dependent judgement. Its balanced
 validation is recorded in `docs/judge-validation-pilot-v2.md`; do not add domain
@@ -350,6 +351,7 @@ one table in the write-up.
 | `.venv/bin/python -m evals.compare` | `results/comparison.json` — the 2×2 matrix, confusion matrices, judge reasons | ~800 calls, ~57 min |
 | `.venv/bin/python -m evals.calibration` | `results/calibration.json` — reliability buckets, ECE, Brier | 80 calls, ~2 min |
 | `.venv/bin/python -m evals.latency` | `results/latency.json` — **serial**, never merged with a quality run | 80 calls, ~5 min |
+| `.venv/bin/python -m evals.latency --triage-model qwen3.7-plus-2026-05-26 --draft-model qwen3.7-flash-2026-07-15 --out results/latency-plus-flash.json` | Cross-run needed for same-role latency/cost comparison | 80 calls, ~5 min |
 | `.venv/bin/python -m evals.meta_evaluation prepare` | Worksheet + judge scores, including source-backed domain correctness | ~90 calls |
 | `.venv/bin/python -m evals.meta_evaluation status` | Blind human-label progress; never reads judge scores | free |
 | `.venv/bin/python -m evals.meta_evaluation score` | Judge/human agreement — requires every prepared human row | free |
@@ -380,10 +382,20 @@ three times; the caveat travels inside `results/comparison.json`.
 | plus / flash | 0.900 | 1.000 | 0.977 | 0.465 | 0.639 | 0.600 |
 | plus / plus | 0.900 | 1.000 | 0.943 | 0.732 | 0.635 | 0.739 |
 
-All four disqualified on entity groundedness (bar 0.99) and commitment
-groundedness (bar 0.98). Composites are withheld rather than reported: a
-weighted mean that a safety failure cannot lower launders that failure into a
-decimal.
+The assignment-facing diagnostic fitness weights triage 40% and drafting 60%:
+drafting receives the larger share because its text is customer-facing. It does
+not override the safety gate.
+
+| triage / draft | diagnostic fitness | release gate |
+|---|---:|---|
+| flash / flash | 0.806 | DISQUALIFIED |
+| flash / plus | 0.844 | DISQUALIFIED |
+| plus / flash | 0.790 | DISQUALIFIED |
+| plus / plus | 0.856 | DISQUALIFIED |
+
+All four miss entity groundedness (bar 0.99) and commitment groundedness (bar
+0.98), so their publishable scores remain withheld. Diagnostic fitness supports
+comparison for the assignment; it cannot launder a safety failure into a pass.
 
 **The models are indistinguishable at triage** (0.900 both, urgent recall 1.000
 both) **and are not at drafting** — drafting with flash scores 0.500 on refusal
@@ -395,29 +407,34 @@ the topic being complained about.
 
 ### Latency and cost
 
-Serial, single-threaded, first call discarded, n=39.
+Serial, single-threaded, first successful call discarded, n=39 per stage. The
+two runs use the same 40 enquiries.
 
 | stage | model | median | p95 | in tok | out tok |
 |---|---|---|---|---|---|
 | triage | flash | 0.64s | 1.57s | 722 | 17 |
+| triage | plus | 1.25s | 1.91s | 722 | 15 |
+| draft | flash | 4.91s | 8.89s | 776 | 347 |
 | draft | plus | 5.90s | 9.21s | 776 | 313 |
-| end to end | | 6.72s | 10.04s | | |
 
 p95 is nearest-rank; at n=39 it is the second-slowest observation, not a fitted
 quantile.
 
-Cost is reported as an interval, because token counts are measured exactly while
-the price is not published for these snapshots on any citable page:
+Costs use Alibaba Cloud Model Studio's published China (Beijing) list prices,
+verified 2026-09-13. The calculation excludes free quota, limited-time, batch
+and cache discounts.
 
-| | cost per invocation (USD) |
-|---|---|
-| triage (flash) | 0.0000239 – 0.000158 |
-| drafting (plus) | 0.000649 – 0.000812 |
-| **end to end** | **0.000673 – 0.000970** |
+| combination | estimated CNY / enquiry |
+|---|---:|
+| flash / flash | 0.000591 |
+| flash / plus | 0.004216 |
+| plus / flash | 0.001997 |
+| plus / plus | 0.005623 |
 
-USD 0.67 – 0.97 per thousand enquiries. Bounds and their sources are in
-[`data/model_prices.json`](data/model_prices.json); filling in the account's real
-rates collapses the interval to a point.
+The recommended Flash/Plus run measured end-to-end median 6.72s and p95 10.04s.
+Prices are inputs; token counts and timings are measured API results. Source,
+region and pricing basis are versioned in
+[`data/model_prices.json`](data/model_prices.json).
 
 ### Calibration
 
@@ -466,7 +483,7 @@ someone has to keep.
 | Path | Contents |
 |---|---|
 | `src/` | Pipeline, schema, contract, redaction, trace store, review CLI |
-| `data/` | Enquiries, frozen golden set, balanced judge-validation set, labeling guide, provenance, price template |
+| `data/` | Enquiries, frozen golden set, balanced judge-validation set, labeling guide, provenance, cited price input |
 | `knowledge/` | Versioned public regulatory evidence plus a separately labelled synthetic internal service contract |
 | `evals/` | Metrics, comparison, calibration, latency, meta-evaluation |
 | `results/` | The numbers this README cites |

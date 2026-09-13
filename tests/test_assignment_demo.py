@@ -114,6 +114,8 @@ def test_runner_completes_pairs_and_resume_makes_no_paid_calls(
     monkeypatch.setattr(demo, "actionability", lambda judge: Metric())
     monkeypatch.setenv("TRIAGE_MODEL_A", "triage")
     monkeypatch.setenv("TRIAGE_MODEL_B", "draft")
+    monkeypatch.setenv("DASHSCOPE_API_KEY", "test-key")
+    monkeypatch.setenv("DASHSCOPE_BASE_URL", "https://example.invalid/v1")
 
     out, review, report = (tmp_path / "result.json", tmp_path / "review.jsonl",
                            tmp_path / "report.md")

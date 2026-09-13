@@ -118,12 +118,22 @@ with no error and no signal.
 | plus / flash | 0.900 | 1.000 | 0.977 | 0.465 | 0.639 | 0.600 |
 | plus / plus | 0.900 | 1.000 | 0.943 | 0.732 | 0.635 | 0.739 |
 
-**The composite is gated, not averaged.** Weights differ by stage because the
-costs of error do — triage: urgent recall 0.45, case type 0.30, priority 0.25;
-drafting: entity groundedness 0.35, commitment 0.35, tone 0.15, summary 0.15.
-Composites are **withheld for all four**, because each misses a hard bar: a
-weighted mean a safety failure cannot lower launders it into a decimal, so the
-gate runs first and there were no survivors to rank.
+**Fitness is numeric and gated.** Within triage, urgent recall / case type /
+priority carry 0.45 / 0.30 / 0.25; within drafting, entity / commitment / tone /
+summary carry 0.35 / 0.35 / 0.15 / 0.15. Overall diagnostic fitness is 40%
+triage and 60% drafting because the latter produces customer-facing text:
+
+| triage / draft | diagnostic fitness | release gate |
+|---|---:|---|
+| flash / flash | 0.806 | DISQUALIFIED |
+| flash / plus | 0.844 | DISQUALIFIED |
+| plus / flash | 0.790 | DISQUALIFIED |
+| plus / plus | 0.856 | DISQUALIFIED |
+
+The score answers the assignment comparison; the gate answers whether to ship.
+All four miss a hard bar, so publishable fitness remains withheld. The original
+draft metrics also failed human validation, making these diagnostic rankings,
+not evidence of production quality.
 
 `COMPLAINT` is the only weak class — recall 0.571, three of seven misrouted into
 the topic being complained about.
@@ -131,8 +141,8 @@ the topic being complained about.
 ### Recommendation
 
 **Cheap model for triage, careful model for drafting — and not in production
-yet.** Triage is nine times faster (0.64s against 5.90s median) at no measurable
-quality cost; drafting with `flash` answers one of the two refusal cases it
+yet.** At triage, Flash is about twice as fast as Plus (0.64s against 1.25s
+median) at no measurable quality cost; drafting with `flash` answers one of the two refusal cases it
 should decline. A later evidence-backed variant on five frozen cases raised mean
 commitment groundedness from 0.270 to 0.734 and surfaced the trade-off:
 `ENQ-021` fell from 0.700 to 0.300 on actionability because the safer reply
@@ -141,36 +151,42 @@ deferred so much the customer could not act
 
 ### What would change it
 
-- **A completed natural-output human packet** — the boundary validations test
-  rubric edges, not agreement on ordinary output.
+- **A repaired natural-output Judge** — the completed human packet exposed poor
+  agreement; the rebuilt instrument must pass on ordinary output.
 - **A COMPLAINT-aware triage prompt** — if it fixes `flash` but not `plus`, the
   triage half strengthens; if only `plus` recovers, it reverses.
-- **Real prices** — triage is input-bound (722 in, 17 out), so its cost turns on
-  the input price, not the output price that gets the attention.
+- **Material price or discount changes** — the comparison uses list price and
+  excludes temporary, batch, cache and free-quota discounts.
 - **Any number moving on a second run.**
 
 ### Operational
 
-Serial, single-threaded, first call discarded, n = 39:
+Serial, single-threaded, first successful call discarded, n = 39 per stage:
 
 | stage | model | median | p95 | in tok | out tok |
 |---|---|---|---|---|---|
 | triage | flash | 0.64s | 1.57s | 722 | 17 |
+| triage | plus | 1.25s | 1.91s | 722 | 15 |
+| draft | flash | 4.91s | 8.89s | 776 | 347 |
 | draft | plus | 5.90s | 9.21s | 776 | 313 |
-| end to end | | 6.72s | 10.04s | | |
 
 p95 is nearest-rank; at n=39 it is the second-slowest observation.
 
-**Cost per invocation, as an interval.** No price is published for these
-snapshots on any citable page and third-party figures disagree, so tokens are
-measured exactly, the price is bounded by the reported range, and only
-conclusions holding at both ends are stated. Triage costs 0.0000239 – 0.000158
-per call and drafting 0.000649 – 0.000812: **0.000673 – 0.000970 end to end**, or
-**USD 0.67 – 0.97 per thousand enquiries**. Two conclusions survive the interval
-— **triage is input-bound** (91% of its cost is input tokens at both ends) and
-**drafting is 84–96% of the total**, so moving triage to `flash` saves only
-**14–25%** per enquiry. The cheap triage model is justified by latency and equal
-quality, not by money. A third finding needs no price: **thinking is on by
+**Cost per invocation.** Alibaba Cloud's published China (Beijing) list prices,
+verified 13 September 2026, are CNY 0.20 / 0.80 per million input/output tokens
+for Flash and CNY 2 / 8 for Plus:
+
+| triage / draft | estimated CNY / enquiry |
+|---|---:|
+| flash / flash | 0.000591 |
+| flash / plus | 0.004216 |
+| plus / flash | 0.001997 |
+| plus / plus | 0.005623 |
+
+The recommended Flash/Plus run measured end-to-end median 6.72s and p95
+10.04s. Discounts and free quota are excluded.
+The cheap triage model is justified mainly by latency and equal quality, not by
+money. A separate finding needs no price: **thinking is on by
 default and dominates output**, `flash` emitting a median 727 output tokens
 against 21 with it disabled.
 

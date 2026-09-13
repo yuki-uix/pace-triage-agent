@@ -13,6 +13,7 @@ results/*.json
 # read the numbers without paying to regenerate them.
 !results/relabel.json
 !results/latency.json
+!results/latency-plus-flash.json
 !results/comparison.json
 !results/calibration.json
 !results/meta_eval_judge.json

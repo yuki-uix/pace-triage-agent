@@ -1,5 +1,6 @@
 """Serial measurement, and the properties that make it worth measuring."""
 
+import json
 import math
 import pathlib
 import re
@@ -9,6 +10,7 @@ import pytest
 
 from evals.latency import (
     MissingPrice,
+    PRICES_PATH,
     StageSamples,
     cost_per_invocation,
     load_prices,
@@ -150,12 +152,16 @@ def test_cost_uses_the_measured_token_counts():
     assert cost == pytest.approx(7.0)
 
 
-def test_the_shipped_price_file_is_a_template_not_a_guess():
-    """Prices were not published anywhere citable; inventing them would make the
-    cost column fiction dressed as measurement."""
+def test_the_shipped_price_file_has_citable_official_prices():
+    document = json.loads(pathlib.Path(PRICES_PATH).read_text(encoding="utf-8"))
     prices = load_prices()
     assert prices
-    assert all(entry["input_per_mtok"] is None for entry in prices.values())
+    assert all(entry["input_per_mtok"] > 0 for entry in prices.values())
+    assert all(entry["output_per_mtok"] > 0 for entry in prices.values())
+    assert document["_source"].startswith("https://help.aliyun.com/")
+    assert document["_currency"] == "CNY"
+    assert document["_region"] == "China (Beijing)"
+    assert document["_verified_on"]
 
 
 def test_the_report_says_no_price_rather_than_printing_a_number():

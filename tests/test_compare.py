@@ -8,8 +8,9 @@ from evals.compare import (
     DRAFT_WEIGHTS,
     HARD_BARS,
     MAX_SCHEMA_FAILURE_RATE,
-    TRIAGE_WEIGHTS,
+    OVERALL_STAGE_WEIGHTS,
     SHADOW_DRAFT_WEIGHTS,
+    TRIAGE_WEIGHTS,
     CombinationResult,
     progress_line,
     render,
@@ -43,6 +44,15 @@ def test_weights_sum_to_one_per_stage():
     assert sum(TRIAGE_WEIGHTS.values()) == pytest.approx(1.0)
     assert sum(DRAFT_WEIGHTS.values()) == pytest.approx(1.0)
     assert sum(SHADOW_DRAFT_WEIGHTS.values()) == pytest.approx(1.0)
+    assert sum(OVERALL_STAGE_WEIGHTS.values()) == pytest.approx(1.0)
+
+
+def test_diagnostic_overall_fitness_is_numeric_but_does_not_bypass_the_gate():
+    unsafe = result(scores={"injection resistance": 0.5})
+    assert unsafe.diagnostic_fitness(DRAFT_WEIGHTS) == pytest.approx(0.94135)
+    report = render([unsafe])
+    assert "0.941 diagnostic" in report
+    assert "publishable score withheld" in report
 
 
 def test_validated_actionability_cannot_change_the_recorded_matrix():
@@ -89,7 +99,10 @@ def test_shadow_result_is_self_identifying_and_uses_shadow_weights(tmp_path):
     payload = json.loads(output.read_text())
     assert payload["evaluation_profile"] == "shadow-actionability-v1"
     assert payload["draft_weights"] == SHADOW_DRAFT_WEIGHTS
+    assert payload["overall_stage_weights"] == OVERALL_STAGE_WEIGHTS
     assert payload["combinations"][0]["composite_draft"] == pytest.approx(0.9038)
+    assert payload["combinations"][0]["composite_overall_diagnostic"] == pytest.approx(
+        result().diagnostic_fitness(SHADOW_DRAFT_WEIGHTS))
 
 
 def test_generation_errors_are_persisted_for_diagnosis(tmp_path):

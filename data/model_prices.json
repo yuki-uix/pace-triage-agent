@@ -1,39 +1,25 @@
 {
   "_note": [
-    "Per-million-token prices. These are an INPUT, not a measurement.",
-    "Token counts in results/latency.json are measured from API responses.",
-    "Turning them into money needs a price, and the provider does not publish",
-    "one for these dated snapshots on any page that could be fetched and cited:",
-    "the official Model Studio docs list the models and send you to the console.",
-    "Third-party aggregators disagree with each other and tier by context",
-    "length, so no single figure can be presented as the price.",
-    "Rather than invent one, each model carries a LOW and HIGH bound spanning",
-    "the publicly reported range, and evals/latency.py reports cost per",
-    "invocation as an interval. A conclusion that holds across the whole",
-    "interval is safe to state; one that flips inside it is not.",
-    "Replace with the account's actual rates from the billing console and the",
-    "interval collapses to a point. Reasoning tokens bill as output and are",
-    "already inside completion_tokens."
+    "Per-million-token published list prices for real-time inference.",
+    "These are an input, not a measurement. Token counts in the latency reports",
+    "are measured from API responses. Limited-time discounts, free quota, batch",
+    "discounts and context-cache discounts are excluded so every model uses the",
+    "same stable list-price basis. Reasoning tokens are billed as output and are",
+    "already included in completion_tokens."
   ],
-  "_status": "UNVERIFIED_RANGE - bounds from third-party aggregators, not the provider",
-  "_sources": [
-    "https://openrouter.ai/qwen/qwen3.7-plus (qwen3.7-plus 0.32 / 1.28)",
-    "https://www.eesel.ai/blog/qwen-pricing (qwen-plus tier ~0.40 / 1.60)",
-    "https://www.orcarouter.ai/blog/what-is-qwen-3-7-flash (flash 0.03 / 0.13 under 32K, 0.20 / 0.80 above 256K)"
-  ],
-  "_retrieved": "2026-09-13",
-  "_currency": "USD",
-  "_context_note": "Prompts here are ~800 tokens, so the lowest context tier applies.",
+  "_source": "https://help.aliyun.com/zh/model-studio/model-pricing",
+  "_verified_on": "2026-09-13",
+  "_region": "China (Beijing)",
+  "_basis": "Published list price; real-time, uncached requests in the first input-token tier; excludes discounts and free quota",
+  "_currency": "CNY",
   "prices": {
     "qwen3.7-flash-2026-07-15": {
-      "input_per_mtok": null, "output_per_mtok": null,
-      "input_low": 0.03, "input_high": 0.20,
-      "output_low": 0.13, "output_high": 0.80
+      "input_per_mtok": 0.2,
+      "output_per_mtok": 0.8
     },
     "qwen3.7-plus-2026-05-26": {
-      "input_per_mtok": null, "output_per_mtok": null,
-      "input_low": 0.32, "input_high": 0.40,
-      "output_low": 1.28, "output_high": 1.60
+      "input_per_mtok": 2.0,
+      "output_per_mtok": 8.0
     }
   }
 }

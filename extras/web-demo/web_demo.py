@@ -23,10 +23,13 @@ from src.reference_pack import load_claims, load_sources
 from src.service_catalogue import load_entries
 
 
-ROOT = Path(__file__).resolve().parents[1]
+# This module lives in extras/, outside the assessed deliverable, so the
+# repository root is two levels up and the static assets sit beside it.
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
 RESULT = ROOT / "results" / "assignment_demo_v1.json"
 ENQUIRIES = ROOT / "data" / "assignment_demo_v1.jsonl"
-ASSETS = ROOT / "web_demo"
+ASSETS = HERE / "static"
 
 PURPOSES = {
     "ENQ-009": "Address change: compare a specific but partly unsupported answer with an evidence-grounded operational path.",

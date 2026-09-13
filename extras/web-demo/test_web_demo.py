@@ -5,7 +5,7 @@ from urllib.request import urlopen
 from http.server import ThreadingHTTPServer
 import threading
 
-from src.web_demo import ASSETS, build_demo_payload, make_handler
+from web_demo import ASSETS, build_demo_payload, make_handler
 
 
 def test_demo_payload_joins_frozen_cases_enquiries_and_evidence():

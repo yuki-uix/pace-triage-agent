@@ -268,13 +268,15 @@ in [`docs/assignment-demo-v1.md`](docs/assignment-demo-v1.md). This demonstrates
 that the complete path operates; it does not replace the original production-
 oriented hard bars or claim regulatory readiness.
 
-For a non-technical audience, open the local web interface. Its live panel runs
+**The demo lives in [`extras/`](extras/) and is not part of the assessed
+deliverable** — see [`extras/README.md`](extras/README.md) for why. For a
+non-technical audience, open the local web interface. Its live panel runs
 one new enquiry through evidence-backed triage and drafting (normally two paid
 model calls; more if confidence falls back to self-consistency). The frozen
 case browser below it is read-only. Neither path sends a customer reply.
 
 ```bash
-.venv/bin/python -m src.web_demo
+.venv/bin/python extras/web-demo/web_demo.py
 ```
 
 The browser opens automatically at `http://127.0.0.1:8765`. Press `Ctrl+C` in

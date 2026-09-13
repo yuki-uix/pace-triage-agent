@@ -15,6 +15,11 @@ test("selects public and service evidence deterministically", async () => {
   assert.ok(result.context.some(line => line.includes("SYNTHETIC INTERNAL SERVICE CONTRACT")));
 });
 
+test("recognises natural duplicate-charge wording", async () => {
+  const result = await selectEvidence("My bank account shows two charges for the renewal.");
+  assert.deepEqual(result.selected.map(item => item.id), ["LEVY_01", "SVC_BILLING_01"]);
+});
+
 test("public live endpoint fails closed without an access code", async () => {
   const previous = process.env.DEMO_ACCESS_CODE; delete process.env.DEMO_ACCESS_CODE;
   try {

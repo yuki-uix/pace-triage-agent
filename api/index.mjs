@@ -25,12 +25,12 @@ const PUBLIC_TERMS = {
   complaint: ["complaint", "complain", "mis-selling", "misled", "投诉", "投訴"],
   direct_marketing: ["marketing", "telemarketing", "promotional", "sales call", "推广", "推廣"],
   data_access: ["data access", "personal data", "privacy ordinance", "个人资料", "個人資料"],
-  premium_billing: ["premium debit", "premium deduction", "autopay", "double charge", "charged amount", "billing", "levy", "自动转账", "自動轉賬", "重复扣款"],
+  premium_billing: ["premium debit", "premium deduction", "autopay", "double charge", "charged twice", "two charges", "two deductions", "taken twice", "charged amount", "billing", "levy", "自动转账", "自動轉賬", "重复扣款"],
 };
 const SERVICE_TERMS = {
   policy_information: ["cash value", "benefit illustration", "policy statement", "sum assured", "policy status", "policy still", "premium due", "annual statement"],
   address_change: ["change of address", "update the address", "update my address", "new address", "moved", "correspondence address"],
-  premium_billing: ["autopay", "deduct", "debit", "double charge", "duplicate", "billing", "refund"],
+  premium_billing: ["autopay", "deduct", "debit", "double charge", "charged twice", "two charges", "two deductions", "taken twice", "duplicate", "billing", "refund"],
   medical_claim: ["make a claim", "put in a claim", "claim form", "hospital claim", "hospital bill", "surgery", "medical", "receipt", "doctor", "letter of guarantee"],
   complaint: ["complaint", "complain", "mis-selling", "misled"],
   direct_marketing: ["marketing", "telemarketing", "promotional", "sales call", "opt out"],
@@ -40,7 +40,7 @@ const SERVICE_TERMS = {
 };
 
 const readJson = async path => JSON.parse(await readFile(resolve(ROOT, path), "utf8"));
-const readJsonl = async path => (await readFile(resolve(ROOT, path), "utf8")).split("\n").filter(Boolean).map(JSON.parse);
+const readJsonl = async path => (await readFile(resolve(ROOT, path), "utf8")).split("\n").filter(Boolean).map(line => JSON.parse(line));
 const topicsFor = (text, terms) => {
   const lower = text.toLowerCase();
   const topics = new Set(Object.entries(terms).filter(([, words]) => words.some(word => lower.includes(word))).map(([topic]) => topic));

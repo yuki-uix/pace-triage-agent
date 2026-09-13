@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import handler, { parseContract, selectEvidence } from "./index.mjs";
+import handler, { parseContract, selectEvidence, confidenceFromVotes } from "./index.mjs";
 
 test("validates the same strict output shapes as the Python pipeline", () => {
   assert.deepEqual(parseContract('{"case_type":"CLAIM","priority":"LOW"}', "triage"), { case_type: "CLAIM", priority: "LOW" });
@@ -26,4 +26,10 @@ test("public live endpoint fails closed without an access code", async () => {
     const response = await handler.fetch(new Request("https://demo.example/api/index?route=run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject: "x", body: "y" }) }));
     assert.equal(response.status, 503);
   } finally { if (previous !== undefined) process.env.DEMO_ACCESS_CODE = previous; }
+});
+
+test("fallback confidence supports the label returned to the reviewer", () => {
+  assert.equal(confidenceFromVotes(["OTHER", "OTHER", "OTHER"], "CLAIM").value, 0);
+  assert.equal(confidenceFromVotes(["CLAIM", "OTHER", "CLAIM"], "CLAIM").value, 2 / 3);
+  assert.throws(() => confidenceFromVotes([], "CLAIM"), /no valid votes/);
 });

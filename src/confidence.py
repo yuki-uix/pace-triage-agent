@@ -92,19 +92,13 @@ def from_logprobs(content: str, tokens: Sequence, value: str,
     )
 
 
-def by_self_consistency(votes: Sequence[str]) -> Confidence:
-    """Modal vote share across independent samples (ADR-002's fallback).
-
-    Triples the cost of triage, which is why it is the fallback and why the
-    write-up reports what the cheap path would have given instead.
-    """
+def by_self_consistency(votes: Sequence[str], predicted_type: str) -> Confidence:
+    """Share of validated independent samples supporting the emitted label."""
     if not votes:
         raise ValueError("self-consistency needs at least one vote")
-
-    counts = Counter(votes)
-    _, top = counts.most_common(1)[0]
+    supported = Counter(votes)[predicted_type]
     return Confidence(
-        value=top / len(votes),
+        value=supported / len(votes),
         method=ConfidenceMethod.SELF_CONSISTENCY,
-        detail=f"modal share {top}/{len(votes)} over {sorted(counts)}",
+        detail=f"support for {predicted_type!r}: {supported}/{len(votes)} independent samples",
     )

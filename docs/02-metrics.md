@@ -198,3 +198,17 @@ was run once because every combination already failed the same hard gates. The
 write-up therefore labels those figures as single-run evidence rather than
 presenting them as stable. Blind relabelling is the separate component that was
 run three times.
+
+## Regression and evidence retention
+
+`python -m evals.regression --live --out-dir results/regression-v2` runs the
+baseline quality matrix, both calibration runs and serial latency/cost in one
+command. Without `--live` it previews only. Source and data hashes are stored in
+a manifest; outputs go to a new directory. The evidence-backed candidate is
+excluded because it uses a different prompt and experimental instrument.
+
+New comparison outputs retain each generated summary, draft and stage trace
+beside the classification, plus the existing per-record Judge scores/reasons.
+These are synthetic benchmark artifacts; this is not a logging policy for real
+customer data. Historical aggregate files remain unchanged and cannot recover
+missing raw records. See [submission evidence](submission-evidence.md).

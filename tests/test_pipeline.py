@@ -121,9 +121,8 @@ def test_the_first_call_is_not_counted_as_a_self_consistency_vote():
                          '{"case_type": "OTHER", "priority": "LOW"}'])
     output, _ = run_triage(client, StageConfig("m"), "s", "b", FailureCounters())
 
-    # All three votes said OTHER; had the first call been counted the share
-    # would be 3/4, not 3/3.
-    assert output.confidence == pytest.approx(1.0)
+    # No independent sample supports the label actually returned.
+    assert output.confidence == pytest.approx(0.0)
     assert output.case_type is CaseType.CLAIM
 
 
@@ -285,3 +284,15 @@ def test_the_triage_stage_recovers_from_one_malformed_response():
 
     assert output.case_type is CaseType.CLAIM
     assert counters.schema_failures == 1
+
+
+@pytest.mark.parametrize("bad", ['{"case_type":"UNKNOWN","priority":"LOW"}',
+                                 '{"case_type":"CLAIM"}', 'not json'])
+def test_malformed_fallback_vote_fails_visibly(bad):
+    from src.contract import SchemaValidationError
+    client = FakeClient([TRIAGE_JSON, TRIAGE_JSON, bad])
+    counters = FailureCounters()
+    with pytest.raises(SchemaValidationError):
+        run_triage(client, StageConfig("m"), "s", "b", counters)
+    assert counters.schema_failures == 1
+    assert counters.raw_failures == [bad]

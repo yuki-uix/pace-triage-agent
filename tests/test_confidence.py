@@ -51,25 +51,25 @@ def test_whitespace_between_tokens_does_not_break_location():
     assert from_logprobs("", tokens, "CLAIM").value == pytest.approx(0.5)
 
 
-def test_self_consistency_is_the_modal_vote_share():
-    result = by_self_consistency(["CLAIM", "CLAIM", "OTHER"])
+def test_self_consistency_measures_support_for_the_output():
+    result = by_self_consistency(["CLAIM", "CLAIM", "OTHER"], "CLAIM")
     assert result.method is ConfidenceMethod.SELF_CONSISTENCY
     assert result.value == pytest.approx(2 / 3)
 
 
 def test_unanimous_self_consistency_is_one():
-    assert by_self_consistency(["CLAIM"] * 3).value == 1.0
+    assert by_self_consistency(["CLAIM"] * 3, "CLAIM").value == 1.0
 
 
 def test_self_consistency_needs_a_vote():
     with pytest.raises(ValueError):
-        by_self_consistency([])
+        by_self_consistency([], "CLAIM")
 
 
 def test_the_method_is_always_recorded():
     """A metric that silently degrades to a worse method is worse than one that fails."""
     assert from_logprobs(CONTENT, TOKENS, "NORMAL").method
-    assert by_self_consistency(["A"]).method
+    assert by_self_consistency(["CLAIM"], "CLAIM").method
 
 
 ECHOED_TOKENS = [
@@ -102,3 +102,7 @@ def test_the_last_occurrence_of_the_key_wins():
         token('"} {"case_type": "', 1.0), token("CLAIM", 0.9), token('"}', 1.0),
     ]
     assert from_logprobs("", tokens, "CLAIM", key="case_type").value == pytest.approx(0.9)
+
+
+def test_other_labels_agreeing_do_not_inflate_output_confidence():
+    assert by_self_consistency(["OTHER"] * 3, "CLAIM").value == 0.0

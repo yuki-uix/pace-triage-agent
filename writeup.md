@@ -6,6 +6,8 @@ The runtime is small relative to its evaluation and governance harness: the larg
 
 **On the frozen production bars, it is not ready.** All four model combinations fail. Versioned machine results are in [`docs/`](docs/) and [`results/`](results/). The human-agreement aggregate is versioned; raw labels remain local by reviewer choice. Limitations — n=40, synthetic data, single-run variance and failed Judge validation — are recorded in [`docs/07-limitations.md`](docs/07-limitations.md).
 
+**Evidence scope.** The 40-case model matrix below is the baseline. The optional evidence-backed candidate has a separate five-case paired demo, not a full model-selection run. The historical matrix preserves aggregates and confusion matrices but not its complete per-draft outputs and Judge records; those means cannot be independently reconstructed from the committed files. The demo's raw outputs are committed. See [evidence coverage](docs/submission-evidence.md). New runs retain per-record drafts and Judge results; no missing historical evidence has been invented.
+
 ---
 
 ## 1. Architecture and key design decisions
@@ -20,7 +22,7 @@ stage traces -> full-field encryption -> append-only trace store
 
 Across one 40-record pass per combination, the split exposed a role-level difference. Case-type accuracy was 0.875–0.900 with Flash Triage and 0.900 with Plus; urgent recall was 1.000 throughout. Drafting with Flash scored **0.500 on refusal correctness**, against **1.000** for Plus. A fused design would hide that distinction. These small stochastic runs do not establish model equivalence.
 
-**Confidence is derived, not asked for.** Verbalised confidence clusters in 0.85–0.95 regardless of correctness. The provider exposes `logprobs`, so confidence is the probability the model assigned to the label string it emitted. In the Flash calibration run, **ENQ-034 at 0.2972** is a `COMPLAINT` wrongly routed to `CLAIM`; **ENQ-033 at 0.5198** has the same error; and **ENQ-040 at 0.5461** was independently flagged as ambiguous. This is useful diagnostic evidence, not proof that the raw confidence is deployment-ready.
+**Confidence is derived, not asked for.** The fallback now measures independent votes supporting the emitted label and fails on malformed samples; it cannot assign another label's majority share to the original answer. Historical calibration used logprobs and has not been rerun after this fix. Verbalised confidence clusters in 0.85–0.95 regardless of correctness. The provider exposes `logprobs`, so confidence is the probability the model assigned to the label string it emitted. In the Flash calibration run, **ENQ-034 at 0.2972** is a `COMPLAINT` wrongly routed to `CLAIM`; **ENQ-033 at 0.5198** has the same error; and **ENQ-040 at 0.5461** was independently flagged as ambiguous. This is useful diagnostic evidence, not proof that the raw confidence is deployment-ready.
 
 **Groundedness is split.** Entity-level support is a set comparison and gets no LLM; commitment-level support for SLAs, outcomes and entitlements requires semantic judgement. Conflating them makes the cheap half impossible to audit.
 
@@ -137,5 +139,7 @@ Entity-level NER originally missed a customer name, so traces now encrypt whole 
 1. **Build an evidence-gated Draft Plan.** Mark supported and missing topics; require each fact, action and commitment to cite enquiry or approved evidence before prose is rendered. Missing support routes to review or a safe fallback.
 2. **Run a controlled Agent experiment.** Freeze Triage and metric versions, compare paired baseline/candidate deltas, repair COMPLAINT routing, validate semantic Judges on natural output, then test on a new blind Agent holdout.
 3. **Close the operating loop.** Track reviewer decisions, edit time and critical corrections; add provider/schema/evidence alerts, owned escalation, queue access and retention controls, approved insurer evidence and a privacy-approved sample of real enquiry shapes.
+
+Fresh baseline measurements run with `.venv/bin/python -m evals.regression --live --out-dir results/regression-v2`; omitting `--live` previews the commands. The offline test command only checks recorded results. A completed run is not a release approval.
 
 Further scope exclusions and rationale are in [`docs/04-scope.md`](docs/04-scope.md).

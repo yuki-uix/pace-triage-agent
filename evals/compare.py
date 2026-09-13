@@ -180,7 +180,8 @@ def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
                        counters)
             return record, {"case_type": item.case_type, "priority": item.priority,
                             "confidence": item.confidence, "summary": item.summary,
-                            "draft_reply": item.draft_reply}, None
+                            "draft_reply": item.draft_reply,
+                            "traces": item.traces}, None
         except (RetryExhaustedError, Exception) as exc:  # noqa: BLE001
             return record, None, f"{type(exc).__name__}: {exc}"
 
@@ -215,7 +216,9 @@ def evaluate(client, judge, analyzer, triage_model: str, draft_model: str,
         {"record_id": r.id, "expected_type": r.expected_type.value,
          "predicted_type": o["case_type"],
          "expected_priority": r.expected_priority.value,
-         "predicted_priority": o["priority"], "confidence": o["confidence"]}
+         "predicted_priority": o["priority"], "confidence": o["confidence"],
+         "summary": o["summary"], "draft_reply": o["draft_reply"],
+         "traces": o.get("traces", [])}
         for r, o in scored
     ]
     case_report = case_type_report(case_pairs)

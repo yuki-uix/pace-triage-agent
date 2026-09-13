@@ -61,13 +61,15 @@ anyway.
 
 **Decision.** Prefer token-level probability from the classification decision. If
 the provider does not expose logprobs, fall back to self-consistency: three
-samples at temperature 0.7, confidence = modal vote share.
+samples at temperature 0.7, confidence = the fraction supporting the emitted
+case type. Every sample must pass the triage schema; a malformed sample fails
+visibly instead of shrinking the denominator.
 
 **Why.** Verbalized LLM confidence clusters in 0.85–0.95 regardless of
 correctness. A calibration table built on it has no resolution. Both fallbacks
 produce a score with actual variance.
 
-**Cost.** Self-consistency triples triage cost. Mitigation: run it on the golden
+**Cost.** Self-consistency adds three calls to the initial triage call. Mitigation: run it on the golden
 set to characterise the gap, and document the production trade-off rather than
 pretending the cheap path is equivalent.
 

@@ -133,9 +133,9 @@ export async function runAgent(subject, body) {
   let extraCalls = 0;
   if (!confidence) {
     const votes = [];
-    for (let i = 0; i < 3; i += 1) { const vote = await modelCall({ model: triageModel, maxTokens: 2048, temperature: 0.7, messages: [{ role: "system", content: TRIAGE_SYSTEM }, { role: "user", content: enquiry }] }); extraCalls += 1; try { votes.push(parseContract(vote.content, "triage").case_type); } catch {} }
+    for (let i = 0; i < 3; i += 1) { const vote = await modelCall({ model: triageModel, maxTokens: 2048, temperature: 0.7, messages: [{ role: "system", content: TRIAGE_SYSTEM }, { role: "user", content: enquiry }] }); extraCalls += 1; votes.push(parseContract(vote.content, "triage").case_type); }
     if (!votes.length) throw new Error("confidence fallback produced no valid votes");
-    const counts = votes.reduce((out, vote) => ({ ...out, [vote]: (out[vote] || 0) + 1 }), {}); const top = Math.max(...Object.values(counts)); confidence = { value: top / votes.length, method: "SELF_CONSISTENCY", detail: `modal share ${top}/${votes.length}` };
+    confidence = confidenceFromVotes(votes, triage.value.case_type);
   }
   const evidence = await selectEvidence(`${subject}\n${body}`);
   const draftSystem = `${DRAFT_SYSTEM}\n\n${EVIDENCE_RULES}\n\n<trusted_evidence>\n${evidence.context.join("\n")}\n</trusted_evidence>`;
@@ -174,3 +174,9 @@ export default {
     try { return json(await runAgent(subject, body)); } catch (error) { return json({ error: `Agent run failed: ${error.name}: ${error.message}` }, 502); }
   },
 };
+
+export function confidenceFromVotes(votes, predictedType) {
+  if (!votes.length) throw new Error("confidence fallback produced no valid votes");
+  const supported = votes.filter(vote => vote === predictedType).length;
+  return { value: supported / votes.length, method: "SELF_CONSISTENCY", detail: `support for '${predictedType}': ${supported}/${votes.length} independent samples` };
+}

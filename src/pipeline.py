@@ -31,7 +31,7 @@ from dataclasses import asdict, dataclass, field
 from openai import OpenAI
 
 from src.confidence import Confidence, ConfidenceMethod, by_self_consistency, from_logprobs
-from src.contract import FailureCounters, SchemaValidationError, call_with_contract
+from src.contract import FailureCounters, SchemaValidationError, call_with_contract, parse
 from src.draft_evidence import draft_evidence
 from src.schema import DraftOutput, Priority, TriageDecision, TriageOutput
 from src.trace import TraceEntry, TraceStore
@@ -247,7 +247,7 @@ def _derive_confidence(client, config, enquiry, decision, last_response,
         if derived is not None:
             return derived
 
-    # Fallback: independent samples, modal vote share (ADR-002). Every vote is
+    # Fallback: independent samples, support for the emitted label (ADR-002). Every vote is
     # drawn at temperature 0.7. The first call's answer is deliberately NOT
     # reused as a vote: it was sampled at the provider default, and possibly
     # from a prompt carrying a retry note, so mixing it in would compute a
@@ -267,14 +267,19 @@ def _derive_confidence(client, config, enquiry, decision, last_response,
         )
         _record(trace, response, time.perf_counter() - started)
         trace.extra_calls += 1
+        raw = response.choices[0].message.content or ""
         try:
-            votes.append(
-                json.loads(response.choices[0].message.content or "{}")["case_type"]
-            )
-        except (json.JSONDecodeError, KeyError, TypeError):
+            vote = parse(raw, TriageDecision)
+        except SchemaValidationError as exc:
             counters.schema_failures += 1
+            counters.raw_failures.append(exc.raw)
+            # Incomplete vote samples must not inflate confidence by shrinking
+            # its denominator. The caller records this enquiry as no output.
+            raise
+        votes.append(vote.case_type.value)
 
-    return by_self_consistency(votes)
+    return by_self_consistency(votes, decision.case_type.value)
+
 
 
 def _store(store: TraceStore | None, record_id: str, trace: StageTrace,

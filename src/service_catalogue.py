@@ -31,7 +31,8 @@ TOPIC_TERMS: dict[str, tuple[str, ...]] = {
         "correspondence address",
     ),
     "premium_billing": (
-        "autopay", "deduct", "debit", "double charge", "duplicate", "billing",
+        "autopay", "deduct", "debit", "double charge", "charged twice",
+        "two charges", "two deductions", "taken twice", "duplicate", "billing",
         "refund",
     ),
     "medical_claim": (

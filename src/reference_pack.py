@@ -32,6 +32,7 @@ TOPIC_TERMS: dict[str, tuple[str, ...]] = {
     ),
     "premium_billing": (
         "premium debit", "premium deduction", "autopay", "double charge",
+        "charged twice", "two charges", "two deductions", "taken twice",
         "charged amount", "billing", "levy", "自动转账", "自動轉賬", "重复扣款",
     ),
 }

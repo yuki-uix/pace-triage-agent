@@ -69,6 +69,7 @@
               <form id="live-form">
                 <label for="live-subject">Email subject</label><input id="live-subject" name="subject" maxlength="300" placeholder="Enter an email subject" required>
                 <label for="live-body">Email body</label><textarea id="live-body" name="body" maxlength="20000" rows="13" placeholder="Paste or enter the customer email…" required></textarea>
+                <div id="access-code-field" hidden><label for="live-access-code">Demo access code</label><input id="live-access-code" name="access_code" type="password" autocomplete="off" placeholder="Enter the presenter access code"></div>
                 <label class="consent"><input id="live-consent" type="checkbox" required><span>I understand that this input is sent to the configured DashScope model service. I will use synthetic data.</span></label>
                 <button class="primary-button run-button" id="run-button" type="submit">Run Agent <span>→</span></button>
               </form>

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import secrets
 import threading
 import webbrowser
 from dataclasses import asdict
@@ -93,6 +94,7 @@ def build_demo_payload(result_path: Path = RESULT,
         "contract_failures": result["contract_failures"],
         "judge_usage": result["judge_usage"],
         "models": result["models"],
+        "live_requires_access_code": bool(os.environ.get("DEMO_ACCESS_CODE")),
         "cases": cases,
         "notice": "Live input calls the configured models; frozen cases are read-only. Neither mode sends a customer reply.",
     }
@@ -172,6 +174,13 @@ def make_handler(payload: dict, live_runner=run_live_enquiry):
                 if "application/json" not in self.headers.get("Content-Type", ""):
                     raise ValueError("Request must use JSON")
                 incoming = json.loads(self.rfile.read(length))
+                expected_code = os.environ.get("DEMO_ACCESS_CODE")
+                supplied_code = incoming.get("access_code", "")
+                if expected_code and not secrets.compare_digest(
+                        supplied_code, expected_code):
+                    self._json({"error": "Invalid demo access code"},
+                               HTTPStatus.UNAUTHORIZED)
+                    return
                 subject = incoming.get("subject", "").strip()
                 body = incoming.get("body", "").strip()
                 if not subject or not body:

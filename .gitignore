@@ -24,3 +24,4 @@ results/*.json
 !results/commitment_v2_holdout_v1.json
 traces/
 .local/
+.vercel
